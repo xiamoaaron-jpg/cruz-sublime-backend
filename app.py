@@ -61,7 +61,7 @@ def verify_code(code, user=""):
     expected = hmac.new(app.secret_key.encode(), rp.encode(), hashlib.sha256).hexdigest()[:8].upper()
     if sig != expected:
         return False, "Firma inválida"
-    db.execute("UPDATE codes SET used=1, used_by=? WHERE code=?", (user, row["code"]))
+    db.execute("UPDATE codes SET used=1, used_by=? WHERE code=?", (user or "Anónimo", row["code"]))
     db.commit()
     return True, "Acceso concedido"
 
@@ -80,12 +80,12 @@ button{width:100%;padding:12px;border:none;border-radius:10px;background:linear-
 ADMIN_HTML = """<!DOCTYPE html><html><head><meta charset="utf-8"><title>Admin - Cruz Sublime</title>
 <style>body{background:#050505;color:#f2f2f2;font-family:sans-serif;margin:0;padding:24px}
 h1{background:linear-gradient(90deg,#3b82f6,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent}
-.card{background:#0d0d0d;border:1px solid #1f1f1f;border-radius:16px;padding:24px;max-width:640px;margin:20px auto}
+.card{background:#0d0d0d;border:1px solid #1f1f1f;border-radius:16px;padding:24px;max-width:760px;margin:20px auto}
 label{display:block;color:#8a8a8a;font-size:13px;margin:12px 0 6px}
 input{width:100%;padding:10px;border-radius:10px;border:1px solid #1f1f1f;background:#141414;color:#f2f2f2;box-sizing:border-box}
 button{padding:12px 24px;border:none;border-radius:10px;background:linear-gradient(90deg,#3b82f6,#ec4899);color:#fff;font-weight:bold;cursor:pointer;margin-top:12px}
-.codes{background:#141414;border-radius:10px;padding:16px;margin-top:16px;font-family:monospace;font-size:15px;line-height:1.8}
-.codes div{display:flex;justify-content:space-between;border-bottom:1px solid #1f1f1f;padding:6px 0}
+.codes{background:#141414;border-radius:10px;padding:16px;margin-top:16px;font-family:monospace;font-size:14px;line-height:1.8}
+.codes div{display:flex;justify-content:space-between;border-bottom:1px solid #1f1f1f;padding:6px 0;gap:12px}
 .small{color:#8a8a8a;font-size:12px;margin-top:8px}
 a{color:#ec4899;text-decoration:none}</style></head><body>
 <h1>Cruz Sublime - Generador de Códigos</h1>
@@ -98,9 +98,18 @@ a{color:#ec4899;text-decoration:none}</style></head><body>
 <button type="submit">Generar</button></form>
 </div>
 <div class="card">
-<h3>Códigos recientes</h3>
+<h3>Códigos y usuarios</h3>
 <div class="codes">
-{% for c in codes %}<div><span>{{ c.code }}</span><span style="color:#8a8a8a">vence: {{ c.vence }}</span></div>{% else %}<div>No hay códigos generados</div>{% endfor %}</div>
+{% for c in codes %}
+<div>
+  <span>{{ c.code }}</span>
+  <span style="color:#8a8a8a">{{ c.estado }}</span>
+  <span style="color:#ec4899">{{ c.user }}</span>
+</div>
+{% else %}
+<div>No hay códigos generados</div>
+{% endfor %}
+</div>
 </div>
 <p class="small" style="text-align:center"><a href="/admin/logout">Cerrar sesión</a></p>
 </div></body></html>"""
@@ -113,8 +122,15 @@ def index():
 def admin():
     if session.get("admin"):
         db = get_db()
-        rows = db.execute("SELECT code, expires_at FROM codes ORDER BY created_at DESC LIMIT 20").fetchall()
-        codes = [{"code": r["code"], "vence": time.strftime("%Y-%m-%d", time.localtime(r["expires_at"]))} for r in rows]
+        rows = db.execute("SELECT code, expires_at, used, used_by FROM codes ORDER BY created_at DESC LIMIT 50").fetchall()
+        codes = []
+        for r in rows:
+            estado = "Usado" if r["used"] else ("Vencido" if time.time() > r["expires_at"] else "Disponible")
+            codes.append({
+                "code": r["code"],
+                "estado": estado,
+                "user": r["used_by"] or "—"
+            })
         return render_template_string(ADMIN_HTML, codes=codes)
     error = None
     if request.method == "POST":
