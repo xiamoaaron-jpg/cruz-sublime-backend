@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cruz Sublime — Membresía VIP</title>
+<style>
+  :root{
+    --bg:#050505; --panel:#0d0d0d; --panel2:#141414;
+    --text:#f2f2f2; --muted:#8a8a8a; --blue:#3b82f6; --pink:#ec4899;
+    --border:#1f1f1f; --shadow:0 10px 30px rgba(59,130,246,.15);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+  body{background:radial-gradient(900px 500px at 10% -10%,rgba(59,130,246,.18) 0%,transparent 60%),radial-gradient(800px 450px at 100% 0%,rgba(236,72,153,.16) 0%,transparent 55%),var(--bg);color:var(--text);min-height:100vh}
+  .ticker{background:linear-gradient(90deg,var(--blue),var(--pink),var(--blue));color:#fff;font-weight:800;font-size:13px;letter-spacing:2.5px;padding:9px 0;text-align:center;white-space:nowrap;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .ticker span{display:inline-block;padding-left:100%;animation:scroll 16s linear infinite}
+  @keyframes scroll{to{transform:translateX(-100%)}}
+  header{max-width:1100px;margin:0 auto;padding:34px 20px 14px;text-align:center}
+  .badge-top{display:inline-block;background:linear-gradient(90deg,var(--blue),var(--pink));color:#fff;font-size:11px;font-weight:800;letter-spacing:2px;padding:6px 14px;border-radius:30px;margin-bottom:14px;box-shadow:0 6px 16px rgba(236,72,153,.35)}
+  header h1{font-size:clamp(28px,5.5vw,44px);background:linear-gradient(90deg,var(--blue),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.5px}
+  header p.sub{color:var(--muted);margin-top:8px;font-size:16px;font-weight:600}
+  header p.desc{color:#a3a3a3;margin-top:12px;font-size:14.5px;max-width:640px;margin-left:auto;margin-right:auto;line-height:1.6}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;justify-content:center}
+  .tab{background:var(--panel2);border:1.5px solid var(--border);color:var(--muted);font-weight:700;font-size:13.5px;padding:11px 20px;border-radius:12px;cursor:pointer;transition:all .2s}
+  .tab:hover{border-color:var(--pink);color:var(--text)}
+  .tab.active{background:linear-gradient(90deg,var(--blue),var(--pink));border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(59,130,246,.35)}
+  .panel{display:none}
+  .panel.active{display:block}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:var(--shadow);margin-bottom:22px}
+  .card h2{font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .card h2 .num{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 4px 10px rgba(59,130,246,.4)}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .field input[type="number"],.field input[type="text"],.field input[type="email"],.field input[type="password"],.field select{width:100%;background:var(--panel2);border:1.5px solid var(--border);border-radius:12px;padding:11px 13px;color:var(--text);font-size:14.5px;outline:none;transition:border .2s,box-shadow .2s}
+  .field input:focus,.field select:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(236,72,153,.15)}
+  .field .row{display:flex;gap:8px}
+  .field .unit{color:var(--muted);font-size:12px;align-self:center;white-space:nowrap;font-weight:700}
+  .field input[type="range"]{width:100%;accent-color:var(--pink)}
+  .field .val{color:var(--text);font-weight:800;font-size:13px;float:right}
+  .design-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:10px;align-items:end}
+  .design-row .rm{background:none;border:1.5px solid #e63946;color:#e63946;border-radius:12px;padding:11px 12px;cursor:pointer;font-size:13px;font-weight:700;transition:background .2s}
+  .design-row .rm:hover{background:rgba(230,57,70,.08)}
+  .btn-add{background:linear-gradient(90deg,rgba(59,130,246,.08),rgba(236,72,153,.08));border:2px dashed var(--pink);color:var(--pink);border-radius:12px;padding:11px;width:100%;cursor:pointer;font-size:13.5px;font-weight:700;margin-bottom:16px;transition:background .2s}
+  .btn-add:hover{background:linear-gradient(90deg,rgba(59,130,246,.16),rgba(236,72,153,.16))}
+  .btn{background:linear-gradient(90deg,var(--blue),var(--pink));border:none;color:#fff;font-weight:800;font-size:14px;padding:12px 22px;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(59,130,246,.3);transition:transform .15s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn.ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none}
+  .btn.ghost:hover{border-color:var(--pink)}
+  .btn.big{width:100%;font-size:16.5px;padding:15px;border-radius:14px;margin-top:8px}
+  .drop{border:2px dashed var(--border);border-radius:16px;padding:50px 20px;text-align:center;cursor:pointer;transition:border .2s,background .2s;background:var(--panel2)}
+  .drop:hover,.drop.drag{border-color:var(--pink);background:rgba(236,72,153,.06)}
+  .drop .ico{font-size:42px;margin-bottom:10px}
+  .drop p{color:var(--muted);font-size:14px}
+  .drop p b{color:var(--pink)}
+  .preview{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  @media(max-width:700px){.preview{grid-template-columns:1fr}}
+  .pv{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:12px;text-align:center}
+  .pv h4{font-size:12px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:800}
+  .pv img{max-width:100%;max-height:320px;border-radius:10px;background:#000}
+  .status{color:var(--muted);font-size:13px;margin-top:10px}
+  .status b{color:var(--pink)}
+  .results{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:24px;min-height:300px;box-shadow:var(--shadow)}
+  .results h2{font-size:17px;margin-bottom:6px}
+  .results .hint{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .res-block{margin-bottom:20px}
+  .res-block h3{font-size:13px;color:var(--pink);margin-bottom:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:800}
+  .res-line{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:14.5px}
+  .res-line .val{font-weight:800}
+  .res-line.highlight{background:linear-gradient(90deg,rgba(59,130,246,.1),rgba(236,72,153,.1));border-radius:10px;padding:12px 10px;border:none;margin-top:6px}
+  .res-line.highlight .val{color:#2a9d8f;font-size:18px}
+  .empty{color:var(--muted);font-size:13.5px;text-align:center;padding:50px 10px}
+  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:10px}
+  .plan{background:var(--panel);border:1.5px solid var(--border);border-radius:20px;padding:28px;text-align:center;box-shadow:var(--shadow);position:relative;transition:transform .2s}
+  .plan:hover{transform:translateY(-4px)}
+  .plan.featured{border-color:var(--pink);box-shadow:0 10px 30px rgba(236,72,153,.25)}
+  .plan .badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--blue),var(--pink));color:#fff;font-size:11px;font-weight:800;padding:5px 14px;border-radius:20px;box-shadow:0 4px 10px rgba(236,72,153,.35)}
+  .plan h3{font-size:19px;margin-bottom:6px}
+  .plan .price{font-size:34px;font-weight:800;background:linear-gradient(90deg,var(--blue),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .plan .price span{font-size:14px;color:var(--muted);font-weight:600}
+  .plan ul{list-style:none;margin:18px 0;text-align:left}
+  .plan ul li{padding:8px 0;font-size:13.5px;color:#bdbdbd;border-bottom:1px solid var(--border)}
+  .plan ul li::before{content:"✓ ";color:var(--pink);font-weight:800}
+  .login-box{max-width:420px;margin:0 auto}
+  .login-box h3{font-size:17px;margin-bottom:6px;text-align:center}
+  .login-box p{color:var(--muted);font-size:13px;text-align:center;margin-bottom:18px}
+  .link-soft{color:var(--pink);text-decoration:none;font-weight:700;font-size:13.5px}
+  .link-soft:hover{text-decoration:underline}
+  .support{text-align:center;color:var(--muted);font-size:12.5px;margin-top:26px}
+  .support a{color:var(--blue);text-decoration:none;font-weight:700}
+  .support a:hover{text-decoration:underline}
+  footer{text-align:center;color:var(--muted);font-size:12.5px;padding:24px;font-weight:600}
+  #gate{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:999}
+  #gate .box{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:420px;text-align:center}
+  @media(max-width:800px){
+    .design-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}
+    .design-row .rm{grid-column:1/-1}
+  }
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="box">
+    <h2 style="margin-bottom:8px">Cruz Sublime</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Ingresa tu código de acceso</p>
+    <div class="field">
+      <input type="text" id="codeInput" placeholder="XXXX-XXXX" style="text-align:center;letter-spacing:2px;font-weight:800">
+    </div>
+    <button class="btn btn-big" id="btnUnlock">Desbloquear</button>
+    <div class="status" id="gateMsg" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<div class="ticker"><span>CRUZ SUBLIME — MEMBRESIA VIP — CALCULADORA DTF — SEMITONOS MASTER — MEJORADOR DE IMAGENES AI — </span></div>
+<header>
+  <div class="badge-top">✦ COMUNIDAD VIP</div>
+  <h1>Cruz Sublime</h1>
+  <p class="sub">Tres herramientas profesionales en una sola membresía</p>
+  <p class="desc">Calculadora de precios DTF, Semitonos Master y Mejorador de Imagenes AI. Todo en tu navegador, sin subir nada a servidores.</p>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" data-tab="calc">Calculadora DTF</button>
+    <button class="tab" data-tab="semi">Semitonos Master</button>
+    <button class="tab" data-tab="img">Mejorador AI</button>
+    <button class="tab" data-tab="plans">Membresía</button>
+  </div>
+
+  <!-- CALCULADORA DTF -->
+  <div class="panel active" id="panel-calc">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+      <div>
+        <div class="card">
+          <h2><span class="num">1</span> Costos del Material</h2>
+          <div class="field">
+            <label>Precio del pliego o metro DTF</label>
+            <div class="row"><input id="sheetPrice" type="number" value="200" min="0" step="0.01"><span class="unit">MXN</span></div>
+          </div>
+          <div class="field">
+            <label>Medidas del pliego (ancho x alto)</label>
+            <div class="row">
+              <input id="sheetW" type="number" value="58" min="1" step="0.1"><span class="unit">cm</span>
+              <input id="sheetH" type="number" value="100" min="1" step="0.1"><span class="unit">cm</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Costo de la playera lisa (blank)</label>
+            <div class="row"><input id="blankCost" type="number" value="100" min="0" step="0.01"><span class="unit">MXN</span></div>
+          </div>
+          <h2 style="margin-top:20px"><span class="num">2</span> Listado de Diseños</h2>
+          <div id="designs"></div>
+          <button class="btn-add" id="btnAddDesign">+ Añadir otro diseño</button>
+          <h2 style="margin-top:4px"><span class="num">3</span> Producción y Gastos</h2>
+          <div class="field">
+            <label>Otros gastos por playera (bolsa, stickers, luz, plancha)</label>
+            <div class="row"><input id="extraCost" type="number" value="15" min="0" step="0.01"><span class="unit">MXN</span></div>
+          </div>
+          <h2 style="margin-top:4px"><span class="num">4</span> Margen de Ganancia</h2>
+          <div class="field">
+            <label>Margen de ganancia</label>
+            <div class="row"><input id="margin" type="number" value="60" min="0" max="500" step="1"><span class="unit">%</span></div>
+          </div>
+          <div class="field">
+            <label>Cantidad de playeras a fabricar</label>
+            <div class="row"><input id="qty" type="number" value="30" min="1" step="1"></div>
+          </div>
+          <button class="btn btn-big" id="btnCalc">Calcular Precio</button>
+        </div>
+      </div>
+      <div class="results" id="results">
+        <h2>Tu Cotización Detallada</h2>
+        <p class="hint">Completa los datos y haz clic en "Calcular Precio" para ver el desglose aquí.</p>
+        <div class="empty" id="emptyState">Los resultados aparecerán aquí.</div>
+        <div id="out" style="display:none">
+          <div class="res-block">
+            <h3>Desglose por Playera</h3>
+            <div class="res-line"><span>Costo Total Estampados</span><span class="val" id="rPrints">$0.00</span></div>
+            <div class="res-line"><span>Costo total por playera</span><span class="val" id="rCost">$0.00</span></div>
+            <div class="res-line highlight"><span>Precio de Venta Sugerido</span><span class="val" id="rPrice">$0.00</span></div>
+          </div>
+          <div class="res-block">
+            <h3>Resumen Total de Producción</h3>
+            <div class="res-line"><span>Costo total (<span id="rQty">0</span> pzs)</span><span class="val" id="rTotalCost">$0.00</span></div>
+            <div class="res-line"><span>Ingreso total estimado</span><span class="val" id="rRevenue">$0.00</span></div>
+            <div class="res-line highlight"><span>Ganancia total estimada</span><span class="val" id="rProfit">$0.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEMITONOS MASTER -->
+  <div class="panel" id="panel-semi">
+    <div class="card">
+      <h2><span class="num">1</span> Sube tu imagen</h2>
+      <div class="drop" id="semiDrop">
+        <div class="ico">🖼️</div>
+        <p>Arrastra tu imagen aqui o <b>haz clic para seleccionar</b></p>
+        <p style="font-size:12px;margin-top:6px">PNG, JPG o WEBP</p>
+      </div>
+      <input type="file" id="semiFile" accept="image/*" style="display:none">
+      <div class="status" id="semiStatus">Ninguna imagen cargada.</div>
+    </div>
+    <div class="card">
+      <h2><span class="num">2</span> Motor de semitono</h2>
+      <div class="field">
+        <label>Tipo de motor</label>
+        <select id="semiMode">
+          <option value="multi">Múltiple — varios ángulos de trama</option>
+          <option value="adv">Avanzado — control fino de punto</option>
+          <option value="hole">Agujereado — trama clásica con huecos</option>
+        </select>
+      </div>
+      <div class="field"><label>Tolerancia de fondo <span class="val" id="vTol">30</span></label><input type="range" id="semiTol" min="0" max="100" step="1" value="30"></div>
+      <div class="field"><label>Espaciado de puntos <span class="val" id="vSpace">6</span></label><input type="range" id="semiSpace" min="2" max="20" step="1" value="6"></div>
+      <div class="field"><label>Tamaño de punto <span class="val" id="vDot">3</span></label><input type="range" id="semiDot" min="1" max="10" step="1" value="3"></div>
+      <div class="field"><label>Ancho real de impresión <span class="val" id="vWidth">30</span> cm</label><input type="range" id="semiWidth" min="5" max="100" step="1" value="30"></div>
+      <div class="btns">
+        <button class="btn" id="btnSemi" disabled>Aplicar semitono</button>
+        <button class="btn ghost" id="btnSemiDl" disabled>Descargar semitono</button>
+      </div>
+      <div class="status" id="semiInfo">—</div>
+    </div>
+    <div class="card">
+      <h2><span class="num">3</span> Valores sugeridos</h2>
+      <div class="res-block">
+        <h3>Según el tipo de imagen</h3>
+        <div class="res-line"><span>Foto realista</span><span class="val">Espaciado 4–6 · Punto 2–3</span></div>
+        <div class="res-line"><span>Ilustración con colores planos</span><span class="val">Espaciado 6–8 · Punto 3–4</span></div>
+        <div class="res-line"><span>Texto o logo</span><span class="val">Espaciado 8–12 · Punto 4–6</span></div>
+        <div class="res-line"><span>Serigrafía CMYK</span><span class="val">Espaciado 5–7 · Punto 3–5</span></div>
+      </div>
+    </div>
+    <div class="preview">
+      <div class="pv"><h4>Original</h4><img id="semiBefore" alt="Antes"><div class="status" id="semiBeforeInfo">—</div></div>
+      <div class="pv"><h4>Semitono</h4><img id="semiAfter" alt="Despues"><div class="status" id="semiAfterInfo">—</div></div>
+    </div>
+  </div>
+
+  <!-- MEJORADOR AI -->
+  <div class="panel" id="panel-img">
+    <div class="card">
+      <h2><span class="num">1</span> Sube tu imagen</h2>
+      <div class="drop" id="imgDrop">
+        <div class="ico">🖼️</div>
+        <p>Arrastra tu imagen aqui o <b>haz clic para seleccionar</b></p>
+        <p style="font-size:12px;margin-top:6px">PNG, JPG o WEBP</p>
+      </div>
+      <input type="file" id="imgFile" accept="image/*" style="display:none">
+      <div class="status" id="imgStatus">Ninguna imagen cargada.</div>
+    </div>
+    <div class="card">
+      <h2><span class="num">2</span> Ajustes de mejora</h2>
+      <div class="field"><label>Escala <span class="val" id="vScale">2x</span></label><input type="range" id="imgScale" min="1" max="4" step="1" value="2"></div>
+      <div class="field"><label>Nitidez <span class="val" id="vSharp">1.2</span></label><input type="range" id="imgSharp" min="0" max="3" step="0.1" value="1.2"></div>
+      <div class="field"><label>Contraste <span class="val" id="vContr">1.15</span></label><input type="range" id="imgContr" min="0.5" max="2" step="0.05" value="1.15"></div>
+      <div class="field"><label>Saturacion <span class="val" id="vSat">1.1</span></label><input type="range" id="imgSat" min="0" max="2" step="0.05" value="1.1"></div>
+      <div class="btns">
+        <button class="btn" id="btnImprove" disabled>Mejorar imagen</button>
+        <button class="btn ghost" id="btnReset" disabled>Restablecer</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span class="num">3</span> Antes / Despues</h2>
+      <div class="preview">
+        <div class="pv"><h4>Original</h4><img id="imgBefore" alt="Antes"><div class="status" id="infoBefore">—</div></div>
+        <div class="pv"><h4>Mejorada</h4><img id="imgAfter" alt="Despues"><div class="status" id="infoAfter">—</div></div>
+      </div>
+      <div class="btns">
+        <button class="btn" id="btnDlOrig" disabled>Descargar original</button>
+        <button class="btn" id="btnDlImp" disabled>Descargar mejorada</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEMBRESÍA -->
+  <div class="panel" id="panel-plans">
+    <div class="card">
+      <h2><span class="num">★</span> Elige tu plan</h2>
+      <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">Acceso instantáneo a las tres herramientas. Cancela cuando quieras. Pago seguro con Mercado Pago.</p>
+      <div class="plans">
+        <div class="plan">
+          <h3>Mensual</h3>
+          <div class="price">$50 <span>MXN/mes</span></div>
+          <ul>
+            <li>Calculadora de Precios DTF</li>
+            <li>Semitonos Master (3 motores)</li>
+            <li>Mejorador de Imagenes AI</li>
+            <li>Descargas ilimitadas</li>
+            <li>Soporte por WhatsApp</li>
+          </ul>
+          <button class="btn big" id="btnMensual">Suscribirme con Mercado Pago</button>
+        </div>
+        <div class="plan featured">
+          <span class="badge">Más popular</span>
+          <h3>Anual</h3>
+          <div class="price">$499 <span>MXN/año</span></div>
+          <ul>
+            <li>Todo lo del plan mensual</li>
+            <li>Ahorra más de 2 meses</li>
+            <li>Acceso prioritario a novedades</li>
+            <li>Plantillas exclusivas DTF</li>
+            <li>Soporte prioritario</li>
+          </ul>
+          <button class="btn big" id="btnAnual">Suscribirme con Mercado Pago</button>
+        </div>
+      </div>
+      <p style="margin-top:20px;font-size:12.5px;color:var(--muted);text-align:center;">
+        Los botones de arriba redirigen a tu checkout de Mercado Pago.<br>
+        Reemplaza los links en el código con los tuyos reales.
+      </p>
+    </div>
+  </div>
+
+  <div class="support">Cruz Sublime · Hecho con 💙🩷</div>
+</div>
+
+<footer>Cruz Sublime — Membresía VIP · Calculadora DTF · Semitonos Master · Mejorador AI</footer>
+
+<script>
+(function(){
+  var API_URL = "https://cruz-sublime-backend.onrender.com/api/verify";
+
+  async function verificarCodigo(code) {
+    try {
+      var res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, user: "" })
+      });
+      return await res.json();
+    } catch (e) {
+      return { valid: false, message: "Error de conexion con el servidor" };
+    }
+  }
+
+  document.getElementById("btnUnlock").addEventListener("click", async function() {
+    var code = document.getElementById("codeInput").value.trim();
+    if (!code) { document.getElementById("gateMsg").textContent = "Ingresa un codigo"; return; }
+    document.getElementById("gateMsg").textContent = "Verificando...";
+    var r = await verificarCodigo(code);
+    if (r && r.valid) {
+      document.getElementById("gate").style.display = "none";
+      localStorage.setItem("cruz_sublime_unlocked", "1");
+    } else {
+      document.getElementById("gateMsg").textContent = (r && r.message) ? r.message : "Codigo invalido";
+    }
+  });
+
+  if (localStorage.getItem("cruz_sublime_unlocked") === "1") {
+    document.getElementById("gate").style.display = "none";
+  }
+
+  var tabs = document.querySelectorAll(".tab");
+  var panels = document.querySelectorAll(".panel");
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){
+      tabs.forEach(function(x){ x.classList.remove("active"); });
+      panels.forEach(function(x){ x.classList.remove("active"); });
+      t.classList.add("active");
+      document.getElementById("panel-" + t.getAttribute("data-tab")).classList.add("active");
+    });
+  });
+
+  var designCount = 0;
+  function addDesign(w, h){
+    designCount++;
+    var id = designCount;
+    var div = document.createElement("div");
+    div.className = "design-row";
+    div.id = "d" + id;
+    div.innerHTML = '<div class="field" style="margin:0"><label>Ancho</label><input type="number" class="dw" value="' + (w||10) + '" min="0.1" step="0.1"></div>' +
+      '<div class="field" style="margin:0"><label>Alto</label><input type="number" class="dh" value="' + (h||10) + '" min="0.1" step="0.1"></div>' +
+      '<div class="field" style="margin:0"><label>Cant.</label><input type="number" class="dq" value="1" min="1" step="1"></div>' +
+      '<button class="rm" onclick="this.parentNode.remove()">x Quitar</button>';
+    document.getElementById("designs").appendChild(div);
+  }
+  document.getElementById("btnAddDesign").addEventListener("click", function(){ addDesign(); });
+  addDesign(10,10); addDesign(15,15); addDesign(20,20);
+
+  function calcular(){
+    var sheetPrice = parseFloat(document.getElementById("sheetPrice").value) || 0;
+    var sheetW = parseFloat(document.getElementById("sheetW").value) || 1;
+    var sheetH = parseFloat(document.getElementById("sheetH").value) || 1;
+    var blankCost = parseFloat(document.getElementById("blankCost").value) || 0;
+    var extraCost = parseFloat(document.getElementById("extraCost").value) || 0;
+    var margin = parseFloat(document.getElementById("margin").value) || 0;
+    var qty = parseInt(document.getElementById("qty").value, 10) || 1;
+    var rows = document.querySelectorAll(".design-row");
+    var totalArea = 0, totalQty = 0;
+    rows.forEach(function(r){
+      var w = parseFloat(r.querySelector(".dw").value) || 0;
+      var h = parseFloat(r.querySelector(".dh").value) || 0;
+      var q = parseInt(r.querySelector(".dq").value, 10) || 0;
+      totalArea += w * h * q;
+      totalQty += q;
+    });
+    var sheetArea = sheetW * sheetH;
+    var avgArea = totalQty > 0 ? totalArea / totalQty : 1;
+    var designsPerSheet = Math.max(1, Math.floor(sheetArea / avgArea));
+    var sheetsNeeded = totalQty > 0 ? Math.ceil(totalQty / designsPerSheet) : 0;
+    var printCost = sheetsNeeded * sheetPrice;
+    var costPerShirt = blankCost + extraCost + (printCost / Math.max(totalQty, 1));
+    var price = costPerShirt * (1 + margin / 100);
+    var totalCost = costPerShirt * qty;
+    var revenue = price * qty;
+    var profit = revenue - totalCost;
+    document.getElementById("rPrints").textContent = "$" + printCost.toFixed(2);
+    document.getElementById("rCost").textContent = "$" + costPerShirt.toFixed(2);
+    document.getElementById("rPrice").textContent = "$" + price.toFixed(2);
+    document.getElementById("rQty").textContent = qty;
+    document.getElementById("rTotalCost").textContent = "$" + totalCost.toFixed(2);
+    document.getElementById("rRevenue").textContent = "$" + revenue.toFixed(2);
+    document.getElementById("rProfit").textContent = "$" + profit.toFixed(2);
+    document.getElementById("emptyState").style.display = "none";
+    document.getElementById("out").style.display = "block";
+  }
+  document.getElementById("btnCalc").addEventListener("click", calcular);
+
+  var semiFileInput = document.getElementById("semiFile");
+  var semiDrop = document.getElementById("semiDrop");
+  var semiOriginal = null, semiResult = null;
+
+  function semiSetVal(id, v){ document.getElementById(id).textContent = v; }
+  document.getElementById("semiTol").oninput = function(e){ semiSetVal("vTol", e.target.value); };
+  document.getElementById("semiSpace").oninput = function(e){ semiSetVal("vSpace", e.target.value); };
+  document.getElementById("semiDot").oninput = function(e){ semiSetVal("vDot", e.target.value); };
+  document.getElementById("semiWidth").oninput = function(e){ semiSetVal("vWidth", e.target.value); };
+
+  function semiLoad(f){
+    if(!f || !f.type || f.type.indexOf("image/") !== 0){ document.getElementById("semiStatus").textContent = "Elige una imagen."; return; }
+    var r = new FileReader();
+    r.onload = function(e){
+      semiOriginal = e.target.result;
+      document.getElementById("semiBefore").src = semiOriginal;
+      document.getElementById("semiBeforeInfo").innerHTML = "<b>" + f.name + "</b> · " + Math.round(f.size/1024) + " KB";
+      document.getElementById("semiAfter").src = "";
+      document.getElementById("semiAfterInfo").textContent = "—";
+      semiResult = null;
+      document.getElementById("btnSemi").disabled = false;
+      document.getElementById("btnSemiDl").disabled = true;
+      document.getElementById("semiStatus").innerHTML = "Imagen cargada: <b>" + f.name + "</b>.";
+    };
+    r.readAsDataURL(f);
+  }
+  semiDrop.addEventListener("click", function(){ semiFileInput.click(); });
+  semiDrop.addEventListener("dragover", function(e){ e.preventDefault(); semiDrop.classList.add("drag"); });
+  semiDrop.addEventListener("dragleave", function(){ semiDrop.classList.remove("drag"); });
+  semiDrop.addEventListener("drop", function(e){ e.preventDefault(); semiDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) semiLoad(e.dataTransfer.files[0]); });
+  semiFileInput.addEventListener("change", function(e){ if(e.target.files[0]) semiLoad(e.target.files[0]); });
+
+  function applySemi(){
+    if(!semiOriginal) return;
+    var img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function(){
+      var tol = parseInt(document.getElementById("semiTol").value,10);
+      var space = parseInt(document.getElementById("semiSpace").value,10);
+      var dot = parseInt(document.getElementById("semiDot").value,10);
+      var realW = parseFloat(document.getElementById("semiWidth").value);
+      var c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      var ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      var data = ctx.getImageData(0, 0, c.width, c.height);
+      var d = data.data;
+      var corners = [[0,0],[c.width-1,0],[0,c.height-1],[c.width-1,c.height-1]];
+      var br=0,bg=0,bb=0;
+      corners.forEach(function(p){ var i=(p[1]*c.width+p[0])*4; br+=d[i]; bg+=d[i+1]; bb+=d[i+2]; });
+      br/=4; bg/=4; bb/=4;
+      var gray = new Float32Array(c.width*c.height);
+      for(var i=0;i<d.length;i+=4){
+        var r2=d[i], g2=d[i+1], b2=d[i+2];
+        var dist = Math.sqrt((r2-br)*(r2-br)+(g2-bg)*(g2-bg)+(b2-bb)*(b2-bb));
+        if(dist <= tol){ gray[i/4] = 1; d[i+3] = 0; }
+        else { gray[i/4] = (0.299*r2+0.587*g2+0.114*b2)/255; }
+      }
+      ctx.clearRect(0,0,c.width,c.height);
+      var mode = document.getElementById("semiMode").value;
+      for(var y=0;y<c.height;y+=space){
+        for(var x=0;x<c.width;x+=space){
+          var idx = y*c.width+x;
+          var v = gray[idx];
+          if(v >= 1) continue;
+          var rDot = dot * (1 - v);
+          if(mode === "hole") rDot = dot * v;
+          if(mode === "adv") rDot = dot * Math.pow(1-v, 1.5);
+          if(rDot < 0.3) continue;
+          ctx.beginPath();
+          ctx.arc(x, y, rDot, 0, Math.PI*2);
+          ctx.fillStyle = "#000";
+          ctx.fill();
+        }
+      }
+      var pxPerCm = c.width / realW;
+      semiResult = c.toDataURL("image/png");
+      document.getElementById("semiAfter").src = semiResult;
+      document.getElementById("semiAfterInfo").innerHTML = "<b>" + c.width + " x " + c.height + " px</b> · " + pxPerCm.toFixed(1) + " px/cm · PNG";
+      document.getElementById("btnSemiDl").disabled = false;
+      document.getElementById("semiInfo").innerHTML = "Semitono listo. Ancho real: <b>" + realW + " cm</b>.";
+    };
+    img.onerror = function(){ document.getElementById("semiStatus").textContent = "Error al procesar."; };
+    img.src = semiOriginal;
+  }
+  document.getElementById("btnSemi").addEventListener("click", applySemi);
+  document.getElementById("btnSemiDl").addEventListener("click", function(){
+    if(!semiResult) return;
+    var a = document.createElement("a");
+    a.href = semiResult; a.download = "cruz_sublime_semitono.png";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
+
+  var imgFileInput = document.getElementById("imgFile");
+  var imgDrop = document.getElementById("imgDrop");
+  var imgOriginal = null, imgImproved = null;
+
+  function imgSetVal(id, v){ document.getElementById(id).textContent = v; }
+  document.getElementById("imgScale").oninput = function(e){ imgSetVal("vScale", e.target.value + "x"); };
+  document.getElementById("imgSharp").oninput = function(e){ imgSetVal("vSharp", e.target.value); };
+  document.getElementById("imgContr").oninput = function(e){ imgSetVal("vContr", e.target.value); };
+  document.getElementById("imgSat").oninput = function(e){ imgSetVal("vSat", e.target.value); };
+
+  function imgDownload(dataUrl, filename){
+    var a = document.createElement("a");
+    a.href = dataUrl; a.download = filename; a.style.display = "none";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); }, 1000);
+  }
+
+  function imgLoad(f){
+    if(!f || !f.type || f.type.indexOf("image/") !== 0){ document.getElementById("imgStatus").textContent = "Elige una imagen."; return; }
+    var r = new FileReader();
+    r.onload = function(e){
+      imgOriginal = e.target.result;
+      document.getElementById("imgBefore").src = imgOriginal;
+      document.getElementById("infoBefore").innerHTML = "<b>" + f.name + "</b> · " + Math.round(f.size/1024) + " KB";
+      document.getElementById("imgAfter").src = "";
+      document.getElementById("infoAfter").textContent = "—";
+      imgImproved = null;
+      document.getElementById("btnImprove").disabled = false;
+      document.getElementById("btnReset").disabled = false;
+      document.getElementById("btnDlOrig").disabled = false;
+      document.getElementById("btnDlImp").disabled = true;
+      document.getElementById("imgStatus").innerHTML = "Imagen cargada: <b>" + f.name + "</b>.";
+    };
+    r.readAsDataURL(f);
+  }
+  imgDrop.addEventListener("click", function(){ imgFileInput.click(); });
+  imgDrop.addEventListener("dragover", function(e){ e.preventDefault(); imgDrop.classList.add("drag"); });
+  imgDrop.addEventListener("dragleave", function(){ imgDrop.classList.remove("drag"); });
+  imgDrop.addEventListener("drop", function(e){ e.preventDefault(); imgDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) imgLoad(e.dataTransfer.files[0]); });
+  imgFileInput.addEventListener("change", function(e){ if(e.target.files[0]) imgLoad(e.target.files[0]); });
+
+  function convolve(data, w, h, kernel){
+    var out = new Float32Array(data.length);
+    for(var y=0;y<h;y++){
+      for(var x=0;x<w;x++){
+        var r=0,g=0,b=0,a=0,sum=0;
+        for(var ky=0;ky<3;ky++){
+          for(var kx=0;kx<3;kx++){
+            var px = Math.min(w-1, Math.max(0, x+kx-1));
+            var py = Math.min(h-1, Math.max(0, y+ky-1));
+            var i = (py*w+px)*4;
+            var kv = kernel[ky*3+kx];
+            r+=data[i]*kv; g+=data[i+1]*kv; b+=data[i+2]*kv; a+=data[i+3]*kv; sum+=kv;
+          }
+        }
+        var oi=(y*w+x)*4;
+        out[oi]=r/sum; out[oi+1]=g/sum; out[oi+2]=b/sum; out[oi+3]=a/sum;
+      }
+    }
+    return out;
+  }
+  function sharpen(data, w, h, amount){
+    return convolve(data, w, h, [0,-amount,0,-amount,1+4*amount,-amount,0,-amount,0]);
+  }
+
+  function improveImage(){
+    if(!imgOriginal) return;
+    var scale = parseInt(document.getElementById("imgScale").value,10);
+    var sharpAmt = parseFloat(document.getElementById("imgSharp").value);
+    var contr = parseFloat(document.getElementById("imgContr").value);
+    var sat = parseFloat(document.getElementById("imgSat").value);
+    var img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function(){
+      var w = img.width*scale, h = img.height*scale;
+      var c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var ctx = c.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, w, h);
+      var imgData = ctx.getImageData(0, 0, w, h);
+      var d = new Float32Array(imgData.data);
+      if(sharpAmt > 0) d = sharpen(d, w, h, sharpAmt);
+      var out = imgData.data, mid = 128;
+      for(var i=0;i<d.length;i+=4){
+        var r2=(d[i]-mid)*contr+mid, g2=(d[i+1]-mid)*contr+mid, b2=(d[i+2]-mid)*contr+mid;
+        var gray = 0.299*r2+0.587*g2+0.114*b2;
+        out[i]=Math.max(0,Math.min(255,gray+(r2-gray)*sat));
+        out[i+1]=Math.max(0,Math.min(255,gray+(g2-gray)*sat));
+        out[i+2]=Math.max(0,Math.min(255,gray+(b2-gray)*sat));
+        out[i+3]=d[i+3];
+      }
+      ctx.putImageData(imgData, 0, 0);
+      imgImproved = c.toDataURL("image/png");
+      document.getElementById("imgAfter").src = imgImproved;
+      document.getElementById("infoAfter").innerHTML = "<b>" + w + " x " + h + " px</b> · PNG";
+      document.getElementById("btnDlImp").disabled = false;
+      document.getElementById("imgStatus").innerHTML = "Imagen mejorada: <b>" + w + " x " + h + " px</b>.";
+    };
+    img.onerror = function(){ document.getElementById("imgStatus").textContent = "Error al procesar."; };
+    img.src = imgOriginal;
+  }
+  document.getElementById("btnImprove").addEventListener("click", improveImage);
+  document.getElementById("btnReset").addEventListener("click", function(){
+    if(!imgOriginal) return;
+    document.getElementById("imgScale").value = 2; imgSetVal("vScale","2x");
+    document.getElementById("imgSharp").value = 1.2; imgSetVal("vSharp","1.2");
+    document.getElementById("imgContr").value = 1.15; imgSetVal("vContr","1.15");
+    document.getElementById("imgSat").value = 1.1; imgSetVal("vSat","1.1");
+    document.getElementById("imgAfter").src = "";
+    document.getElementById("infoAfter").textContent = "—";
+    imgImproved = null;
+    document.getElementById("btnDlImp").disabled = true;
+    document.getElementById("imgStatus").textContent = "Ajustes restablecidos.";
+  });
+  document.getElementById("btnDlOrig").addEventListener("click", function(){
+    if(!imgOriginal) return;
+    imgDownload(imgOriginal, "cruz_sublime_original.png");
+  });
+  document.getElementById("btnDlImp").addEventListener("click", function(){
+    if(!imgImproved) return;
+    imgDownload(imgImproved, "cruz_sublime_mejorada.png");
+  });
+
+  var mpMensual = "https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=REEMPLAZA_CON_TU_PREFERENCE_MENSUAL";
+  var mpAnual   = "https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=REEMPLAZA_CON_TU_PREFERENCE_ANUAL";
+
+  document.getElementById("btnMensual").addEventListener("click", function(){
+    window.open(mpMensual, "_blank");
+  });
+  document.getElementById("btnAnual").addEventListener("click", function(){
+    window.open(mpAnual, "_blank");
+  });
+})();
+</script>
+</body>
+</html>
