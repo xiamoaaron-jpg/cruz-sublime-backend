@@ -133,6 +133,7 @@
     <button class="tab" data-tab="calc">Calculadora DTF</button>
     <button class="tab" data-tab="semi">Semitonos Master</button>
     <button class="tab" data-tab="img">Mejorador AI</button>
+    <button class="tab" data-tab="canva" id="tabCanva" style="display:none">Canva</button>
     <button class="tab active" data-tab="plans">Membresía</button>
   </div>
 
@@ -287,37 +288,63 @@
   <div class="panel active" id="panel-plans">
     <div class="card">
       <h2><span class="num">★</span> Elige tu plan</h2>
-      <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">Acceso instantáneo a las tres herramientas. Cancela cuando quieras. Pago seguro con Mercado Pago.</p>
+      <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">Acceso a las tres herramientas. Elige el que mejor se adapte a ti. Pago seguro con Mercado Pago.</p>
       <div class="plans">
         <div class="plan">
-          <h3>Mensual</h3>
+          <h3>Básico</h3>
           <div class="price">$50 <span>MXN/mes</span></div>
           <ul>
             <li>Calculadora de Precios DTF</li>
             <li>Semitonos Master (3 motores)</li>
-            <li>Mejorador de Imagenes AI</li>
+            <li>Mejorador de Imágenes AI</li>
             <li>Descargas ilimitadas</li>
             <li>Soporte por WhatsApp</li>
           </ul>
-          <button class="btn big" id="btnMensual">Suscribirme con Mercado Pago</button>
+          <button class="btn big" id="btnBasico">Suscribirme con Mercado Pago</button>
         </div>
         <div class="plan featured">
           <span class="badge">Más popular</span>
+          <h3>Medio</h3>
+          <div class="price">$99 <span>MXN/mes</span></div>
+          <ul>
+            <li>Todo lo del plan Básico</li>
+            <li>Cuenta de Canva Premium incluida</li>
+            <li>Acceso prioritario a novedades</li>
+            <li>Soporte prioritario</li>
+          </ul>
+          <button class="btn big" id="btnMedio">Suscribirme con Mercado Pago</button>
+        </div>
+        <div class="plan">
           <h3>Anual</h3>
           <div class="price">$499 <span>MXN/año</span></div>
           <ul>
-            <li>Todo lo del plan mensual</li>
+            <li>Todo lo del plan Medio</li>
+            <li>12 meses de herramientas</li>
+            <li>1 mes de Canva Premium de regalo</li>
             <li>Ahorra más de 2 meses</li>
-            <li>Acceso prioritario a novedades</li>
-            <li>Plantillas exclusivas DTF</li>
             <li>Soporte prioritario</li>
           </ul>
           <button class="btn big" id="btnAnual">Suscribirme con Mercado Pago</button>
         </div>
       </div>
       <p style="margin-top:20px;font-size:12.5px;color:var(--muted);text-align:center;">
-        Los botones de arriba redirigen a tu checkout de Mercado Pago.<br>
-        Reemplaza los links en el código con los tuyos reales.
+        Los botones redirigen a Mercado Pago. Después del pago, te mandamos el código por WhatsApp.
+      </p>
+    </div>
+  </div>
+
+  <!-- CANVA (solo para Medio y Anual) -->
+  <div class="panel" id="panel-canva">
+    <div class="card">
+      <h2><span class="num">C</span> Tu cuenta de Canva</h2>
+      <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">Esta cuenta está incluida en tu plan. Úsala con responsabilidad.</p>
+      <div class="res-block">
+        <div class="res-line"><span>Correo</span><span class="val" id="canvaEmail">tu-cuenta@canva.com</span></div>
+        <div class="res-line"><span>Contraseña</span><span class="val" id="canvaPass">TuContraseña123</span></div>
+      </div>
+      <p style="margin-top:16px;font-size:12.5px;color:var(--muted);">
+        Si la cuenta deja de funcionar, contáctanos por WhatsApp y la actualizamos.<br>
+        <b>Nota:</b> Edita estos datos directamente en el código HTML cuando necesites cambiarlos.
       </p>
     </div>
   </div>
@@ -355,15 +382,24 @@
       document.getElementById("gate").style.display = "none";
       localStorage.setItem("cruz_sublime_unlocked", "1");
       localStorage.setItem("cruz_sublime_user", user);
+      localStorage.setItem("cruz_sublime_plan", r.plan || "basico");
+      updateCanvaVisibility();
       document.querySelector('[data-tab="calc"]').click();
     } else {
       document.getElementById("gateMsg").textContent = (r && r.message) ? r.message : "Codigo invalido";
     }
   });
 
-  if (localStorage.getItem("cruz_sublime_unlocked") === "1") {
-    document.getElementById("gate").style.display = "none";
+  function updateCanvaVisibility() {
+    var plan = localStorage.getItem("cruz_sublime_plan") || "basico";
+    var tab = document.getElementById("tabCanva");
+    if (plan === "medio" || plan === "anual") {
+      tab.style.display = "inline-block";
+    } else {
+      tab.style.display = "none";
+    }
   }
+  updateCanvaVisibility();
 
   var tabs = document.querySelectorAll(".tab");
   var panels = document.querySelectorAll(".panel");
@@ -654,11 +690,15 @@
     imgDownload(imgImproved, "cruz_sublime_mejorada.png");
   });
 
-  var mpMensual = "https://mpago.li/27dgBVR";
-  var mpAnual   = "https://mpago.li/1GSS1PN";
+  var mpBasico = "https://mpago.li/27dgBVR";
+  var mpMedio  = "https://mpago.li/15vftKy";
+  var mpAnual  = "https://mpago.li/29YTyPn";
 
-  document.getElementById("btnMensual").addEventListener("click", function(){
-    window.open(mpMensual, "_blank");
+  document.getElementById("btnBasico").addEventListener("click", function(){
+    window.open(mpBasico, "_blank");
+  });
+  document.getElementById("btnMedio").addEventListener("click", function(){
+    window.open(mpMedio, "_blank");
   });
   document.getElementById("btnAnual").addEventListener("click", function(){
     window.open(mpAnual, "_blank");
