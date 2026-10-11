@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -102,7 +103,7 @@
 </style>
 </head>
 <body>
-<div id="gate">
+<div id="gate" style="display:none">
   <div class="box">
     <h2 style="margin-bottom:8px">Cruz Sublime</h2>
     <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Ingresa tu código de acceso</p>
@@ -128,14 +129,14 @@
 
 <div class="wrap">
   <div class="tabs">
-    <button class="tab active" data-tab="calc">Calculadora DTF</button>
+    <button class="tab" data-tab="calc">Calculadora DTF</button>
     <button class="tab" data-tab="semi">Semitonos Master</button>
     <button class="tab" data-tab="img">Mejorador AI</button>
-    <button class="tab" data-tab="plans">Membresía</button>
+    <button class="tab active" data-tab="plans">Membresía</button>
   </div>
 
   <!-- CALCULADORA DTF -->
-  <div class="panel active" id="panel-calc">
+  <div class="panel" id="panel-calc">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
       <div>
         <div class="card">
@@ -282,7 +283,7 @@
   </div>
 
   <!-- MEMBRESÍA -->
-  <div class="panel" id="panel-plans">
+  <div class="panel active" id="panel-plans">
     <div class="card">
       <h2><span class="num">★</span> Elige tu plan</h2>
       <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">Acceso instantáneo a las tres herramientas. Cancela cuando quieras. Pago seguro con Mercado Pago.</p>
@@ -350,6 +351,7 @@
     if (r && r.valid) {
       document.getElementById("gate").style.display = "none";
       localStorage.setItem("cruz_sublime_unlocked", "1");
+      document.querySelector('[data-tab="calc"]').click();
     } else {
       document.getElementById("gateMsg").textContent = (r && r.message) ? r.message : "Codigo invalido";
     }
@@ -363,10 +365,15 @@
   var panels = document.querySelectorAll(".panel");
   tabs.forEach(function(t){
     t.addEventListener("click", function(){
+      var tabName = t.getAttribute("data-tab");
+      if (tabName !== "plans" && localStorage.getItem("cruz_sublime_unlocked") !== "1") {
+        document.getElementById("gate").style.display = "flex";
+        return;
+      }
       tabs.forEach(function(x){ x.classList.remove("active"); });
       panels.forEach(function(x){ x.classList.remove("active"); });
       t.classList.add("active");
-      document.getElementById("panel-" + t.getAttribute("data-tab")).classList.add("active");
+      document.getElementById("panel-" + tabName).classList.add("active");
     });
   });
 
