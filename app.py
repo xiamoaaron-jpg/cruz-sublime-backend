@@ -1,7 +1,9 @@
 from flask import Flask, request, render_template_string, session, redirect, url_for, g
+from flask_cors import CORS
 import hmac, hashlib, secrets, string, sqlite3, time, os
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = os.environ.get("SECRET_KEY", "CAMBIA-ESTO-POR-UNA-CLAVE-LARGA-Y-ALEATORIA")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "CAMBIA-ESTO-POR-TU-CONTRASENA")
 DB = "codes.db"
@@ -145,7 +147,6 @@ def api_verify():
     ok, msg = verify_code(code, user)
     return {"valid": ok, "message": msg}
 
-# Inicializar la base de datos al arrancar
 with app.app_context():
     init_db()
 
