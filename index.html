@@ -15,11 +15,13 @@
   .ticker{background:linear-gradient(90deg,var(--blue),var(--pink),var(--blue));color:#fff;font-weight:800;font-size:13px;letter-spacing:2.5px;padding:9px 0;text-align:center;white-space:nowrap;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,.4)}
   .ticker span{display:inline-block;padding-left:100%;animation:scroll 16s linear infinite}
   @keyframes scroll{to{transform:translateX(-100%)}}
-  header{max-width:1100px;margin:0 auto;padding:34px 20px 14px;text-align:center}
-  .badge-top{display:inline-block;background:linear-gradient(90deg,var(--blue),var(--pink));color:#fff;font-size:11px;font-weight:800;letter-spacing:2px;padding:6px 14px;border-radius:30px;margin-bottom:14px;box-shadow:0 6px 16px rgba(236,72,153,.35)}
-  header h1{font-size:clamp(28px,5.5vw,44px);background:linear-gradient(90deg,var(--blue),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.5px}
-  header p.sub{color:var(--muted);margin-top:8px;font-size:16px;font-weight:600}
-  header p.desc{color:#a3a3a3;margin-top:12px;font-size:14.5px;max-width:640px;margin-left:auto;margin-right:auto;line-height:1.6}
+  header{max-width:1100px;margin:0 auto;padding:50px 20px 30px;text-align:center}
+  .badge-top{display:inline-block;background:linear-gradient(90deg,var(--blue),var(--pink));color:#fff;font-size:12px;font-weight:800;letter-spacing:2.5px;padding:7px 16px;border-radius:30px;margin-bottom:18px;box-shadow:0 6px 16px rgba(236,72,153,.35)}
+  header h1{font-size:clamp(32px,6vw,52px);background:linear-gradient(90deg,var(--blue),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-1px;line-height:1.1;margin-bottom:12px}
+  header p.sub{color:#e0e0e0;margin-top:6px;font-size:18px;font-weight:700;max-width:720px;margin-left:auto;margin-right:auto}
+  header p.desc{color:#a3a3a3;margin-top:14px;font-size:15.5px;max-width:680px;margin-left:auto;margin-right:auto;line-height:1.65}
+  .hero-cta{margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .hero-cta .btn{font-size:15.5px;padding:14px 28px}
   .wrap{max-width:1100px;margin:0 auto;padding:20px}
   .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;justify-content:center}
   .tab{background:var(--panel2);border:1.5px solid var(--border);color:var(--muted);font-weight:700;font-size:13.5px;padding:11px 20px;border-radius:12px;cursor:pointer;transition:all .2s}
@@ -116,8 +118,12 @@
 <header>
   <div class="badge-top">✦ COMUNIDAD VIP</div>
   <h1>Cruz Sublime</h1>
-  <p class="sub">Tres herramientas profesionales en una sola membresía</p>
-  <p class="desc">Calculadora de precios DTF, Semitonos Master y Mejorador de Imagenes AI. Todo en tu navegador, sin subir nada a servidores.</p>
+  <p class="sub">Tres herramientas profesionales para tu negocio de estampado.<br>Todo en un solo lugar, sin complicaciones.</p>
+  <p class="desc">Calculadora de precios DTF, Semitonos Master y Mejorador de Imágenes AI. Trabaja más rápido, cotiza mejor y entrega con calidad profesional. Acceso con código personal.</p>
+  <div class="hero-cta">
+    <button class="btn" onclick="document.querySelector('[data-tab=plans]').click()">Ver planes y precios</button>
+    <button class="btn ghost" onclick="document.getElementById('gate').style.display='flex'">Ya tengo código</button>
+  </div>
 </header>
 
 <div class="wrap">
@@ -637,8 +643,8 @@
     imgDownload(imgImproved, "cruz_sublime_mejorada.png");
   });
 
-  var mpMensual = "https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=REEMPLAZA_CON_TU_PREFERENCE_MENSUAL";
-  var mpAnual   = "https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=REEMPLAZA_CON_TU_PREFERENCE_ANUAL";
+  var mpMensual = "https://mpago.li/27dgBVR";
+  var mpAnual   = "https://mpago.li/1GSS1PN";
 
   document.getElementById("btnMensual").addEventListener("click", function(){
     window.open(mpMensual, "_blank");
