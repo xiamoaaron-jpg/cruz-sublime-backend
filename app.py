@@ -2,10 +2,13 @@ from flask import Flask, request, jsonify, render_template_string
 import sqlite3
 import os
 from datetime import datetime
+import random
+import string
 
 app = Flask(__name__)
 
 DB_PATH = "codes.db"
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -30,7 +33,7 @@ init_db()
 
 @app.route("/api/verify", methods=["POST"])
 def verify():
-    data = request.get_json()
+    data = request.get_json() or {}
     code = data.get("code", "").strip().upper()
     user = data.get("user", "").strip()
     
@@ -54,64 +57,13 @@ def verify():
     
     return jsonify({"valid": True, "plan": plan, "message": "Acceso concedido"})
 
-@app.route("/admin")
-def admin():
-    password = request.args.get("p", "")
-    if password != os.environ.get("ADMIN_PASSWORD", "admin123"):
-        return "Acceso denegado", 403
-    
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT code, user, plan, used_at FROM usages ORDER BY used_at DESC")
-    usages = c.fetchall()
-    c.execute("SELECT code, plan, days, created_at FROM codes ORDER BY created_at DESC")
-    codes = c.fetchall()
-    conn.close()
-    
-    html = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Admin Cruz Sublime</title>
-        <style>
-            body { font-family: Arial; background: #111; color: #eee; padding: 20px; }
-            table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-            th, td { border: 1px solid #333; padding: 10px; text-align: left; }
-            th { background: #222; }
-            h2 { color: #ec4899; }
-        </style>
-    </head>
-    <body>
-        <h1>Admin Cruz Sublime</h1>
-        <h2>Usos de códigos</h2>
-        <table>
-            <tr><th>Código</th><th>Usuario (nombre/correo)</th><th>Plan</th><th>Fecha de uso</th></tr>
-            {% for u in usages %}
-            <tr><td>{{ u[0] }}</td><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td></tr>
-            {% endfor %}
-        </table>
-        
-        <h2>Códigos generados</h2>
-        <table>
-            <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th></tr>
-            {% for c in codes %}
-            <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td></tr>
-            {% endfor %}
-        </table>
-    </body>
-    </html>
-    """
-    return render_template_string(html, usages=usages, codes=codes)
-
 @app.route("/api/generate", methods=["POST"])
-def generate():
-    data = request.get_json()
+def api_generate():
+    data = request.get_json() or {}
     password = data.get("password", "")
-    if password != os.environ.get("ADMIN_PASSWORD", "admin123"):
+    if password != ADMIN_PASSWORD:
         return jsonify({"error": "No autorizado"}), 403
     
-    import random, string
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
     code = f"{code[:4]}-{code[4:]}"
     plan = data.get("plan", "basico")
@@ -125,6 +77,106 @@ def generate():
     conn.close()
     
     return jsonify({"code": code, "plan": plan, "days": days})
+
+@app.route("/admin")
+def admin():
+    password = request.args.get("p", "")
+    if password != ADMIN_PASSWORD:
+        return "Acceso denegado. Usa ?p=tu_contraseña", 403
+    
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT code, user, plan, used_at FROM usages ORDER BY used_at DESC LIMIT 100")
+    usages = c.fetchall()
+    c.execute("SELECT code, plan, days, created_at FROM codes ORDER BY created_at DESC")
+    codes = c.fetchall()
+    conn.close()
+    
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Admin Cruz Sublime</title>
+        <style>
+            body { font-family: Arial, sans-serif; background: #0f0f0f; color: #eee; padding: 20px; }
+            table { border-collapse: collapse; width: 100%; margin-bottom: 30px; background: #1a1a1a; }
+            th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+            th { background: #222; color: #ec4899; }
+            h1, h2 { color: #3b82f6; }
+            .box { background: #1a1a1a; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+            input, select, button { padding: 8px; margin: 5px; border-radius: 5px; border: 1px solid #333; background: #222; color: #eee; }
+            button { background: linear-gradient(90deg, #3b82f6, #ec4899); border: none; cursor: pointer; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <h1>Admin Cruz Sublime</h1>
+        
+        <div class="box">
+            <h2>Generar nuevo código</h2>
+            <form method="POST" action="/admin/generate">
+                <input type="hidden" name="p" value="{{ password }}">
+                <select name="plan">
+                    <option value="basico">Básico</option>
+                    <option value="medio">Medio</option>
+                    <option value="anual">Anual</option>
+                </select>
+                <input type="number" name="days" value="30" min="1" placeholder="Días">
+                <button type="submit">Generar código</button>
+            </form>
+        </div>
+        
+        <h2>Usos de códigos (últimos 100)</h2>
+        <table>
+            <tr><th>Código</th><th>Usuario (nombre/correo)</th><th>Plan</th><th>Fecha de uso</th></tr>
+            {% for u in usages %}
+            <tr><td>{{ u[0] }}</td><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td></tr>
+            {% else %}
+            <tr><td colspan="4">Aún no hay usos</td></tr>
+            {% endfor %}
+        </table>
+        
+        <h2>Códigos generados</h2>
+        <table>
+            <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th></tr>
+            {% for c in codes %}
+            <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td></tr>
+            {% else %}
+            <tr><td colspan="4">No hay códigos</td></tr>
+            {% endfor %}
+        </table>
+    </body>
+    </html>
+    """
+    return render_template_string(html, usages=usages, codes=codes, password=password)
+
+@app.route("/admin/generate", methods=["POST"])
+def admin_generate():
+    password = request.form.get("p", "")
+    if password != ADMIN_PASSWORD:
+        return "Acceso denegado", 403
+    
+    plan = request.form.get("plan", "basico")
+    days = int(request.form.get("days", 30))
+    
+    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    code = f"{code[:4]}-{code[4:]}"
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO codes (code, plan, days, created_at) VALUES (?, ?, ?, ?)", (code, plan, days, now))
+    conn.commit()
+    conn.close()
+    
+    return f"""
+    <html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center">
+    <h2>Código generado</h2>
+    <p style="font-size:28px;font-weight:bold;color:#ec4899">{code}</p>
+    <p>Plan: {plan} · Días: {days}</p>
+    <a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a>
+    </body></html>
+    """
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
