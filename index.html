@@ -451,25 +451,23 @@
     var margin = parseFloat(document.getElementById("margin").value) || 0;
     var qty = parseInt(document.getElementById("qty").value, 10) || 1;
     var rows = document.querySelectorAll(".design-row");
-    var totalArea = 0, totalQty = 0;
+    var sheetArea = sheetW * sheetH;
+    var printCostPerShirt = 0;
     rows.forEach(function(r){
       var w = parseFloat(r.querySelector(".dw").value) || 0;
       var h = parseFloat(r.querySelector(".dh").value) || 0;
       var q = parseInt(r.querySelector(".dq").value, 10) || 0;
-      totalArea += w * h * q;
-      totalQty += q;
+      var designArea = w * h;
+      var designsPerSheet = Math.max(1, Math.floor(sheetArea / Math.max(designArea, 1)));
+      var costPerDesign = sheetPrice / designsPerSheet;
+      printCostPerShirt += costPerDesign * q;
     });
-    var sheetArea = sheetW * sheetH;
-    var avgArea = totalQty > 0 ? totalArea / totalQty : 1;
-    var designsPerSheet = Math.max(1, Math.floor(sheetArea / avgArea));
-    var sheetsNeeded = totalQty > 0 ? Math.ceil(totalQty / designsPerSheet) : 0;
-    var printCost = sheetsNeeded * sheetPrice;
-    var costPerShirt = blankCost + extraCost + (printCost / Math.max(totalQty, 1));
+    var costPerShirt = blankCost + extraCost + printCostPerShirt;
     var price = costPerShirt * (1 + margin / 100);
     var totalCost = costPerShirt * qty;
     var revenue = price * qty;
     var profit = revenue - totalCost;
-    document.getElementById("rPrints").textContent = "$" + printCost.toFixed(2);
+    document.getElementById("rPrints").textContent = "$" + printCostPerShirt.toFixed(2);
     document.getElementById("rCost").textContent = "$" + costPerShirt.toFixed(2);
     document.getElementById("rPrice").textContent = "$" + price.toFixed(2);
     document.getElementById("rQty").textContent = qty;
@@ -716,4 +714,3 @@
 </script>
 </body>
 </html>
-
