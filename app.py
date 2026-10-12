@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request, jsonify, render_template_string
 import sqlite3
 import os
 from datetime import datetime, timedelta
@@ -32,14 +32,14 @@ def init_db():
 
 init_db()
 
-@app.route("/api/verify", methods= )
+@app.route("/api/verify", methods=["POST"])
 def verify():
-    data = request.get_json() or
+    data = request.get_json() or {}
     code = data.get("code", "").strip().upper()
     user = data.get("user", "").strip().lower()
 
     if not code or not user:
-        return {"valid": False, "message": "Faltan datos"}
+        return jsonify({"valid": False, "message": "Faltan datos"})
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -48,35 +48,35 @@ def verify():
 
     if not row:
         conn.close()
-        return {"valid": False, "message": "Código inválido"}
+        return jsonify({"valid": False, "message": "Código inválido"})
 
     plan, days, created_at, email = row
 
     if email and email.lower() != user:
         conn.close()
-        return {"valid": False, "message": "Este código está registrado a otro correo"}
+        return jsonify({"valid": False, "message": "Este código está registrado a otro correo"})
 
     expires = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S") + timedelta(days=days)
     if datetime.now() > expires:
         conn.close()
-        return {"valid": False, "message": "Código expirado"}
+        return jsonify({"valid": False, "message": "Código expirado"})
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     c.execute("INSERT INTO usages (code, user, plan, used_at) VALUES (?, ?, ?, ?)", (code, user, plan, now))
     conn.commit()
     conn.close()
 
-    return {"valid": True, "plan": plan, "message": "Acceso concedido"}
+    return jsonify({"valid": True, "plan": plan, "message": "Acceso concedido"})
 
-@app.route("/api/generate", methods= )
+@app.route("/api/generate", methods=["POST"])
 def api_generate():
-    data = request.get_json() or
+    data = request.get_json() or {}
     password = data.get("password", "")
     if password != ADMIN_PASSWORD:
-        return {"error": "No autorizado"}, 403
+        return jsonify({"error": "No autorizado"}), 403
 
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-    code = f"{code[:4 4:]}"
+    code = f"{code[:4]}-{code[4:]}"
     plan = data.get("plan", "basico")
     days = int(data.get("days", 30))
     email = data.get("email", "").strip().lower()
@@ -88,7 +88,7 @@ def api_generate():
     conn.commit()
     conn.close()
 
-    return {"code": code, "plan": plan, "days": days, "email": email}
+    return jsonify({"code": code, "plan": plan, "days": days, "email": email})
 
 @app.route("/admin")
 def admin():
@@ -143,7 +143,7 @@ def admin():
         <table>
             <tr><th>Código</th><th>Usuario (nombre/correo)</th><th>Plan</th><th>Fecha de uso</th></tr>
             {% for u in usages %}
-            <tr><td>{{ u[0] }}</td><td>{{ u[1 2 3] }}</td></tr>
+            <tr><td>{{ u[0] }}</td><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td></tr>
             {% else %}
             <tr><td colspan="4">Aún no hay usos</td></tr>
             {% endfor %}
@@ -153,7 +153,7 @@ def admin():
         <table>
             <tr><th>Código</th><th>Plan</th><th>Días</th><th>Correo</th><th>Creado</th></tr>
             {% for c in codes %}
-            <tr><td>{{ c[0 1] }}</td><td>{{ c[2 4 3] }}</td></tr>
+            <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[4] }}</td><td>{{ c[3] }}</td></tr>
             {% else %}
             <tr><td colspan="5">No hay códigos</td></tr>
             {% endfor %}
@@ -163,7 +163,7 @@ def admin():
     """
     return render_template_string(html, usages=usages, codes=codes, password=password)
 
-@app.route("/admin/generate", methods= )
+@app.route("/admin/generate", methods=["POST"])
 def admin_generate():
     password = request.form.get("p", "")
     if password != ADMIN_PASSWORD:
@@ -174,7 +174,7 @@ def admin_generate():
     email = request.form.get("email", "").strip().lower()
 
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-    code = f"{code[:4 4:]}"
+    code = f"{code[:4]}-{code[4:]}"
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     conn = sqlite3.connect(DB_PATH)
