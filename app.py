@@ -1,5 +1,4 @@
-from flask import Flask, request, jsonify, render_template_string
-from flask_cors import CORS
+from flask import Flask, request, make_response
 import sqlite3
 import os
 from datetime import datetime, timedelta
@@ -7,41 +6,27 @@ import random
 import string
 
 app = Flask(__name__)
-CORS(app)
 
 DB_PATH = "codes.db"
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS codes (
-        code TEXT PRIMARY KEY,
-        plan TEXT,
-        days INTEGER,
-        created_at TEXT,
-        email TEXT
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS usages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT,
-        user TEXT,
-        plan TEXT,
-        used_at TEXT
-    )''')
-    conn.commit()
-    conn.close()
+def add_cors(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers = "GET, POST, OPTIONS"
+    response.headers = "Content-Type"
+    return response
 
-init_db()
-
-@app.route("/api/verify", methods=["POST"])
+@app.route("/api/verify", methods= )
 def verify():
-    data = request.get_json() or {}
+    if request.method == "OPTIONS":
+        return add_cors(make_response("", 204))
+
+    data = request.get_json() or
     code = data.get("code", "").strip().upper()
     user = data.get("user", "").strip().lower()
 
     if not code or not user:
-        return jsonify({"valid": False, "message": "Faltan datos"})
+        return add_cors(make_response('{"valid": false, "message": "Faltan datos"}', 200, {"Content-Type": "application/json"}))
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -50,35 +35,38 @@ def verify():
 
     if not row:
         conn.close()
-        return jsonify({"valid": False, "message": "Código inválido"})
+        return add_cors(make_response('{"valid": false, "message": "Código inválido"}', 200, {"Content-Type": "application/json"}))
 
     plan, days, created_at, email = row
 
     if email and email.lower() != user:
         conn.close()
-        return jsonify({"valid": False, "message": "Este código está registrado a otro correo"})
+        return add_cors(make_response('{"valid": false, "message": "Este código está registrado a otro correo"}', 200, {"Content-Type": "application/json"}))
 
     expires = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S") + timedelta(days=days)
     if datetime.now() > expires:
         conn.close()
-        return jsonify({"valid": False, "message": "Código expirado"})
+        return add_cors(make_response('{"valid": false, "message": "Código expirado"}', 200, {"Content-Type": "application/json"}))
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     c.execute("INSERT INTO usages (code, user, plan, used_at) VALUES (?, ?, ?, ?)", (code, user, plan, now))
     conn.commit()
     conn.close()
 
-    return jsonify({"valid": True, "plan": plan, "message": "Acceso concedido"})
+    return add_cors(make_response('{"valid": true, "plan": "' + plan + '"}', 200, {"Content-Type": "application/json"}))
 
-@app.route("/api/generate", methods=["POST"])
+@app.route("/api/generate", methods= )
 def api_generate():
-    data = request.get_json() or {}
+    if request.method == "OPTIONS":
+        return add_cors(make_response("", 204))
+
+    data = request.get_json() or
     password = data.get("password", "")
     if password != ADMIN_PASSWORD:
-        return jsonify({"error": "No autorizado"}), 403
+        return add_cors(make_response('{"error": "No autorizado"}', 403, {"Content-Type": "application/json"}))
 
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-    code = f"{code[:4]}-{code[4:]}"
+    code = f"{code[:4 4:]}"
     plan = data.get("plan", "basico")
     days = int(data.get("days", 30))
     email = data.get("email", "").strip().lower()
@@ -90,7 +78,7 @@ def api_generate():
     conn.commit()
     conn.close()
 
-    return jsonify({"code": code, "plan": plan, "days": days, "email": email})
+    return add_cors(make_response('{"code": "' + code + '"}', 200, {"Content-Type": "application/json"}))
 
 @app.route("/admin")
 def admin():
@@ -145,7 +133,7 @@ def admin():
         <table>
             <tr><th>Código</th><th>Usuario (nombre/correo)</th><th>Plan</th><th>Fecha de uso</th></tr>
             {% for u in usages %}
-            <tr><td>{{ u[0] }}</td><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td></tr>
+            <tr><td>{{ u[0] }}</td><td>{{ u[1 2 3] }}</td></tr>
             {% else %}
             <tr><td colspan="4">Aún no hay usos</td></tr>
             {% endfor %}
@@ -155,7 +143,7 @@ def admin():
         <table>
             <tr><th>Código</th><th>Plan</th><th>Días</th><th>Correo</th><th>Creado</th></tr>
             {% for c in codes %}
-            <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[4] }}</td><td>{{ c[3] }}</td></tr>
+            <tr><td>{{ c[0 1] }}</td><td>{{ c[2 4 3] }}</td></tr>
             {% else %}
             <tr><td colspan="5">No hay códigos</td></tr>
             {% endfor %}
@@ -165,7 +153,7 @@ def admin():
     """
     return render_template_string(html, usages=usages, codes=codes, password=password)
 
-@app.route("/admin/generate", methods=["POST"])
+@app.route("/admin/generate", methods= )
 def admin_generate():
     password = request.form.get("p", "")
     if password != ADMIN_PASSWORD:
@@ -176,7 +164,7 @@ def admin_generate():
     email = request.form.get("email", "").strip().lower()
 
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-    code = f"{code[:4]}-{code[4:]}"
+    code = f"{code[:4 4:]}"
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     conn = sqlite3.connect(DB_PATH)
