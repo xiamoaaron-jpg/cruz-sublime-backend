@@ -34,11 +34,11 @@
   .card h2 .num{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 4px 10px rgba(59,130,246,.4)}
   .field{margin-bottom:15px}
   .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
-  .field input[type="number"],.field input[type="text"],.field input[type="email"],.field input[type="password"],.field select{width:100%;background:var(--panel2);border:1.5px solid var(--border);border-radius:12px;padding:11px 13px;color:var(--text);font-size:14.5px;outline:none;transition:border .2s,box-shadow .2s}
+  .field input ,.field input ,.field input ,.field input ,.field select{width:100%;background:var(--panel2);border:1.5px solid var(--border);border-radius:12px;padding:11px 13px;color:var(--text);font-size:14.5px;outline:none;transition:border .2s,box-shadow .2s}
   .field input:focus,.field select:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(236,72,153,.15)}
   .field .row{display:flex;gap:8px}
   .field .unit{color:var(--muted);font-size:12px;align-self:center;white-space:nowrap;font-weight:700}
-  .field input[type="range"]{width:100%;accent-color:var(--pink)}
+  .field input {width:100%;accent-color:var(--pink)}
   .field .val{color:var(--text);font-weight:800;font-size:13px;float:right}
   .design-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:10px;align-items:end}
   .design-row .rm{background:none;border:1.5px solid #e63946;color:#e63946;border-radius:12px;padding:11px 12px;cursor:pointer;font-size:13px;font-weight:700;transition:background .2s}
@@ -122,7 +122,7 @@
   <p class="sub">Tres herramientas profesionales para tu negocio de estampado.<br>Todo en un solo lugar, sin complicaciones.</p>
   <p class="desc">Calculadora de precios DTF, Semitonos Master y Mejorador de Imágenes AI. Trabaja más rápido, cotiza mejor y entrega con calidad profesional. Acceso con código personal.</p>
   <div class="hero-cta">
-    <button class="btn" onclick="document.querySelector('[data-tab=plans]').click()">Ver planes y precios</button>
+    <button class="btn" onclick="document.querySelector(' ').click()">Ver planes y precios</button>
     <button class="btn ghost" onclick="document.getElementById('gate').style.display='flex'">Ya tengo código</button>
   </div>
 </header>
@@ -261,7 +261,7 @@
         <p>Arrastra tu imagen aqui o <b>haz clic para seleccionar</b></p>
         <p style="font-size:12px;margin-top:6px">PNG, JPG o WEBP</p>
       </div>
-      <input type="file" id="imgFile" accept="image/*" style="display:none">
+      <input type="file" id="semiFile" accept="image/*" style="display:none">
       <div class="status" id="imgStatus">Ninguna imagen cargada.</div>
     </div>
     <div class="card">
@@ -345,6 +345,37 @@
         Los botones redirigen a Mercado Pago. Después del pago, te mandamos el código por WhatsApp.
       </p>
     </div>
+
+    <!-- TESTIMONIOS -->
+    <div class="card" id="testimonios">
+      <h2><span class="num">★</span> Lo que dicen nuestros clientes</h2>
+      <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">
+        Estampadores reales que ya usan Cruz Sublime en su negocio.
+      </p>
+      <div class="plans">
+        <div class="plan">
+          <p style="font-size:15px;line-height:1.6;color:#bdbdbd;margin-bottom:14px">
+            "Antes cotizaba a ojo y perdía dinero en cada pedido. Con la calculadora ahora sé exactamente cuánto cobrar y mi ganancia subió un treinta por ciento."
+          </p>
+          <b style="color:var(--text)">María G.</b>
+          <div style="color:var(--muted);font-size:12.5px">Estampado DTF · Guadalajara</div>
+        </div>
+        <div class="plan">
+          <p style="font-size:15px;line-height:1.6;color:#bdbdbd;margin-bottom:14px">
+            "El semitono me ahorra horas de trabajo. Antes hacía las tramas a mano en Photoshop, ahora en dos minutos tengo el archivo listo para imprimir."
+          </p>
+          <b style="color:var(--text)">Luis R.</b>
+          <div style="color:var(--muted);font-size:12.5px">Serigrafía · Monterrey</div>
+        </div>
+        <div class="plan">
+          <p style="font-size:15px;line-height:1.6;color:#bdbdbd;margin-bottom:14px">
+            "El mejorador de imágenes me salvó un pedido urgente. La foto del cliente venía borrosa y en un minuto la dejé nítida para imprimir."
+          </p>
+          <b style="color:var(--text)">Ana P.</b>
+          <div style="color:var(--muted);font-size:12.5px">Negocio de playeras · CDMX</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- CANVA (solo para Medio y Anual) -->
@@ -392,13 +423,13 @@
     if (!user) { document.getElementById("gateMsg").textContent = "Ingresa tu nombre o correo"; return; }
     document.getElementById("gateMsg").textContent = "Verificando...";
     var r = await verificarCodigo(code, user);
-    if (r && r.valid) {
+    if (r && r.status === "ok") {
       document.getElementById("gate").style.display = "none";
       localStorage.setItem("cruz_sublime_unlocked", "1");
       localStorage.setItem("cruz_sublime_user", user);
       localStorage.setItem("cruz_sublime_plan", r.plan || "basico");
       updateCanvaVisibility();
-      document.querySelector('[data-tab="calc"]').click();
+      document.querySelector(' ).click();
     } else {
       document.getElementById("gateMsg").textContent = (r && r.message) ? r.message : "Codigo invalido";
     }
@@ -480,63 +511,4 @@
     document.getElementById("rCost").textContent = "$" + costPerShirt.toFixed(2);
     document.getElementById("rPrice").textContent = "$" + price.toFixed(2);
     document.getElementById("rQty").textContent = qty;
-    document.getElementById("rTotalCost").textContent = "$" + totalCost.toFixed(2);
-    document.getElementById("rRevenue").textContent = "$" + revenue.toFixed(2);
-    document.getElementById("rProfit").textContent = "$" + profit.toFixed(2);
-    document.getElementById("emptyState").style.display = "none";
-    document.getElementById("out").style.display = "block";
-  }
-  document.getElementById("btnCalc").addEventListener("click", calcular);
-
-  var semiFileInput = document.getElementById("semiFile");
-  var semiDrop = document.getElementById("semiDrop");
-  var semiOriginal = null, semiResult = null;
-
-  function semiSetVal(id, v){ document.getElementById(id).textContent = v; }
-  document.getElementById("semiTol").oninput = function(e){ semiSetVal("vTol", e.target.value); };
-  document.getElementById("semiSpace").oninput = function(e){ semiSetVal("vSpace", e.target.value); };
-  document.getElementById("semiDot").oninput = function(e){ semiSetVal("vDot", e.target.value); };
-  document.getElementById("semiWidth").oninput = function(e){ semiSetVal("vWidth", e.target.value); };
-
-  function semiLoad(f){
-    if(!f || !f.type || f.type.indexOf("image/") !== 0){ document.getElementById("semiStatus").textContent = "Elige una imagen."; return; }
-    var r = new FileReader();
-    r.onload = function(e){
-      semiOriginal = e.target.result;
-      document.getElementById("semiBefore").src = semiOriginal;
-      document.getElementById("semiBeforeInfo").innerHTML = "<b>" + f.name + "</b> · " + Math.round(f.size/1024) + " KB";
-      document.getElementById("semiAfter").src = "";
-      document.getElementById("semiAfterInfo").textContent = "—";
-      semiResult = null;
-      document.getElementById("btnSemi").disabled = false;
-      document.getElementById("btnSemiDl").disabled = true;
-      document.getElementById("semiStatus").innerHTML = "Imagen cargada: <b>" + f.name + "</b>.";
-    };
-    r.readAsDataURL(f);
-  }
-  semiDrop.addEventListener("click", function(){ semiFileInput.click(); });
-  semiDrop.addEventListener("dragover", function(e){ e.preventDefault(); semiDrop.classList.add("drag"); });
-  semiDrop.addEventListener("dragleave", function(){ semiDrop.classList.remove("drag"); });
-  semiDrop.addEventListener("drop", function(e){ e.preventDefault(); semiDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) semiLoad(e.dataTransfer.files[0]); });
-  semiFileInput.addEventListener("change", function(e){ if(e.target.files[0]) semiLoad(e.target.files[0]); });
-
-  function applySemi(){
-    if(!semiOriginal) return;
-    var img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = function(){
-      var tol = parseInt(document.getElementById("semiTol").value,10);
-      var space = parseInt(document.getElementById("semiSpace").value,10);
-      var dot = parseInt(document.getElementById("semiDot").value,10);
-      var realW = parseFloat(document.getElementById("semiWidth").value);
-      var c = document.createElement("canvas");
-      c.width = img.width; c.height = img.height;
-      var ctx = c.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      var data = ctx.getImageData(0, 0, c.width, c.height);
-      var d = data.data;
-      var corners = [[0,0],[c.width-1,0],[0,c.height-1],[c.width-1,c.height-1]];
-      var br=0,bg=0,bb=0;
-      corners.forEach(function(p){ var i=(p[1]*c.width+p[0])*4; br+=d[i]; bg+=d[i+1]; bb+=d[i+2]; });
-      br/=4; bg/=4; bb/=4;
-      var gray = new Float32Array(c.width*c.height);
+    document.getElementById("r
