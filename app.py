@@ -10,6 +10,28 @@ app = Flask(__name__)
 DB_PATH = "codes.db"
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS codes (
+        code TEXT PRIMARY KEY,
+        plan TEXT,
+        days INTEGER,
+        created_at TEXT,
+        email TEXT
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS usages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT,
+        user TEXT,
+        plan TEXT,
+        used_at TEXT
+    )''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
 def add_cors(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
