@@ -346,7 +346,6 @@
       </p>
     </div>
 
-    <!-- TESTIMONIOS -->
     <div class="card" id="testimonios">
       <h2><span class="num">★</span> Lo que dicen nuestros clientes</h2>
       <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">
@@ -378,7 +377,7 @@
     </div>
   </div>
 
-  <!-- CANVA (solo para Medio y Anual) -->
+  <!-- CANVA -->
   <div class="panel" id="panel-canva">
     <div class="card">
       <h2><span class="num">C</span> Tu cuenta de Canva</h2>
@@ -423,7 +422,7 @@
     if (!user) { document.getElementById("gateMsg").textContent = "Ingresa tu nombre o correo"; return; }
     document.getElementById("gateMsg").textContent = "Verificando...";
     var r = await verificarCodigo(code, user);
-    if (r && (r.status === "ok" || r.status === true)) {
+    if (r && (r.status === "ok" || r.valid === true)) {
       document.getElementById("gate").style.display = "none";
       localStorage.setItem("cruz_sublime_unlocked", "1");
       localStorage.setItem("cruz_sublime_user", user);
