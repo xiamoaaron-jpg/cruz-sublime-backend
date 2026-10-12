@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string
+from flask_cors import CORS
 import sqlite3
 import os
 from datetime import datetime, timedelta
@@ -6,6 +7,7 @@ import random
 import string
 
 app = Flask(__name__)
+CORS(app)
 
 DB_PATH = "codes.db"
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
