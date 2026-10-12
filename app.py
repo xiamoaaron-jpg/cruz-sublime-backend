@@ -12,16 +12,16 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
 def add_cors(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers = "GET, POST, OPTIONS"
-    response.headers = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
 
-@app.route("/api/verify", methods= )
+@app.route("/api/verify", methods=["POST", "OPTIONS"])
 def verify():
     if request.method == "OPTIONS":
         return add_cors(make_response("", 204))
 
-    data = request.get_json() or
+    data = request.get_json() or {}
     code = data.get("code", "").strip().upper()
     user = data.get("user", "").strip().lower()
 
@@ -55,18 +55,18 @@ def verify():
 
     return add_cors(make_response('{"valid": true, "plan": "' + plan + '"}', 200, {"Content-Type": "application/json"}))
 
-@app.route("/api/generate", methods= )
+@app.route("/api/generate", methods=["POST", "OPTIONS"])
 def api_generate():
     if request.method == "OPTIONS":
         return add_cors(make_response("", 204))
 
-    data = request.get_json() or
+    data = request.get_json() or {}
     password = data.get("password", "")
     if password != ADMIN_PASSWORD:
         return add_cors(make_response('{"error": "No autorizado"}', 403, {"Content-Type": "application/json"}))
 
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-    code = f"{code[:4 4:]}"
+    code = f"{code[:4]}-{code[4:]}"
     plan = data.get("plan", "basico")
     days = int(data.get("days", 30))
     email = data.get("email", "").strip().lower()
@@ -133,7 +133,7 @@ def admin():
         <table>
             <tr><th>Código</th><th>Usuario (nombre/correo)</th><th>Plan</th><th>Fecha de uso</th></tr>
             {% for u in usages %}
-            <tr><td>{{ u[0] }}</td><td>{{ u[1 2 3] }}</td></tr>
+            <tr><td>{{ u[0] }}</td><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td></tr>
             {% else %}
             <tr><td colspan="4">Aún no hay usos</td></tr>
             {% endfor %}
@@ -143,7 +143,7 @@ def admin():
         <table>
             <tr><th>Código</th><th>Plan</th><th>Días</th><th>Correo</th><th>Creado</th></tr>
             {% for c in codes %}
-            <tr><td>{{ c[0 1] }}</td><td>{{ c[2 4 3] }}</td></tr>
+            <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[4] }}</td><td>{{ c[3] }}</td></tr>
             {% else %}
             <tr><td colspan="5">No hay códigos</td></tr>
             {% endfor %}
@@ -153,7 +153,7 @@ def admin():
     """
     return render_template_string(html, usages=usages, codes=codes, password=password)
 
-@app.route("/admin/generate", methods= )
+@app.route("/admin/generate", methods=["POST"])
 def admin_generate():
     password = request.form.get("p", "")
     if password != ADMIN_PASSWORD:
@@ -164,7 +164,7 @@ def admin_generate():
     email = request.form.get("email", "").strip().lower()
 
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-    code = f"{code[:4 4:]}"
+    code = f"{code[:4]}-{code[4:]}"
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     conn = sqlite3.connect(DB_PATH)
