@@ -34,11 +34,11 @@
   .card h2 .num{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 4px 10px rgba(59,130,246,.4)}
   .field{margin-bottom:15px}
   .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
-  .field input ,.field input ,.field input ,.field input ,.field select{width:100%;background:var(--panel2);border:1.5px solid var(--border);border-radius:12px;padding:11px 13px;color:var(--text);font-size:14.5px;outline:none;transition:border .2s,box-shadow .2s}
+  .field input[type="number"],.field input[type="text"],.field input[type="email"],.field input[type="password"],.field select{width:100%;background:var(--panel2);border:1.5px solid var(--border);border-radius:12px;padding:11px 13px;color:var(--text);font-size:14.5px;outline:none;transition:border .2s,box-shadow .2s}
   .field input:focus,.field select:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(236,72,153,.15)}
   .field .row{display:flex;gap:8px}
   .field .unit{color:var(--muted);font-size:12px;align-self:center;white-space:nowrap;font-weight:700}
-  .field input {width:100%;accent-color:var(--pink)}
+  .field input[type="range"]{width:100%;accent-color:var(--pink)}
   .field .val{color:var(--text);font-weight:800;font-size:13px;float:right}
   .design-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:10px;align-items:end}
   .design-row .rm{background:none;border:1.5px solid #e63946;color:#e63946;border-radius:12px;padding:11px 12px;cursor:pointer;font-size:13px;font-weight:700;transition:background .2s}
@@ -122,7 +122,7 @@
   <p class="sub">Tres herramientas profesionales para tu negocio de estampado.<br>Todo en un solo lugar, sin complicaciones.</p>
   <p class="desc">Calculadora de precios DTF, Semitonos Master y Mejorador de Imágenes AI. Trabaja más rápido, cotiza mejor y entrega con calidad profesional. Acceso con código personal.</p>
   <div class="hero-cta">
-    <button class="btn" onclick="document.querySelector(' ').click()">Ver planes y precios</button>
+    <button class="btn" onclick="document.querySelector('[data-tab=plans]').click()">Ver planes y precios</button>
     <button class="btn ghost" onclick="document.getElementById('gate').style.display='flex'">Ya tengo código</button>
   </div>
 </header>
@@ -261,7 +261,7 @@
         <p>Arrastra tu imagen aqui o <b>haz clic para seleccionar</b></p>
         <p style="font-size:12px;margin-top:6px">PNG, JPG o WEBP</p>
       </div>
-      <input type="file" id="semiFile" accept="image/*" style="display:none">
+      <input type="file" id="imgFile" accept="image/*" style="display:none">
       <div class="status" id="imgStatus">Ninguna imagen cargada.</div>
     </div>
     <div class="card">
@@ -423,13 +423,13 @@
     if (!user) { document.getElementById("gateMsg").textContent = "Ingresa tu nombre o correo"; return; }
     document.getElementById("gateMsg").textContent = "Verificando...";
     var r = await verificarCodigo(code, user);
-    if (r && r.status === "ok") {
+    if (r && (r.status === "ok" || r.status === true)) {
       document.getElementById("gate").style.display = "none";
       localStorage.setItem("cruz_sublime_unlocked", "1");
       localStorage.setItem("cruz_sublime_user", user);
       localStorage.setItem("cruz_sublime_plan", r.plan || "basico");
       updateCanvaVisibility();
-      document.querySelector(' ).click();
+      document.querySelector('[data-tab="calc"]').click();
     } else {
       document.getElementById("gateMsg").textContent = (r && r.message) ? r.message : "Codigo invalido";
     }
@@ -511,4 +511,246 @@
     document.getElementById("rCost").textContent = "$" + costPerShirt.toFixed(2);
     document.getElementById("rPrice").textContent = "$" + price.toFixed(2);
     document.getElementById("rQty").textContent = qty;
-    document.getElementById("r
+    document.getElementById("rTotalCost").textContent = "$" + totalCost.toFixed(2);
+    document.getElementById("rRevenue").textContent = "$" + revenue.toFixed(2);
+    document.getElementById("rProfit").textContent = "$" + profit.toFixed(2);
+    document.getElementById("emptyState").style.display = "none";
+    document.getElementById("out").style.display = "block";
+  }
+  document.getElementById("btnCalc").addEventListener("click", calcular);
+
+  var semiFileInput = document.getElementById("semiFile");
+  var semiDrop = document.getElementById("semiDrop");
+  var semiOriginal = null, semiResult = null;
+
+  function semiSetVal(id, v){ document.getElementById(id).textContent = v; }
+  document.getElementById("semiTol").oninput = function(e){ semiSetVal("vTol", e.target.value); };
+  document.getElementById("semiSpace").oninput = function(e){ semiSetVal("vSpace", e.target.value); };
+  document.getElementById("semiDot").oninput = function(e){ semiSetVal("vDot", e.target.value); };
+  document.getElementById("semiWidth").oninput = function(e){ semiSetVal("vWidth", e.target.value); };
+
+  function semiLoad(f){
+    if(!f || !f.type || f.type.indexOf("image/") !== 0){ document.getElementById("semiStatus").textContent = "Elige una imagen."; return; }
+    var r = new FileReader();
+    r.onload = function(e){
+      semiOriginal = e.target.result;
+      document.getElementById("semiBefore").src = semiOriginal;
+      document.getElementById("semiBeforeInfo").innerHTML = "<b>" + f.name + "</b> · " + Math.round(f.size/1024) + " KB";
+      document.getElementById("semiAfter").src = "";
+      document.getElementById("semiAfterInfo").textContent = "—";
+      semiResult = null;
+      document.getElementById("btnSemi").disabled = false;
+      document.getElementById("btnSemiDl").disabled = true;
+      document.getElementById("semiStatus").innerHTML = "Imagen cargada: <b>" + f.name + "</b>.";
+    };
+    r.readAsDataURL(f);
+  }
+  semiDrop.addEventListener("click", function(){ semiFileInput.click(); });
+  semiDrop.addEventListener("dragover", function(e){ e.preventDefault(); semiDrop.classList.add("drag"); });
+  semiDrop.addEventListener("dragleave", function(){ semiDrop.classList.remove("drag"); });
+  semiDrop.addEventListener("drop", function(e){ e.preventDefault(); semiDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) semiLoad(e.dataTransfer.files[0]); });
+  semiFileInput.addEventListener("change", function(e){ if(e.target.files[0]) semiLoad(e.target.files[0]); });
+
+  function applySemi(){
+    if(!semiOriginal) return;
+    var img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function(){
+      var tol = parseInt(document.getElementById("semiTol").value,10);
+      var space = parseInt(document.getElementById("semiSpace").value,10);
+      var dot = parseInt(document.getElementById("semiDot").value,10);
+      var realW = parseFloat(document.getElementById("semiWidth").value);
+      var c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      var ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      var data = ctx.getImageData(0, 0, c.width, c.height);
+      var d = data.data;
+      var corners = [[0,0],[c.width-1,0],[0,c.height-1],[c.width-1,c.height-1]];
+      var br=0,bg=0,bb=0;
+      corners.forEach(function(p){ var i=(p[1]*c.width+p[0])*4; br+=d[i]; bg+=d[i+1]; bb+=d[i+2]; });
+      br/=4; bg/=4; bb/=4;
+      var gray = new Float32Array(c.width*c.height);
+      for(var i=0;i<d.length;i+=4){
+        var r2=d[i], g2=d[i+1], b2=d[i+2];
+        var dist = Math.sqrt((r2-br)*(r2-br)+(g2-bg)*(g2-bg)+(b2-bb)*(b2-bb));
+        if(dist <= tol){ gray[i/4] = 1; d[i+3] = 0; }
+        else { gray[i/4] = (0.299*r2+0.587*g2+0.114*b2)/255; }
+      }
+      ctx.clearRect(0,0,c.width,c.height);
+      var mode = document.getElementById("semiMode").value;
+      for(var y=0;y<c.height;y+=space){
+        for(var x=0;x<c.width;x+=space){
+          var idx = y*c.width+x;
+          var v = gray[idx];
+          if(v >= 1) continue;
+          var rDot = dot * (1 - v);
+          if(mode === "hole") rDot = dot * v;
+          if(mode === "adv") rDot = dot * Math.pow(1-v, 1.5);
+          if(rDot < 0.3) continue;
+          ctx.beginPath();
+          ctx.arc(x, y, rDot, 0, Math.PI*2);
+          ctx.fillStyle = "#000";
+          ctx.fill();
+        }
+      }
+      var pxPerCm = c.width / realW;
+      semiResult = c.toDataURL("image/png");
+      document.getElementById("semiAfter").src = semiResult;
+      document.getElementById("semiAfterInfo").innerHTML = "<b>" + c.width + " x " + c.height + " px</b> · " + pxPerCm.toFixed(1) + " px/cm · PNG";
+      document.getElementById("btnSemiDl").disabled = false;
+      document.getElementById("semiInfo").innerHTML = "Semitono listo. Ancho real: <b>" + realW + " cm</b>.";
+    };
+    img.onerror = function(){ document.getElementById("semiStatus").textContent = "Error al procesar."; };
+    img.src = semiOriginal;
+  }
+  document.getElementById("btnSemi").addEventListener("click", applySemi);
+  document.getElementById("btnSemiDl").addEventListener("click", function(){
+    if(!semiResult) return;
+    var a = document.createElement("a");
+    a.href = semiResult; a.download = "cruz_sublime_semitono.png";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
+
+  var imgFileInput = document.getElementById("imgFile");
+  var imgDrop = document.getElementById("imgDrop");
+  var imgOriginal = null, imgImproved = null;
+
+  function imgSetVal(id, v){ document.getElementById(id).textContent = v; }
+  document.getElementById("imgScale").oninput = function(e){ imgSetVal("vScale", e.target.value + "x"); };
+  document.getElementById("imgSharp").oninput = function(e){ imgSetVal("vSharp", e.target.value); };
+  document.getElementById("imgContr").oninput = function(e){ imgSetVal("vContr", e.target.value); };
+  document.getElementById("imgSat").oninput = function(e){ imgSetVal("vSat", e.target.value); };
+
+  function imgDownload(dataUrl, filename){
+    var a = document.createElement("a");
+    a.href = dataUrl; a.download = filename; a.style.display = "none";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); }, 1000);
+  }
+
+  function imgLoad(f){
+    if(!f || !f.type || f.type.indexOf("image/") !== 0){ document.getElementById("imgStatus").textContent = "Elige una imagen."; return; }
+    var r = new FileReader();
+    r.onload = function(e){
+      imgOriginal = e.target.result;
+      document.getElementById("imgBefore").src = imgOriginal;
+      document.getElementById("infoBefore").innerHTML = "<b>" + f.name + "</b> · " + Math.round(f.size/1024) + " KB";
+      document.getElementById("imgAfter").src = "";
+      document.getElementById("infoAfter").textContent = "—";
+      imgImproved = null;
+      document.getElementById("btnImprove").disabled = false;
+      document.getElementById("btnReset").disabled = false;
+      document.getElementById("btnDlOrig").disabled = false;
+      document.getElementById("btnDlImp").disabled = true;
+      document.getElementById("imgStatus").innerHTML = "Imagen cargada: <b>" + f.name + "</b>.";
+    };
+    r.readAsDataURL(f);
+  }
+  imgDrop.addEventListener("click", function(){ imgFileInput.click(); });
+  imgDrop.addEventListener("dragover", function(e){ e.preventDefault(); imgDrop.classList.add("drag"); });
+  imgDrop.addEventListener("dragleave", function(){ imgDrop.classList.remove("drag"); });
+  imgDrop.addEventListener("drop", function(e){ e.preventDefault(); imgDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) imgLoad(e.dataTransfer.files[0]); });
+  imgFileInput.addEventListener("change", function(e){ if(e.target.files[0]) imgLoad(e.target.files[0]); });
+
+  function convolve(data, w, h, kernel){
+    var out = new Float32Array(data.length);
+    for(var y=0;y<h;y++){
+      for(var x=0;x<w;x++){
+        var r=0,g=0,b=0,a=0,sum=0;
+        for(var ky=0;ky<3;ky++){
+          for(var kx=0;kx<3;kx++){
+            var px = Math.min(w-1, Math.max(0, x+kx-1));
+            var py = Math.min(h-1, Math.max(0, y+ky-1));
+            var i = (py*w+px)*4;
+            var kv = kernel[ky*3+kx];
+            r+=data[i]*kv; g+=data[i+1]*kv; b+=data[i+2]*kv; a+=data[i+3]*kv; sum+=kv;
+          }
+        }
+        var oi=(y*w+x)*4;
+        out[oi]=r/sum; out[oi+1]=g/sum; out[oi+2]=b/sum; out[oi+3]=a/sum;
+      }
+    }
+    return out;
+  }
+  function sharpen(data, w, h, amount){
+    return convolve(data, w, h, [0,-amount,0,-amount,1+4*amount,-amount,0,-amount,0]);
+  }
+
+  function improveImage(){
+    if(!imgOriginal) return;
+    var scale = parseInt(document.getElementById("imgScale").value,10);
+    var sharpAmt = parseFloat(document.getElementById("imgSharp").value);
+    var contr = parseFloat(document.getElementById("imgContr").value);
+    var sat = parseFloat(document.getElementById("imgSat").value);
+    var img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function(){
+      var w = img.width*scale, h = img.height*scale;
+      var c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var ctx = c.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, w, h);
+      var imgData = ctx.getImageData(0, 0, w, h);
+      var d = new Float32Array(imgData.data);
+      if(sharpAmt > 0) d = sharpen(d, w, h, sharpAmt);
+      var out = imgData.data, mid = 128;
+      for(var i=0;i<d.length;i+=4){
+        var r2=(d[i]-mid)*contr+mid, g2=(d[i+1]-mid)*contr+mid, b2=(d[i+2]-mid)*contr+mid;
+        var gray = 0.299*r2+0.587*g2+0.114*b2;
+        out[i]=Math.max(0,Math.min(255,gray+(r2-gray)*sat));
+        out[i+1]=Math.max(0,Math.min(255,gray+(g2-gray)*sat));
+        out[i+2]=Math.max(0,Math.min(255,gray+(b2-gray)*sat));
+        out[i+3]=d[i+3];
+      }
+      ctx.putImageData(imgData, 0, 0);
+      imgImproved = c.toDataURL("image/png");
+      document.getElementById("imgAfter").src = imgImproved;
+      document.getElementById("infoAfter").innerHTML = "<b>" + w + " x " + h + " px</b> · PNG";
+      document.getElementById("btnDlImp").disabled = false;
+      document.getElementById("imgStatus").innerHTML = "Imagen mejorada: <b>" + w + " x " + h + " px</b>.";
+    };
+    img.onerror = function(){ document.getElementById("imgStatus").textContent = "Error al procesar."; };
+    img.src = imgOriginal;
+  }
+  document.getElementById("btnImprove").addEventListener("click", improveImage);
+  document.getElementById("btnReset").addEventListener("click", function(){
+    if(!imgOriginal) return;
+    document.getElementById("imgScale").value = 2; imgSetVal("vScale","2x");
+    document.getElementById("imgSharp").value = 1.2; imgSetVal("vSharp","1.2");
+    document.getElementById("imgContr").value = 1.15; imgSetVal("vContr","1.15");
+    document.getElementById("imgSat").value = 1.1; imgSetVal("vSat","1.1");
+    document.getElementById("imgAfter").src = "";
+    document.getElementById("infoAfter").textContent = "—";
+    imgImproved = null;
+    document.getElementById("btnDlImp").disabled = true;
+    document.getElementById("imgStatus").textContent = "Ajustes restablecidos.";
+  });
+  document.getElementById("btnDlOrig").addEventListener("click", function(){
+    if(!imgOriginal) return;
+    imgDownload(imgOriginal, "cruz_sublime_original.png");
+  });
+  document.getElementById("btnDlImp").addEventListener("click", function(){
+    if(!imgImproved) return;
+    imgDownload(imgImproved, "cruz_sublime_mejorada.png");
+  });
+
+  var mpBasico = "https://mpago.li/27dgBVR";
+  var mpMedio  = "https://mpago.li/15vftKy";
+  var mpAnual  = "https://mpago.li/29YTyPn";
+
+  document.getElementById("btnBasico").addEventListener("click", function(){
+    window.open(mpBasico, "_blank");
+  });
+  document.getElementById("btnMedio").addEventListener("click", function(){
+    window.open(mpMedio, "_blank");
+  });
+  document.getElementById("btnAnual").addEventListener("click", function(){
+    window.open(mpAnual, "_blank");
+  });
+})();
+</script>
+</body>
+</html>
