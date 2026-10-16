@@ -100,6 +100,27 @@
   .logo-footer{display:block;margin:0 auto 10px;max-width:90px;height:auto;opacity:.85;filter:drop-shadow(0 2px 8px rgba(212,175,55,.3))}
 
   /* Checkerboard para preview de semitono */
+
+  .magnifier {
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border: 3px solid #3b82f6;
+    border-radius: 50%;
+    pointer-events: none;
+    display: none;
+    overflow: hidden;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    background: #111;
+  }
+  .magnifier canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .pv { position: relative; }
+
   .checker {
     background-image:
       linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
@@ -258,9 +279,12 @@
         <img id="semiBefore" alt="Antes">
         <div class="status" id="semiBeforeInfo">—</div>
       </div>
-      <div class="pv checker">
+      <div class="pv checker" id="semiAfterWrap">
         <h4>Semitono (preview transparente)</h4>
         <img id="semiAfter" alt="Despues">
+        <div class="magnifier" id="semiMag">
+          <canvas id="semiMagCanvas" width="160" height="160"></canvas>
+        </div>
         <div class="status" id="semiAfterInfo">—</div>
       </div>
     </div>
@@ -610,6 +634,54 @@
     document.getElementById("semiInfo").innerHTML = "Semitono aplicado. Revisa el preview sobre la cuadrícula.";
   }
   document.getElementById("btnSemi").addEventListener("click", applySemi);
+
+  // ===== LUPA SEMITONO =====
+  var semiMag = document.getElementById("semiMag");
+  var semiMagCanvas = document.getElementById("semiMagCanvas");
+  var semiMagCtx = semiMagCanvas.getContext("2d");
+  var semiAfterImg = document.getElementById("semiAfter");
+  var semiAfterWrap = document.getElementById("semiAfterWrap");
+
+  semiAfterWrap.addEventListener("mouseenter", function(){
+    if(semiResultData) semiMag.style.display = "block";
+  });
+  semiAfterWrap.addEventListener("mouseleave", function(){
+    semiMag.style.display = "none";
+  });
+  semiAfterWrap.addEventListener("mousemove", function(e){
+    if(!semiResultData || !semiAfterImg.src) return;
+    var rect = semiAfterImg.getBoundingClientRect();
+    var wrapRect = semiAfterWrap.getBoundingClientRect();
+    var mx = e.clientX - rect.left;
+    var my = e.clientY - rect.top;
+    if(mx < 0 || my < 0 || mx > rect.width || my > rect.height){
+      semiMag.style.display = "none";
+      return;
+    }
+    semiMag.style.display = "block";
+    semiMag.style.left = (e.clientX - wrapRect.left - 80) + "px";
+    semiMag.style.top = (e.clientY - wrapRect.top - 80) + "px";
+
+    var scaleX = semiOriginalImg.width / rect.width;
+    var scaleY = semiOriginalImg.height / rect.height;
+    var srcX = mx * scaleX;
+    var srcY = my * scaleY;
+    var zoom = 4;
+    var magSize = 160;
+
+    semiMagCtx.clearRect(0,0,magSize,magSize);
+    semiMagCtx.save();
+    semiMagCtx.translate(magSize/2, magSize/2);
+    semiMagCtx.scale(zoom, zoom);
+    // Draw from the processed canvas if available, else from image
+    var src = document.createElement("canvas");
+    src.width = semiOriginalImg.width;
+    src.height = semiOriginalImg.height;
+    src.getContext("2d").drawImage(semiAfterImg, 0, 0);
+    semiMagCtx.drawImage(src, -srcX, -srcY);
+    semiMagCtx.restore();
+  });
+
   document.getElementById("btnSemiDl").addEventListener("click", function(){
     if(!semiResultData) return;
     var a = document.createElement("a");
