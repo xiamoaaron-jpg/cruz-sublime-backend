@@ -98,6 +98,10 @@
   .logo-header{display:block;margin:0 auto 16px;max-width:200px;height:auto;filter:drop-shadow(0 6px 18px rgba(212,175,55,.45))}
   .logo-gate{display:block;margin:0 auto 14px;max-width:140px;height:auto;filter:drop-shadow(0 4px 12px rgba(212,175,55,.4))}
   .logo-footer{display:block;margin:0 auto 10px;max-width:90px;height:auto;opacity:.85;filter:drop-shadow(0 2px 8px rgba(212,175,55,.3))}
+  .canva-counter{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:12px;text-align:center;font-size:13.5px}
+  .canva-counter b{color:var(--pink);font-size:18px}
+  .canva-agotado{background:#3a1a1a;color:#ff6b6b;border-color:#ff6b6b}
+
 
   /* Checkerboard para preview de semitono */
 
@@ -393,6 +397,7 @@
             <li>Soporte prioritario</li>
           </ul>
           <button class="btn big" id="btnMedio">Suscribirme con Mercado Pago</button>
+          <div class="canva-counter" id="canvaCounter">Cuentas Canva disponibles hoy: <b id="canvaLeft">15</b> / 15</div>
         </div>
         <div class="plan">
           <h3>Anual</h3>
@@ -421,6 +426,60 @@
         Los botones redirigen a Mercado Pago. Después del pago, te mandamos el código por WhatsApp.
       </p>
     </div>
+
+    <div class="card" style="margin-top:22px">
+      <h2><span class="num">★</span> Cuentas al 50%</h2>
+      <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">CapCut, Cricut, Spotify y YouTube Premium a mitad de precio. Disponibles en los tres planes.</p>
+      <div class="plans">
+        <div class="plan">
+          <h3>CapCut Pro</h3>
+          <div class="price"><s style="font-size:16px;color:var(--muted)">$249</s> $124 <span>MXN/mes</span></div>
+          <ul>
+            <li>Edición avanzada</li>
+            <li>Sin marca de agua</li>
+            <li>Efectos premium</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <h3>Cricut Access</h3>
+          <div class="price"><s style="font-size:16px;color:var(--muted)">$199</s> $99 <span>MXN/mes</span></div>
+          <ul>
+            <li>Proyectos ilimitados</li>
+            <li>Fuentes y gráficos</li>
+            <li>Para sublimación y vinil</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <h3>Spotify Premium</h3>
+          <div class="price"><s style="font-size:16px;color:var(--muted)">$129</s> $64 <span>MXN/mes</span></div>
+          <ul>
+            <li>Sin anuncios</li>
+            <li>Descarga offline</li>
+            <li>Calidad alta</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <h3>YouTube Premium</h3>
+          <div class="price"><s style="font-size:16px;color:var(--muted)">$139</s> $69 <span>MXN/mes</span></div>
+          <ul>
+            <li>Sin anuncios</li>
+            <li>YouTube Music incluido</li>
+            <li>Descargas</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top:18px;text-align:center;background:linear-gradient(90deg,rgba(59,130,246,.08),rgba(236,72,153,.08));border:1px solid var(--pink)">
+        <h2><span class="num">💬</span> ¿Te interesa una cuenta?</h2>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Contáctame por WhatsApp y te la armo al 50%.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20CapCut" target="_blank" class="btn" style="text-decoration:none">Me interesa CapCut</a>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20Cricut" target="_blank" class="btn" style="text-decoration:none">Me interesa Cricut</a>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20Spotify" target="_blank" class="btn" style="text-decoration:none">Me interesa Spotify</a>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20YouTube%20Premium" target="_blank" class="btn" style="text-decoration:none">Me interesa YouTube</a>
+        </div>
+      </div>
+    </div>
+
     <div class="card" id="testimonios">
       <h2><span class="num">★</span> Lo que dicen nuestros clientes</h2>
       <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">
@@ -950,6 +1009,46 @@
     img.src = checkOriginal;
   });
 
+
+  // ===== CONTADOR CANVA DIARIO (REAL - RENDER) =====
+  var API_BASE = "https://cruz-sublime-api.onrender.com";
+  async function updateCanvaUI(){
+    try {
+      var res = await fetch(API_BASE + "/api/canva/status");
+      var data = await res.json();
+      var left = data.left || 0;
+      var el = document.getElementById("canvaLeft");
+      var box = document.getElementById("canvaCounter");
+      var btn = document.getElementById("btnMedio");
+      if(el) el.textContent = left;
+      if(left <= 0){
+        if(box){
+          box.classList.add("canva-agotado");
+          box.innerHTML = "Cuentas Canva <b>AGOTADAS</b> hasta mañana";
+        }
+        if(btn){ btn.disabled = true; btn.textContent = "Agotado hasta mañana"; }
+      } else {
+        if(box) box.classList.remove("canva-agotado");
+        if(btn){ btn.disabled = false; btn.textContent = "Suscribirme con Mercado Pago"; }
+      }
+    } catch(e){
+      console.log("Error cargando contador Canva", e);
+    }
+  }
+  updateCanvaUI();
+
+  document.getElementById("btnMedio").addEventListener("click", async function(){
+    try {
+      var res = await fetch(API_BASE + "/api/canva/use", { method: "POST" });
+      var data = await res.json();
+      if(!data.ok){
+        alert("Cuentas Canva agotadas por hoy.");
+      }
+      updateCanvaUI();
+    } catch(e){
+      console.log(e);
+    }
+  });
   var mpBasico = "https://mpago.li/27dgBVR";
   var mpMedio  = "https://mpago.li/15vftKy";
   var mpAnual  = "https://mpago.li/29YTyPn";
