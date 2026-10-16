@@ -388,6 +388,19 @@
         <input type="text" id="qrContent" placeholder="https://tusitio.com o texto...">
       </div>
       <div class="field">
+        <label>Redes sociales (rellena el enlace)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+          <button type="button" class="btn ghost" style="padding:8px 12px;font-size:12px" onclick="document.getElementById('qrContent').value='https://instagram.com/';document.getElementById('qrType').value='url'">Instagram</button>
+          <button type="button" class="btn ghost" style="padding:8px 12px;font-size:12px" onclick="document.getElementById('qrContent').value='https://facebook.com/';document.getElementById('qrType').value='url'">Facebook</button>
+          <button type="button" class="btn ghost" style="padding:8px 12px;font-size:12px" onclick="document.getElementById('qrContent').value='https://x.com/';document.getElementById('qrType').value='url'">X</button>
+          <button type="button" class="btn ghost" style="padding:8px 12px;font-size:12px" onclick="document.getElementById('qrContent').value='https://tiktok.com/@';document.getElementById('qrType').value='url'">TikTok</button>
+          <button type="button" class="btn ghost" style="padding:8px 12px;font-size:12px" onclick="document.getElementById('qrContent').value='https://wa.me/';document.getElementById('qrType').value='whatsapp'">WhatsApp</button>
+          <button type="button" class="btn ghost" style="padding:8px 12px;font-size:12px" onclick="document.getElementById('qrContent').value='https://youtube.com/';document.getElementById('qrType').value='url'">YouTube</button>
+          <button type="button" class="btn ghost" style="padding:8px 12px;font-size:12px" onclick="document.getElementById('qrContent').value='https://pinterest.com/';document.getElementById('qrType').value='url'">Pinterest</button>
+          <button type="button" class="btn ghost" style="padding:8px 12px;font-size:12px" onclick="document.getElementById('qrContent').value='https://linkedin.com/in/';document.getElementById('qrType').value='url'">LinkedIn</button>
+        </div>
+      </div>
+      <div class="field">
         <label>Tamaño <span class="val" id="vQrSize">300</span> px</label>
         <input type="range" id="qrSize" min="200" max="600" step="50" value="300">
       </div>
