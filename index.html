@@ -518,38 +518,51 @@
     </div>
   </div>
 
-  <!-- MOCKUPS -->
+  <!-- MOCKUPS PROFESIONAL -->
   <div class="panel" id="panel-mockup">
     <div class="card">
-      <h2><span class="num">1</span> Simulador de mockup</h2>
+      <h2><span class="num">1</span> Mockup profesional 360°</h2>
       <div class="drop" id="mockDrop">
         <div class="ico">👕</div>
         <p>Arrastra tu diseño o <b>haz clic para seleccionar</b></p>
+        <p style="font-size:12px;margin-top:6px">El diseño se integra como estampado real</p>
       </div>
       <input type="file" id="mockFile" accept="image/*" style="display:none">
       <div class="field" style="margin-top:16px">
-        <label>Tipo de prenda</label>
+        <label>Prenda</label>
         <select id="mockType">
           <option value="tshirt">Playera</option>
           <option value="hoodie">Sudadera</option>
-          <option value="cap">Gorra</option>
         </select>
       </div>
       <div class="field">
         <label>Color de prenda</label>
-        <input type="color" id="mockColor" value="#111111">
+        <input type="color" id="mockColor" value="#1a1a1a">
       </div>
-      <button class="btn btn-big" id="btnMock" disabled>Generar mockup</button>
-      <button class="btn ghost" id="btnMockDl" disabled style="margin-top:8px">Descargar</button>
+      <div class="field">
+        <label>Posición del diseño</label>
+        <select id="mockPos">
+          <option value="center">Centro pecho</option>
+          <option value="left">Izquierda</option>
+          <option value="large">Grande frontal</option>
+        </select>
+      </div>
+      <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn" id="btnMock" disabled>Generar</button>
+        <button class="btn ghost" id="btnMockPrev">◀ Vista</button>
+        <button class="btn ghost" id="btnMockNext">Vista ▶</button>
+        <button class="btn ghost" id="btnMockDl" disabled>Descargar</button>
+      </div>
+      <div class="status" id="mockStatus">Sube un diseño para empezar.</div>
     </div>
     <div class="card" style="text-align:center">
-      <h2><span class="num">2</span> Vista previa</h2>
-      <div id="mockPreview" style="min-height:300px;background:var(--panel2);border-radius:14px;display:flex;align-items:center;justify-content:center">
-        <p style="color:var(--muted)">Sube un diseño para ver el mockup</p>
+      <h2><span class="num">2</span> Vista previa 360°</h2>
+      <div id="mockPreview" style="min-height:420px;background:radial-gradient(circle at 50% 30%,#1a1a1a,#0a0a0a);border-radius:16px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+        <p style="color:var(--muted)">El mockup aparecerá aquí</p>
       </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">Arrastra horizontalmente o usa las flechas para rotar</div>
     </div>
   </div>
-
   <!-- SEPARAR COLORES -->
   <div class="panel" id="panel-sep">
     <div class="card">
@@ -841,6 +854,8 @@
     var totalCost = costPerShirt * qty;
     var revenue = price * qty;
     var profit = revenue - totalCost;
+    var designsPerSheet = totalQty > 0 ? Math.max(1, Math.floor(sheetArea / (totalArea / totalQty))) : 0;
+    var sheetsNeeded = totalQty > 0 ? Math.ceil(totalQty / designsPerSheet) : 0;
     document.getElementById("rPerSheet").textContent = designsPerSheet;
     document.getElementById("rSheets").textContent = sheetsNeeded;
     document.getElementById("rPrints").textContent = "$" + printCost.toFixed(2);
@@ -1482,6 +1497,119 @@
       document.getElementById("sepResults").textContent = "Capas generadas (versión básica).";
     };
     img.src = sepOriginal;
+  });
+
+
+  // ===== MOCKUP PROFESIONAL =====
+  var mockFile = document.getElementById("mockFile");
+  var mockDrop = document.getElementById("mockDrop");
+  var mockDesign = null;
+  var mockAngle = 0;
+  var mockAngles = [0, 45, 90, 135, 180];
+  function mockLoad(f){
+    if(!f) return;
+    var r = new FileReader();
+    r.onload = function(e){ mockDesign = e.target.result; document.getElementById("btnMock").disabled = false; document.getElementById("mockStatus").textContent = "Diseño cargado. Genera el mockup."; };
+    r.readAsDataURL(f);
+  }
+  mockDrop.addEventListener("click", function(){ mockFile.click(); });
+  mockDrop.addEventListener("dragover", function(e){ e.preventDefault(); mockDrop.classList.add("drag"); });
+  mockDrop.addEventListener("dragleave", function(){ mockDrop.classList.remove("drag"); });
+  mockDrop.addEventListener("drop", function(e){ e.preventDefault(); mockDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) mockLoad(e.dataTransfer.files[0]); });
+  mockFile.addEventListener("change", function(e){ if(e.target.files[0]) mockLoad(e.target.files[0]); });
+
+  function renderMockup(){
+    if(!mockDesign) return;
+    var c = document.createElement("canvas");
+    c.width = 600; c.height = 700;
+    var ctx = c.getContext("2d");
+    var color = document.getElementById("mockColor").value;
+    var pos = document.getElementById("mockPos").value;
+    var angle = mockAngles[mockAngle % mockAngles.length];
+
+    // Background
+    var grd = ctx.createRadialGradient(300,200,50,300,350,400);
+    grd.addColorStop(0, "#2a2a2a");
+    grd.addColorStop(1, "#0a0a0a");
+    ctx.fillStyle = grd;
+    ctx.fillRect(0,0,600,700);
+
+    // Garment body with slight perspective based on angle
+    ctx.save();
+    ctx.translate(300, 360);
+    var skew = (angle - 90) / 90 * 0.15;
+    ctx.transform(1, 0, skew, 1, 0, 0);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(-140,-180);
+    ctx.quadraticCurveTo(-160,-100,-130,20);
+    ctx.lineTo(-110,220);
+    ctx.quadraticCurveTo(0,250,110,220);
+    ctx.lineTo(130,20);
+    ctx.quadraticCurveTo(160,-100,140,-180);
+    ctx.quadraticCurveTo(80,-200,0,-190);
+    ctx.quadraticCurveTo(-80,-200,-140,-180);
+    ctx.closePath();
+    ctx.fill();
+    // Sleeves
+    ctx.beginPath();
+    ctx.moveTo(-140,-160);
+    ctx.quadraticCurveTo(-220,-80,-200,20);
+    ctx.quadraticCurveTo(-160,40,-120,10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(140,-160);
+    ctx.quadraticCurveTo(220,-80,200,20);
+    ctx.quadraticCurveTo(160,40,120,10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Design placement (looks integrated)
+    var img = new Image();
+    img.onload = function(){
+      ctx.save();
+      ctx.translate(300, 340);
+      ctx.transform(1, 0, skew, 1, 0, 0);
+      var dw = 180, dh = 180;
+      if(pos === "left") { ctx.translate(-60, -20); dw = 120; dh = 120; }
+      if(pos === "large") { dw = 240; dh = 220; }
+      // Soft shadow to integrate
+      ctx.shadowColor = "rgba(0,0,0,0.35)";
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 4;
+      ctx.drawImage(img, -dw/2, -dh/2, dw, dh);
+      ctx.restore();
+      document.getElementById("mockPreview").innerHTML = '<img src="' + c.toDataURL("image/png") + '" style="max-width:100%;border-radius:12px" id="mockImg">';
+      document.getElementById("btnMockDl").disabled = false;
+      document.getElementById("mockStatus").textContent = "Vista " + (mockAngle+1) + " de " + mockAngles.length;
+    };
+    img.src = mockDesign;
+  }
+
+  document.getElementById("btnMock").addEventListener("click", renderMockup);
+  document.getElementById("btnMockPrev").addEventListener("click", function(){ mockAngle = (mockAngle - 1 + mockAngles.length) % mockAngles.length; renderMockup(); });
+  document.getElementById("btnMockNext").addEventListener("click", function(){ mockAngle = (mockAngle + 1) % mockAngles.length; renderMockup(); });
+  document.getElementById("btnMockDl").addEventListener("click", function(){
+    var img = document.getElementById("mockImg");
+    if(!img) return;
+    var a = document.createElement("a"); a.href = img.src; a.download = "mockup-cruz-sublime.png"; a.click();
+  });
+
+  // Drag to rotate
+  var mockPreview = document.getElementById("mockPreview");
+  var dragging = false, lastX = 0;
+  mockPreview.addEventListener("mousedown", function(e){ dragging = true; lastX = e.clientX; });
+  window.addEventListener("mouseup", function(){ dragging = false; });
+  window.addEventListener("mousemove", function(e){
+    if(!dragging || !mockDesign) return;
+    if(Math.abs(e.clientX - lastX) > 40){
+      if(e.clientX > lastX) mockAngle = (mockAngle + 1) % mockAngles.length;
+      else mockAngle = (mockAngle - 1 + mockAngles.length) % mockAngles.length;
+      lastX = e.clientX;
+      renderMockup();
+    }
   });
 
   var mpBasico = "https://mpago.li/27dgBVR";
