@@ -7,6 +7,20 @@ import string
 
 app = Flask(__name__)
 
+# ===== CORS =====
+@app.after_request
+def add_cors(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    return response
+
+@app.route('/api/verify', methods=['OPTIONS'])
+@app.route('/api/canva/status', methods=['OPTIONS'])
+@app.route('/api/canva/use', methods=['OPTIONS'])
+def handle_options():
+    return '', 204
+
 DATABASE_URL = os.environ.get("DATABASE_URL")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
@@ -25,7 +39,6 @@ def init_db():
             email TEXT
         )
     """)
-    # Add email column if table already exists without it
     try:
         c.execute("ALTER TABLE codes ADD COLUMN IF NOT EXISTS email TEXT")
     except:
@@ -165,6 +178,7 @@ def admin_generate():
     
     plan = request.form.get("plan", "basico")
     days = int(request.form.get("days", 30))
+    email = request.form.get("email", "").strip()
     
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
     code = f"{code[:4]}-{code[4:]}"
@@ -172,12 +186,10 @@ def admin_generate():
     
     conn = get_conn()
     c = conn.cursor()
-    email = request.form.get("email", "").strip()
     c.execute("INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)", (code, plan, days, now, email))
     conn.commit()
     conn.close()
     
-    email = request.form.get("email", "").strip()
     return f"""
     <html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center">
     <h2>Código generado</h2>
