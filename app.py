@@ -21,9 +21,15 @@ def init_db():
             code TEXT PRIMARY KEY,
             plan TEXT,
             days INTEGER,
-            created_at TEXT
+            created_at TEXT,
+            email TEXT
         )
     """)
+    # Add email column if table already exists without it
+    try:
+        c.execute("ALTER TABLE codes ADD COLUMN IF NOT EXISTS email TEXT")
+    except:
+        pass
     c.execute("""
         CREATE TABLE IF NOT EXISTS usages (
             id SERIAL PRIMARY KEY,
@@ -97,7 +103,7 @@ def admin():
     
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT code, plan, days, created_at FROM codes ORDER BY created_at DESC")
+    c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
     codes = c.fetchall()
     c.execute('SELECT code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
     usages = c.fetchall()
@@ -135,11 +141,12 @@ def admin():
       <input type="hidden" name="p" value="{{ password }}">
       Plan: <select name="plan"><option>basico</option><option>medio</option><option>anual</option></select>
       Días: <input type="number" name="days" value="30">
+      Correo: <input type="email" name="email" placeholder="cliente@correo.com" style="min-width:200px">
       <button>Generar</button>
     </form>
     <h2>Códigos</h2>
-    <table><tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th></tr>
-    {% for c in codes %}<tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td></tr>{% endfor %}
+    <table><tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Correo</th></tr>
+    {% for c in codes %}<tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[4] or "-" }}</td></tr>{% endfor %}
     </table>
     <h2>Usos recientes</h2>
     <table><tr><th>Código</th><th>Usuario</th><th>Plan</th><th>Fecha</th></tr>
@@ -165,15 +172,18 @@ def admin_generate():
     
     conn = get_conn()
     c = conn.cursor()
-    c.execute("INSERT INTO codes (code, plan, days, created_at) VALUES (%s, %s, %s, %s)", (code, plan, days, now))
+    email = request.form.get("email", "").strip()
+    c.execute("INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)", (code, plan, days, now, email))
     conn.commit()
     conn.close()
     
+    email = request.form.get("email", "").strip()
     return f"""
     <html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center">
     <h2>Código generado</h2>
     <p style="font-size:28px;font-weight:bold;color:#ec4899">{code}</p>
     <p>Plan: {plan} · Días: {days}</p>
+    <p>Correo: {email or "No especificado"}</p>
     <a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a>
     </body></html>
     """
