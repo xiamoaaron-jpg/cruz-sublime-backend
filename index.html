@@ -167,6 +167,7 @@
     <button class="tab" data-tab="calc">Calculadora DTF</button>
     <button class="tab" data-tab="semi">Semitonos Master</button>
     <button class="tab" data-tab="img">Mejorador AI</button>
+    <button class="tab" data-tab="check">Verificador DTF</button>
     <button class="tab" data-tab="canva" id="tabCanva" style="display:none">Canva</button>
     <button class="tab active" data-tab="plans">Membresía</button>
   </div>
@@ -324,6 +325,45 @@
       </div>
     </div>
   </div>
+
+  <!-- VERIFICADOR DTF -->
+  <div class="panel" id="panel-check">
+    <div class="card">
+      <h2><span class="num">1</span> Sube tu archivo PNG</h2>
+      <div class="drop" id="checkDrop">
+        <div class="ico">📁</div>
+        <p>Arrastra tu PNG aquí o <b>haz clic para seleccionar</b></p>
+        <p style="font-size:12px;margin-top:6px">Solo PNG (con o sin fondo)</p>
+      </div>
+      <input type="file" id="checkFile" accept="image/png" style="display:none">
+      <div class="status" id="checkStatus">Ningún archivo cargado.</div>
+    </div>
+    <div class="card">
+      <h2><span class="num">2</span> Datos de impresión</h2>
+      <div class="field">
+        <label>Ancho real de impresión <span class="val" id="vCheckW">30</span> cm</label>
+        <input type="range" id="checkW" min="5" max="100" step="1" value="30">
+      </div>
+      <div class="field">
+        <label>Fondo de la playera</label>
+        <select id="checkBg">
+          <option value="white">Blanca</option>
+          <option value="black">Negra</option>
+          <option value="color">De color</option>
+        </select>
+      </div>
+      <button class="btn btn-big" id="btnCheck" disabled>Verificar archivo</button>
+    </div>
+    <div class="card">
+      <h2><span class="num">3</span> Diagnóstico</h2>
+      <div id="checkResults" class="empty">Sube un archivo y verifica.</div>
+    </div>
+    <div class="preview">
+      <div class="pv"><h4>Original</h4><img id="checkBefore" alt="Antes"><div class="status" id="checkBeforeInfo">—</div></div>
+      <div class="pv"><h4>Simulación sobre playera</h4><img id="checkAfter" alt="Después"><div class="status" id="checkAfterInfo">—</div></div>
+    </div>
+  </div>
+
   <!-- MEMBRESÍA -->
   <div class="panel active" id="panel-plans">
     <div class="card">
@@ -824,6 +864,92 @@
     if(!imgImproved) return;
     imgDownload(imgImproved, "cruz_sublime_mejorada.png");
   });
+
+  // ===== VERIFICADOR DTF =====
+  var checkFileInput = document.getElementById("checkFile");
+  var checkDrop = document.getElementById("checkDrop");
+  var checkOriginal = null;
+  document.getElementById("checkW").oninput = function(e){
+    document.getElementById("vCheckW").textContent = e.target.value;
+  };
+  function checkLoad(f){
+    if(!f || f.type !== "image/png"){
+      document.getElementById("checkStatus").textContent = "Solo se aceptan archivos PNG.";
+      return;
+    }
+    var r = new FileReader();
+    r.onload = function(e){
+      checkOriginal = e.target.result;
+      document.getElementById("checkBefore").src = checkOriginal;
+      document.getElementById("checkBeforeInfo").innerHTML = "<b>" + f.name + "</b> · " + Math.round(f.size/1024) + " KB";
+      document.getElementById("checkAfter").src = "";
+      document.getElementById("checkAfterInfo").textContent = "—";
+      document.getElementById("btnCheck").disabled = false;
+      document.getElementById("checkStatus").innerHTML = "Archivo cargado: <b>" + f.name + "</b>.";
+      document.getElementById("checkResults").className = "empty";
+      document.getElementById("checkResults").textContent = "Listo para verificar.";
+    };
+    r.readAsDataURL(f);
+  }
+  checkDrop.addEventListener("click", function(){ checkFileInput.click(); });
+  checkDrop.addEventListener("dragover", function(e){ e.preventDefault(); checkDrop.classList.add("drag"); });
+  checkDrop.addEventListener("dragleave", function(){ checkDrop.classList.remove("drag"); });
+  checkDrop.addEventListener("drop", function(e){ e.preventDefault(); checkDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) checkLoad(e.dataTransfer.files[0]); });
+  checkFileInput.addEventListener("change", function(e){ if(e.target.files[0]) checkLoad(e.target.files[0]); });
+
+  document.getElementById("btnCheck").addEventListener("click", function(){
+    if(!checkOriginal) return;
+    var img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = function(){
+      var c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      var ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      var data = ctx.getImageData(0, 0, c.width, c.height).data;
+      var total = c.width * c.height;
+      var transparent = 0, semi = 0, dark = 0, bright = 0;
+      for(var i = 0; i < data.length; i += 4){
+        var a = data[i+3];
+        if(a === 0) transparent++;
+        else if(a < 250) semi++;
+        var g = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
+        if(g < 40 && a > 200) dark++;
+        if(g > 220 && a > 200) bright++;
+      }
+      var cm = parseFloat(document.getElementById("checkW").value);
+      var pxPerCm = c.width / cm;
+      var dpi = Math.round(pxPerCm * 2.54);
+      var bg = document.getElementById("checkBg").value;
+      var htmlRes = '<div class="res-block"><h3>Transparencia</h3>' +
+        '<div class="res-line"><span>Píxeles transparentes</span><span class="val">' + Math.round(transparent/total*100) + '%</span></div>' +
+        '<div class="res-line"><span>Semitransparentes</span><span class="val">' + Math.round(semi/total*100) + '%</span></div></div>';
+      htmlRes += '<div class="res-block"><h3>Resolución</h3>' +
+        '<div class="res-line"><span>DPI estimado</span><span class="val">' + dpi + ' DPI</span></div>' +
+        '<div class="res-line"><span>Estado</span><span class="val">' + (dpi >= 280 ? "Buena" : dpi >= 180 ? "Aceptable" : "Baja") + '</span></div></div>';
+      var warn = [];
+      if(semi > total * 0.015) warn.push("Hay zonas semitransparentes que pueden verse sucias en DTF.");
+      if(bg === "black" && bright > total * 0.3) warn.push("Mucho blanco sobre playera negra: el estampado puede verse opaco.");
+      if(bg === "white" && dark > total * 0.4) warn.push("Mucho negro puro sobre playera blanca: revisa si es intencional.");
+      if(dpi < 200) warn.push("Resolución baja para el tamaño elegido. Puede pixelarse.");
+      htmlRes += '<div class="res-block"><h3>Advertencias</h3>' + (warn.length ? warn.map(w=>'<div class="res-line"><span>'+w+'</span></div>').join('') : '<div class="res-line"><span>Sin problemas graves detectados.</span></div>') + '</div>';
+      document.getElementById("checkResults").className = "";
+      document.getElementById("checkResults").innerHTML = htmlRes;
+
+      // Simple simulation: tint the image over a colored bg
+      var sim = document.createElement("canvas");
+      sim.width = Math.min(600, c.width);
+      sim.height = Math.round(sim.width * (c.height / c.width));
+      var sctx = sim.getContext("2d");
+      sctx.fillStyle = bg === "black" ? "#111" : bg === "color" ? "#c0392b" : "#f5f5f5";
+      sctx.fillRect(0,0,sim.width,sim.height);
+      sctx.drawImage(img, 0, 0, sim.width, sim.height);
+      document.getElementById("checkAfter").src = sim.toDataURL("image/png");
+      document.getElementById("checkAfterInfo").textContent = "Simulación sobre playera " + (bg==="black"?"negra":bg==="color"?"de color":"blanca");
+    };
+    img.src = checkOriginal;
+  });
+
   var mpBasico = "https://mpago.li/27dgBVR";
   var mpMedio  = "https://mpago.li/15vftKy";
   var mpAnual  = "https://mpago.li/29YTyPn";
