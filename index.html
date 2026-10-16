@@ -125,6 +125,10 @@
   }
   .pv { position: relative; }
 
+
+  .size-chip{background:var(--panel2);border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+  .size-chip.active{background:linear-gradient(90deg,var(--blue),var(--pink));border-color:transparent;color:#fff}
+
   .checker {
     background-image:
       linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
@@ -210,8 +214,30 @@
             </div>
           </div>
           <div class="field">
-            <label>Costo de la playera lisa (blank)</label>
+            <label>Costo base de la playera (talla M)</label>
             <div class="row"><input id="blankCost" type="number" value="100" min="0" step="0.01"><span class="unit">MXN</span></div>
+          </div>
+          <div class="field">
+            <label>Talla</label>
+            <select id="shirtSize">
+              <option value="0.85">XS / CH</option>
+              <option value="0.92">S / M</option>
+              <option value="1" selected>M / G</option>
+              <option value="1.12">L / EG</option>
+              <option value="1.25">XL / XG</option>
+              <option value="1.4">2XL / XXG</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Módulo visual de tallas</label>
+            <div id="sizeVisual" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+              <span class="size-chip" data-size="0.85">XS</span>
+              <span class="size-chip" data-size="0.92">S</span>
+              <span class="size-chip active" data-size="1">M</span>
+              <span class="size-chip" data-size="1.12">L</span>
+              <span class="size-chip" data-size="1.25">XL</span>
+              <span class="size-chip" data-size="1.4">2XL</span>
+            </div>
           </div>
           <h2 style="margin-top:20px"><span class="num">2</span> Listado de Diseños</h2>
           <div id="designs"></div>
@@ -803,11 +829,14 @@
       totalQty += q;
     });
     var sheetArea = sheetW * sheetH;
-    var avgArea = totalQty > 0 ? totalArea / totalQty : 1;
-    var designsPerSheet = Math.max(1, Math.floor(sheetArea / avgArea));
-    var sheetsNeeded = totalQty > 0 ? Math.ceil(totalQty / designsPerSheet) : 0;
-    var printCost = sheetsNeeded * sheetPrice;
-    var costPerShirt = blankCost + extraCost + (printCost / Math.max(totalQty, 1));
+    var sizeMult = parseFloat(document.getElementById("shirtSize").value) || 1;
+    var adjustedBlank = blankCost * sizeMult;
+    // Proportional cost: cost based on area occupied
+    var designArea = totalQty > 0 ? totalArea / totalQty : 1;
+    var proportion = Math.min(1, designArea / sheetArea);
+    var printCostPerDesign = sheetPrice * proportion;
+    var printCost = printCostPerDesign * totalQty;
+    var costPerShirt = adjustedBlank + extraCost + printCostPerDesign;
     var price = costPerShirt * (1 + margin / 100);
     var totalCost = costPerShirt * qty;
     var revenue = price * qty;
@@ -824,6 +853,16 @@
     document.getElementById("emptyState").style.display = "none";
     document.getElementById("out").style.display = "block";
   }
+
+  // Size chips
+  document.querySelectorAll(".size-chip").forEach(function(chip){
+    chip.addEventListener("click", function(){
+      document.querySelectorAll(".size-chip").forEach(function(c){ c.classList.remove("active"); });
+      chip.classList.add("active");
+      document.getElementById("shirtSize").value = chip.getAttribute("data-size");
+    });
+  });
+
   document.getElementById("btnCalc").addEventListener("click", calcular);
 
   // ===== SEMITONOS MEJORADO =====
