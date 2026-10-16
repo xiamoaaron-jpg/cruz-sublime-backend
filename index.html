@@ -173,6 +173,7 @@
     <button class="tab" data-tab="img">Mejorador AI</button>
     <button class="tab" data-tab="check">Verificador DTF</button>
     <button class="tab" data-tab="qr">Generador QR</button>
+    <button class="tab" data-tab="bg">Remover Fondo</button>
     <button class="tab" data-tab="canva" id="tabCanva" style="display:none">Canva</button>
     <button class="tab active" data-tab="plans">Membresía</button>
   </div>
@@ -419,6 +420,38 @@
     </div>
   </div>
 
+
+  <!-- REMOVER FONDO -->
+  <div class="panel" id="panel-bg">
+    <div class="card">
+      <h2><span class="num">1</span> Sube tu imagen</h2>
+      <div class="drop" id="bgDrop">
+        <div class="ico">🖼️</div>
+        <p>Arrastra tu imagen aquí o <b>haz clic para seleccionar</b></p>
+        <p style="font-size:12px;margin-top:6px">PNG, JPG o WEBP</p>
+      </div>
+      <input type="file" id="bgFile" accept="image/*" style="display:none">
+      <div class="status" id="bgStatus">Ninguna imagen cargada.</div>
+    </div>
+    <div class="card">
+      <h2><span class="num">2</span> Ajustes</h2>
+      <div class="field">
+        <label>Tolerancia de fondo <span class="val" id="vBgTol">40</span></label>
+        <input type="range" id="bgTol" min="10" max="100" step="5" value="40">
+      </div>
+      <div class="field">
+        <label>Color de fondo a remover</label>
+        <input type="color" id="bgColor" value="#ffffff">
+      </div>
+      <button class="btn btn-big" id="btnBg" disabled>Remover fondo</button>
+      <button class="btn ghost" id="btnBgDl" disabled style="margin-top:8px">Descargar PNG</button>
+    </div>
+    <div class="preview">
+      <div class="pv"><h4>Original</h4><img id="bgBefore" alt="Antes"><div class="status" id="bgBeforeInfo">—</div></div>
+      <div class="pv checker"><h4>Sin fondo</h4><img id="bgAfter" alt="Después"><div class="status" id="bgAfterInfo">—</div></div>
+    </div>
+  </div>
+
   <!-- MEMBRESÍA -->
   <div class="panel active" id="panel-plans">
     <div class="card">
@@ -432,6 +465,9 @@
             <li>Calculadora de Precios DTF</li>
             <li>Semitonos Master</li>
             <li>Mejorador de Imágenes AI</li>
+            <li>Verificador de Archivos DTF</li>
+            <li>Generador QR</li>
+            <li>Remover Fondo</li>
             <li>Descargas ilimitadas</li>
             <li>Soporte por WhatsApp</li>
           </ul>
@@ -455,10 +491,8 @@
           <h3>Anual</h3>
           <div class="price">$499 <span>MXN/año</span></div>
           <ul>
-            <li>Todo lo del plan Medio</li>
+            <li>Todo lo del plan Básico</li>
             <li>12 meses de herramientas</li>
-            <li>1 mes de Canva Premium de regalo</li>
-            <li>🎁 CapCut Pro 7 días gratis</li>
             <li>Ahorra más de 2 meses</li>
             <li>Soporte prioritario</li>
           </ul>
@@ -1131,6 +1165,66 @@
     a.href = img.src;
     a.download = "cruz-sublime-qr.png";
     a.click();
+  });
+
+
+  // ===== REMOVER FONDO =====
+  var bgFileInput = document.getElementById("bgFile");
+  var bgDrop = document.getElementById("bgDrop");
+  var bgOriginal = null, bgResult = null;
+  document.getElementById("bgTol").oninput = function(e){ document.getElementById("vBgTol").textContent = e.target.value; };
+  function bgLoad(f){
+    if(!f || !f.type || f.type.indexOf("image/") !== 0){ document.getElementById("bgStatus").textContent = "Elige una imagen."; return; }
+    var r = new FileReader();
+    r.onload = function(e){
+      bgOriginal = e.target.result;
+      document.getElementById("bgBefore").src = bgOriginal;
+      document.getElementById("bgBeforeInfo").innerHTML = "<b>" + f.name + "</b>";
+      document.getElementById("bgAfter").src = "";
+      document.getElementById("bgAfterInfo").textContent = "—";
+      bgResult = null;
+      document.getElementById("btnBg").disabled = false;
+      document.getElementById("btnBgDl").disabled = true;
+      document.getElementById("bgStatus").innerHTML = "Imagen cargada: <b>" + f.name + "</b>.";
+    };
+    r.readAsDataURL(f);
+  }
+  bgDrop.addEventListener("click", function(){ bgFileInput.click(); });
+  bgDrop.addEventListener("dragover", function(e){ e.preventDefault(); bgDrop.classList.add("drag"); });
+  bgDrop.addEventListener("dragleave", function(){ bgDrop.classList.remove("drag"); });
+  bgDrop.addEventListener("drop", function(e){ e.preventDefault(); bgDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) bgLoad(e.dataTransfer.files[0]); });
+  bgFileInput.addEventListener("change", function(e){ if(e.target.files[0]) bgLoad(e.target.files[0]); });
+  document.getElementById("btnBg").addEventListener("click", function(){
+    if(!bgOriginal) return;
+    var img = new Image();
+    img.onload = function(){
+      var tol = parseInt(document.getElementById("bgTol").value,10);
+      var hex = document.getElementById("bgColor").value;
+      var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      var tr = parseInt(m[1],16), tg = parseInt(m[2],16), tb = parseInt(m[3],16);
+      var c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      var ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      var data = ctx.getImageData(0, 0, c.width, c.height);
+      var d = data.data;
+      for(var i=0;i<d.length;i+=4){
+        var dist = Math.sqrt((d[i]-tr)**2 + (d[i+1]-tg)**2 + (d[i+2]-tb)**2);
+        if(dist <= tol) d[i+3] = 0;
+      }
+      ctx.putImageData(data, 0, 0);
+      bgResult = c.toDataURL("image/png");
+      document.getElementById("bgAfter").src = bgResult;
+      document.getElementById("bgAfterInfo").innerHTML = "<b>" + c.width + " x " + c.height + " px</b> · PNG transparente";
+      document.getElementById("btnBgDl").disabled = false;
+    };
+    img.src = bgOriginal;
+  });
+  document.getElementById("btnBgDl").addEventListener("click", function(){
+    if(!bgResult) return;
+    var a = document.createElement("a");
+    a.href = bgResult; a.download = "cruz_sublime_sin_fondo.png";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   });
 
   var mpBasico = "https://mpago.li/27dgBVR";
