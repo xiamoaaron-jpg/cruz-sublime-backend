@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string
-import sqlite3
+import psycopg2
 import os
 from datetime import datetime, timedelta
 import random
@@ -7,11 +7,14 @@ import string
 
 app = Flask(__name__)
 
-DB_PATH = "codes.db"
+DATABASE_URL = os.environ.get("DATABASE_URL")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 
+def get_conn():
+    return psycopg2.connect(DATABASE_URL)
+
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS codes (
         code TEXT PRIMARY KEY,
@@ -21,9 +24,9 @@ def init_db():
         email TEXT
     )''')
     c.execute('''CREATE TABLE IF NOT EXISTS usages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
         code TEXT,
-        user TEXT,
+        "user" TEXT,
         plan TEXT,
         used_at TEXT
     )''')
@@ -50,9 +53,9 @@ def verify():
     if not code or not user:
         return add_cors(jsonify({"valid": False, "message": "Faltan datos"}))
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT plan, days, created_at, email FROM codes WHERE code = ?", (code,))
+    c.execute("SELECT plan, days, created_at, email FROM codes WHERE code = %s", (code,))
     row = c.fetchone()
 
     if not row:
@@ -71,7 +74,7 @@ def verify():
         return add_cors(jsonify({"valid": False, "message": "Código expirado"}))
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    c.execute("INSERT INTO usages (code, user, plan, used_at) VALUES (?, ?, ?, ?)", (code, user, plan, now))
+    c.execute("INSERT INTO usages (code, \"user\", plan, used_at) VALUES (%s, %s, %s, %s)", (code, user, plan, now))
     conn.commit()
     conn.close()
 
@@ -94,9 +97,9 @@ def api_generate():
     email = data.get("email", "").strip().lower()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO codes (code, plan, days, created_at, email) VALUES (?, ?, ?, ?, ?)", (code, plan, days, now, email))
+    c.execute("INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)", (code, plan, days, now, email))
     conn.commit()
     conn.close()
 
@@ -108,9 +111,9 @@ def admin():
     if password != ADMIN_PASSWORD:
         return "Acceso denegado. Usa ?p=tu_contraseña", 403
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT code, user, plan, used_at FROM usages ORDER BY used_at DESC LIMIT 100")
+    c.execute("SELECT code, \"user\", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 100")
     usages = c.fetchall()
     c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
     codes = c.fetchall()
@@ -189,9 +192,9 @@ def admin_generate():
     code = f"{code[:4]}-{code[4:]}"
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_conn()
     c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO codes (code, plan, days, created_at, email) VALUES (?, ?, ?, ?, ?)", (code, plan, days, now, email))
+    c.execute("INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)", (code, plan, days, now, email))
     conn.commit()
     conn.close()
 
