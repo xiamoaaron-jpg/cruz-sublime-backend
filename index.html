@@ -172,6 +172,7 @@
     <button class="tab" data-tab="semi">Semitonos Master</button>
     <button class="tab" data-tab="img">Mejorador AI</button>
     <button class="tab" data-tab="check">Verificador DTF</button>
+    <button class="tab" data-tab="qr">Generador QR</button>
     <button class="tab" data-tab="canva" id="tabCanva" style="display:none">Canva</button>
     <button class="tab active" data-tab="plans">Membresía</button>
   </div>
@@ -368,6 +369,43 @@
     </div>
   </div>
 
+
+  <!-- GENERADOR QR -->
+  <div class="panel" id="panel-qr">
+    <div class="card">
+      <h2><span class="num">1</span> Crea tu código QR</h2>
+      <div class="field">
+        <label>Tipo de contenido</label>
+        <select id="qrType">
+          <option value="url">Enlace / URL</option>
+          <option value="text">Texto libre</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="wifi">WiFi</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Contenido</label>
+        <input type="text" id="qrContent" placeholder="https://tusitio.com o texto...">
+      </div>
+      <div class="field">
+        <label>Tamaño <span class="val" id="vQrSize">300</span> px</label>
+        <input type="range" id="qrSize" min="200" max="600" step="50" value="300">
+      </div>
+      <div class="field">
+        <label>Color</label>
+        <input type="color" id="qrColor" value="#000000">
+      </div>
+      <button class="btn btn-big" id="btnQr">Generar QR</button>
+    </div>
+    <div class="card" style="text-align:center">
+      <h2><span class="num">2</span> Vista previa</h2>
+      <div id="qrPreview" style="min-height:200px;display:flex;align-items:center;justify-content:center;background:var(--panel2);border-radius:14px;padding:20px">
+        <p style="color:var(--muted)">Genera un QR para verlo aquí</p>
+      </div>
+      <button class="btn" id="btnQrDl" disabled style="margin-top:16px">Descargar PNG</button>
+    </div>
+  </div>
+
   <!-- MEMBRESÍA -->
   <div class="panel active" id="panel-plans">
     <div class="card">
@@ -426,6 +464,60 @@
         Los botones redirigen a Mercado Pago. Después del pago, te mandamos el código por WhatsApp.
       </p>
     </div>
+
+    <div class="card" style="margin-top:22px">
+      <h2><span class="num">★</span> Cuentas al 50%</h2>
+      <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">CapCut, Cricut, Spotify y YouTube Premium a mitad de precio. Disponibles en los tres planes.</p>
+      <div class="plans">
+        <div class="plan">
+          <h3>CapCut Pro</h3>
+          <div class="price"><s style="font-size:16px;color:var(--muted)">$249</s> $124 <span>MXN/mes</span></div>
+          <ul>
+            <li>Edición avanzada</li>
+            <li>Sin marca de agua</li>
+            <li>Efectos premium</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <h3>Cricut Access</h3>
+          <div class="price"><s style="font-size:16px;color:var(--muted)">$199</s> $99 <span>MXN/mes</span></div>
+          <ul>
+            <li>Proyectos ilimitados</li>
+            <li>Fuentes y gráficos</li>
+            <li>Para sublimación y vinil</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <h3>Spotify Premium</h3>
+          <div class="price"><s style="font-size:16px;color:var(--muted)">$129</s> $64 <span>MXN/mes</span></div>
+          <ul>
+            <li>Sin anuncios</li>
+            <li>Descarga offline</li>
+            <li>Calidad alta</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <h3>YouTube Premium</h3>
+          <div class="price"><s style="font-size:16px;color:var(--muted)">$139</s> $69 <span>MXN/mes</span></div>
+          <ul>
+            <li>Sin anuncios</li>
+            <li>YouTube Music incluido</li>
+            <li>Descargas</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top:18px;text-align:center;background:linear-gradient(90deg,rgba(59,130,246,.08),rgba(236,72,153,.08));border:1px solid var(--pink)">
+        <h2><span class="num">💬</span> ¿Te interesa una cuenta?</h2>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Contáctame por WhatsApp y te la armo al 50%.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20CapCut" target="_blank" class="btn" style="text-decoration:none">Me interesa CapCut</a>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20Cricut" target="_blank" class="btn" style="text-decoration:none">Me interesa Cricut</a>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20Spotify" target="_blank" class="btn" style="text-decoration:none">Me interesa Spotify</a>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20YouTube%20Premium" target="_blank" class="btn" style="text-decoration:none">Me interesa YouTube</a>
+        </div>
+      </div>
+    </div>
+
     <div class="card" id="testimonios">
       <h2><span class="num">★</span> Lo que dicen nuestros clientes</h2>
       <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">
@@ -995,6 +1087,37 @@
       console.log(e);
     }
   });
+
+  // ===== GENERADOR QR =====
+  document.getElementById("qrSize").oninput = function(e){
+    document.getElementById("vQrSize").textContent = e.target.value;
+  };
+  document.getElementById("btnQr").addEventListener("click", function(){
+    var type = document.getElementById("qrType").value;
+    var content = document.getElementById("qrContent").value.trim();
+    var size = document.getElementById("qrSize").value;
+    var color = document.getElementById("qrColor").value.replace("#","");
+    if(!content){ alert("Escribe algo para generar el QR"); return; }
+    var data = content;
+    if(type === "whatsapp"){
+      data = "https://wa.me/" + content.replace(/[^0-9]/g,"");
+    } else if(type === "wifi"){
+      data = "WIFI:T:WPA;S:" + content + ";P:password;;";
+    }
+    var url = "https://api.qrserver.com/v1/create-qr-code/?size=" + size + "x" + size + "&data=" + encodeURIComponent(data) + "&color=" + color + "&bgcolor=ffffff";
+    var preview = document.getElementById("qrPreview");
+    preview.innerHTML = '<img src="' + url + '" style="max-width:100%;border-radius:12px" id="qrImg">';
+    document.getElementById("btnQrDl").disabled = false;
+  });
+  document.getElementById("btnQrDl").addEventListener("click", function(){
+    var img = document.getElementById("qrImg");
+    if(!img) return;
+    var a = document.createElement("a");
+    a.href = img.src;
+    a.download = "cruz-sublime-qr.png";
+    a.click();
+  });
+
   var mpBasico = "https://mpago.li/27dgBVR";
   var mpMedio  = "https://mpago.li/15vftKy";
   var mpAnual  = "https://mpago.li/29YTyPn";
