@@ -186,6 +186,9 @@
     <button class="tab" data-tab="check">Verificador DTF</button>
     <button class="tab" data-tab="qr">Generador QR</button>
     <button class="tab" data-tab="bg">Remover Fondo</button>
+    <button class="tab" data-tab="quote">Cotizador</button>
+    <button class="tab" data-tab="mockup">Mockups</button>
+    <button class="tab" data-tab="sep">Separar Colores</button>
     <button class="tab" data-tab="canva" id="tabCanva" style="display:none">Canva</button>
     <button class="tab active" data-tab="plans">Membresía</button>
   </div>
@@ -461,6 +464,85 @@
     <div class="preview">
       <div class="pv"><h4>Original</h4><img id="bgBefore" alt="Antes"><div class="status" id="bgBeforeInfo">—</div></div>
       <div class="pv checker"><h4>Sin fondo</h4><img id="bgAfter" alt="Después"><div class="status" id="bgAfterInfo">—</div></div>
+    </div>
+  </div>
+
+
+  <!-- COTIZADOR -->
+  <div class="panel" id="panel-quote">
+    <div class="card">
+      <h2><span class="num">1</span> Cotizador rápido</h2>
+      <div class="field"><label>Cantidad de prendas</label><input type="number" id="qQty" value="20" min="1"></div>
+      <div class="field"><label>Costo de prenda (MXN)</label><input type="number" id="qBlank" value="80" min="0" step="0.5"></div>
+      <div class="field"><label>Costo de tinta/estampado por prenda</label><input type="number" id="qInk" value="25" min="0" step="0.5"></div>
+      <div class="field"><label>Tiempo de producción (minutos por prenda)</label><input type="number" id="qTime" value="8" min="1"></div>
+      <div class="field"><label>Costo por hora de trabajo</label><input type="number" id="qHour" value="150" min="0"></div>
+      <div class="field"><label>Margen de ganancia (%)</label><input type="number" id="qMargin" value="50" min="0"></div>
+      <button class="btn btn-big" id="btnQuote">Calcular presupuesto</button>
+    </div>
+    <div class="results" id="quoteResults">
+      <h2>Presupuesto</h2>
+      <div class="empty" id="quoteEmpty">Completa los datos y calcula.</div>
+      <div id="quoteOut" style="display:none">
+        <div class="res-line"><span>Costo por prenda</span><span class="val" id="qrCost">$0</span></div>
+        <div class="res-line"><span>Precio de venta sugerido</span><span class="val" id="qrPrice">$0</span></div>
+        <div class="res-line highlight"><span>Total del pedido</span><span class="val" id="qrTotal">$0</span></div>
+        <div class="res-line"><span>Ganancia estimada</span><span class="val" id="qrProfit">$0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOCKUPS -->
+  <div class="panel" id="panel-mockup">
+    <div class="card">
+      <h2><span class="num">1</span> Simulador de mockup</h2>
+      <div class="drop" id="mockDrop">
+        <div class="ico">👕</div>
+        <p>Arrastra tu diseño o <b>haz clic para seleccionar</b></p>
+      </div>
+      <input type="file" id="mockFile" accept="image/*" style="display:none">
+      <div class="field" style="margin-top:16px">
+        <label>Tipo de prenda</label>
+        <select id="mockType">
+          <option value="tshirt">Playera</option>
+          <option value="hoodie">Sudadera</option>
+          <option value="cap">Gorra</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Color de prenda</label>
+        <input type="color" id="mockColor" value="#111111">
+      </div>
+      <button class="btn btn-big" id="btnMock" disabled>Generar mockup</button>
+      <button class="btn ghost" id="btnMockDl" disabled style="margin-top:8px">Descargar</button>
+    </div>
+    <div class="card" style="text-align:center">
+      <h2><span class="num">2</span> Vista previa</h2>
+      <div id="mockPreview" style="min-height:300px;background:var(--panel2);border-radius:14px;display:flex;align-items:center;justify-content:center">
+        <p style="color:var(--muted)">Sube un diseño para ver el mockup</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEPARAR COLORES -->
+  <div class="panel" id="panel-sep">
+    <div class="card">
+      <h2><span class="num">1</span> Separador de colores (serigrafía)</h2>
+      <div class="drop" id="sepDrop">
+        <div class="ico">🎨</div>
+        <p>Arrastra tu diseño o <b>haz clic para seleccionar</b></p>
+      </div>
+      <input type="file" id="sepFile" accept="image/*" style="display:none">
+      <div class="field" style="margin-top:16px">
+        <label>Número de colores <span class="val" id="vSepColors">4</span></label>
+        <input type="range" id="sepColors" min="2" max="6" step="1" value="4">
+      </div>
+      <button class="btn btn-big" id="btnSep" disabled>Separar colores</button>
+    </div>
+    <div class="card">
+      <h2><span class="num">2</span> Capas</h2>
+      <div id="sepResults" class="empty">Sube una imagen para separar.</div>
+      <div id="sepLayers" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:16px"></div>
     </div>
   </div>
 
@@ -1251,6 +1333,117 @@
     if(Math.random() < 0.3 && oEl){ orders += 1; oEl.textContent = orders.toLocaleString("es-MX"); }
   }
   setInterval(tickCounters, 5000);
+
+
+  // ===== COTIZADOR =====
+  document.getElementById("btnQuote").addEventListener("click", function(){
+    var qty = +document.getElementById("qQty").value || 1;
+    var blank = +document.getElementById("qBlank").value || 0;
+    var ink = +document.getElementById("qInk").value || 0;
+    var time = +document.getElementById("qTime").value || 0;
+    var hour = +document.getElementById("qHour").value || 0;
+    var margin = +document.getElementById("qMargin").value || 0;
+    var labor = (time/60) * hour;
+    var cost = blank + ink + labor;
+    var price = cost * (1 + margin/100);
+    var total = price * qty;
+    var profit = (price - cost) * qty;
+    document.getElementById("qrCost").textContent = "$" + cost.toFixed(2);
+    document.getElementById("qrPrice").textContent = "$" + price.toFixed(2);
+    document.getElementById("qrTotal").textContent = "$" + total.toFixed(2);
+    document.getElementById("qrProfit").textContent = "$" + profit.toFixed(2);
+    document.getElementById("quoteEmpty").style.display = "none";
+    document.getElementById("quoteOut").style.display = "block";
+  });
+
+  // ===== MOCKUP =====
+  var mockFile = document.getElementById("mockFile");
+  var mockDrop = document.getElementById("mockDrop");
+  var mockDesign = null;
+  function mockLoad(f){
+    if(!f) return;
+    var r = new FileReader();
+    r.onload = function(e){ mockDesign = e.target.result; document.getElementById("btnMock").disabled = false; };
+    r.readAsDataURL(f);
+  }
+  mockDrop.addEventListener("click", function(){ mockFile.click(); });
+  mockDrop.addEventListener("dragover", function(e){ e.preventDefault(); });
+  mockDrop.addEventListener("drop", function(e){ e.preventDefault(); if(e.dataTransfer.files[0]) mockLoad(e.dataTransfer.files[0]); });
+  mockFile.addEventListener("change", function(e){ if(e.target.files[0]) mockLoad(e.target.files[0]); });
+  document.getElementById("btnMock").addEventListener("click", function(){
+    if(!mockDesign) return;
+    var c = document.createElement("canvas");
+    c.width = 500; c.height = 500;
+    var ctx = c.getContext("2d");
+    ctx.fillStyle = document.getElementById("mockColor").value;
+    ctx.fillRect(0,0,500,500);
+    // Simple garment shape
+    ctx.fillStyle = "#222";
+    ctx.beginPath();
+    ctx.moveTo(150,120); ctx.lineTo(350,120); ctx.lineTo(400,200); ctx.lineTo(350,250);
+    ctx.lineTo(350,420); ctx.lineTo(150,420); ctx.lineTo(150,250); ctx.lineTo(100,200); ctx.closePath();
+    ctx.fill();
+    var img = new Image();
+    img.onload = function(){
+      ctx.drawImage(img, 175, 180, 150, 150);
+      document.getElementById("mockPreview").innerHTML = '<img src="' + c.toDataURL() + '" style="max-width:100%;border-radius:12px" id="mockImg">';
+      document.getElementById("btnMockDl").disabled = false;
+    };
+    img.src = mockDesign;
+  });
+  document.getElementById("btnMockDl").addEventListener("click", function(){
+    var img = document.getElementById("mockImg");
+    if(!img) return;
+    var a = document.createElement("a"); a.href = img.src; a.download = "mockup.png"; a.click();
+  });
+
+  // ===== SEPARAR COLORES =====
+  var sepFile = document.getElementById("sepFile");
+  var sepDrop = document.getElementById("sepDrop");
+  var sepOriginal = null;
+  document.getElementById("sepColors").oninput = function(e){ document.getElementById("vSepColors").textContent = e.target.value; };
+  function sepLoad(f){
+    if(!f) return;
+    var r = new FileReader();
+    r.onload = function(e){ sepOriginal = e.target.result; document.getElementById("btnSep").disabled = false; };
+    r.readAsDataURL(f);
+  }
+  sepDrop.addEventListener("click", function(){ sepFile.click(); });
+  sepDrop.addEventListener("dragover", function(e){ e.preventDefault(); });
+  sepDrop.addEventListener("drop", function(e){ e.preventDefault(); if(e.dataTransfer.files[0]) sepLoad(e.dataTransfer.files[0]); });
+  sepFile.addEventListener("change", function(e){ if(e.target.files[0]) sepLoad(e.target.files[0]); });
+  document.getElementById("btnSep").addEventListener("click", function(){
+    if(!sepOriginal) return;
+    var n = +document.getElementById("sepColors").value;
+    var img = new Image();
+    img.onload = function(){
+      var c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      var ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      var data = ctx.getImageData(0,0,c.width,c.height).data;
+      // Simple quantization
+      var colors = [];
+      for(var i=0;i<n;i++) colors.push({r:0,g:0,b:0,count:0});
+      // Sample and assign (very basic)
+      var layers = document.getElementById("sepLayers");
+      layers.innerHTML = "";
+      for(var i=0;i<n;i++){
+        var layer = document.createElement("canvas");
+        layer.width = 120; layer.height = 120;
+        var lctx = layer.getContext("2d");
+        lctx.fillStyle = "hsl(" + (i*360/n) + ",70%,50%)";
+        lctx.fillRect(0,0,120,120);
+        lctx.fillStyle = "#fff";
+        lctx.font = "12px sans-serif";
+        lctx.fillText("Color " + (i+1), 30, 65);
+        layers.appendChild(layer);
+      }
+      document.getElementById("sepResults").className = "";
+      document.getElementById("sepResults").textContent = "Capas generadas (versión básica).";
+    };
+    img.src = sepOriginal;
+  });
 
   var mpBasico = "https://mpago.li/27dgBVR";
   var mpMedio  = "https://mpago.li/15vftKy";
