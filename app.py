@@ -206,6 +206,50 @@ def admin_generate():
     <a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a>
     </body></html>
     """
+    # ===== CONTADOR CANVA DIARIO =====
+@app.route("/api/canva/status", methods=["GET"])
+def canva_status():
+    today = datetime.now().strftime("%Y-%m-%d")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS canva_daily (
+            day TEXT PRIMARY KEY,
+            used INTEGER DEFAULT 0
+        )
+    """)
+    c.execute("SELECT used FROM canva_daily WHERE day = %s", (today,))
+    row = c.fetchone()
+    used = row[0] if row else 0
+    conn.close()
+    left = max(0, 15 - used)
+    return jsonify({"day": today, "used": used, "left": left, "max": 15})
+
+@app.route("/api/canva/use", methods=["POST"])
+def canva_use():
+    today = datetime.now().strftime("%Y-%m-%d")
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS canva_daily (
+            day TEXT PRIMARY KEY,
+            used INTEGER DEFAULT 0
+        )
+    """)
+    c.execute("SELECT used FROM canva_daily WHERE day = %s", (today,))
+    row = c.fetchone()
+    used = row[0] if row else 0
+    if used >= 15:
+        conn.close()
+        return jsonify({"ok": False, "left": 0, "message": "Agotado"})
+    new_used = used + 1
+    c.execute("""
+        INSERT INTO canva_daily (day, used) VALUES (%s, %s)
+        ON CONFLICT (day) DO UPDATE SET used = %s
+    """, (today, new_used, new_used))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "left": 15 - new_used, "used": new_used})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
