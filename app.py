@@ -85,14 +85,21 @@ def verify():
     
     conn = get_conn()
     c = conn.cursor()
-    c.execute("SELECT plan, days, created_at FROM codes WHERE code = %s", (code,))
+    c.execute("SELECT plan, days, created_at, email FROM codes WHERE code = %s", (code,))
     row = c.fetchone()
     
     if not row:
         conn.close()
         return jsonify({"valid": False, "message": "Código inválido"})
     
-    plan, days, created_at = row
+    plan, days, created_at = row[0], row[1], row[2]
+    stored_email = row[3] if len(row) > 3 else None
+    
+    # Validate email match if email was registered with the code
+    if stored_email and stored_email.strip().lower() != user.strip().lower():
+        conn.close()
+        return jsonify({"valid": False, "message": "Este código está asociado a otro correo"})
+    
     try:
         created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
         if (datetime.now() - created).days >= days:
