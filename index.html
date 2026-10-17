@@ -145,9 +145,9 @@
   }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@upscalerjs/default-model@latest/dist/umd/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/upscaler@latest/dist/browser/umd/upscaler.min.js"></script>
+
+
+
 </head>
 <body>
 <div id="gate" style="display:none">
@@ -354,7 +354,7 @@
       <input type="file" id="imgFile" accept="image/*" style="display:none">
       <div class="status" id="imgStatus">Ninguna imagen cargada.</div>
       <div id="aiNote" style="font-size:12px;color:var(--muted);margin-top:8px;display:none">
-        ⏳ La primera vez descarga el modelo de IA (~17 MB). Después es más rápido.
+        ⏳ Procesa por partes para aguantar imágenes grandes. Puede tardar según el tamaño.
       </div>
       <div id="aiProgress" style="display:none;margin-top:10px">
         <div style="height:6px;background:var(--panel2);border-radius:6px;overflow:hidden">
@@ -1100,44 +1100,80 @@
   function sharpen(data, w, h, amount){
     return convolve(data, w, h, [0,-amount,0,-amount,1+4*amount,-amount,0,-amount,0]);
   }
-  async function improveImage(){
+  function improveImage(){
     if(!imgOriginal) return;
     var scale = parseInt(document.getElementById("imgScale").value,10);
+    var sharp = parseFloat(document.getElementById("imgSharp").value) || 1.5;
+    var contr = parseFloat(document.getElementById("imgContr").value) || 1.2;
+    var sat = parseFloat(document.getElementById("imgSat").value) || 1.15;
     document.getElementById("aiNote").style.display = "block";
     document.getElementById("aiProgress").style.display = "block";
-    document.getElementById("imgStatus").textContent = "Descargando modelo de IA...";
+    document.getElementById("imgStatus").textContent = "Mejorando imagen (procesando por partes)...";
     document.getElementById("btnImprove").disabled = true;
     var bar = document.getElementById("aiBar");
-    var pct = document.getElementById("aiPct");
-    var fake = 0;
-    var timer = setInterval(function(){
-      fake = Math.min(fake + Math.random()*8, 90);
-      bar.style.width = fake + "%";
-      pct.textContent = Math.round(fake) + "%";
-    }, 600);
-    try {
-      var upscaler = new Upscaler({
-        model: DefaultUpscalerJSModel,
-        scale: scale === 4 ? 4 : 2
-      });
-      document.getElementById("imgStatus").textContent = "Mejorando imagen...";
-      var upscaled = await upscaler.upscale(imgOriginal);
-      clearInterval(timer);
-      bar.style.width = "100%";
-      pct.textContent = "100%";
-      imgImproved = upscaled;
-      document.getElementById("imgAfter").src = imgImproved;
-      document.getElementById("infoAfter").innerHTML = "<b>Mejorada con IA</b> · PNG";
-      document.getElementById("btnDlImp").disabled = false;
-      document.getElementById("imgStatus").textContent = "Listo. Imagen mejorada.";
-      setTimeout(function(){ document.getElementById("aiProgress").style.display = "none"; }, 1500);
-    } catch(e) {
-      clearInterval(timer);
-      console.error(e);
-      document.getElementById("imgStatus").textContent = "Error. Prueba con una imagen más pequeña o recarga la página.";
-      document.getElementById("aiProgress").style.display = "none";
-    }
-    document.getElementById("btnImprove").disabled = false;
+    var pctEl = document.getElementById("aiPct");
+    var img = new Image();
+    img.onload = function(){
+      var w = img.width * scale, h = img.height * scale;
+      var c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var ctx = c.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, w, h);
+      // Tile processing to handle large images
+      var tile = 512;
+      var tilesX = Math.ceil(w / tile);
+      var tilesY = Math.ceil(h / tile);
+      var total = tilesX * tilesY;
+      var done = 0;
+      function processTile(tx, ty){
+        var x = tx * tile, y = ty * tile;
+        var tw = Math.min(tile, w - x), th = Math.min(tile, h - y);
+        var data = ctx.getImageData(x, y, tw, th);
+        var d = data.data;
+        var mid = 128;
+        for(var i=0;i<d.length;i+=4){
+          var r=(d[i]-mid)*contr+mid, g=(d[i+1]-mid)*contr+mid, b=(d[i+2]-mid)*contr+mid;
+          var gray = 0.299*r+0.587*g+0.114*b;
+          d[i]=Math.max(0,Math.min(255,gray+(r-gray)*sat));
+          d[i+1]=Math.max(0,Math.min(255,gray+(g-gray)*sat));
+          d[i+2]=Math.max(0,Math.min(255,gray+(b-gray)*sat));
+        }
+        // Light sharpen
+        if(sharp > 0){
+          var copy = new Uint8ClampedArray(d);
+          var amt = sharp * 0.6;
+          for(var py=1;py<th-1;py++){
+            for(var px=1;px<tw-1;px++){
+              for(var ch=0;ch<3;ch++){
+                var idx = (py*tw+px)*4+ch;
+                var sum = copy[idx]*(1+4*amt) - copy[idx-4]*amt - copy[idx+4]*amt - copy[idx-tw*4]*amt - copy[idx+tw*4]*amt;
+                d[idx] = Math.max(0, Math.min(255, sum));
+              }
+            }
+          }
+        }
+        ctx.putImageData(data, x, y);
+        done++;
+        var p = Math.round((done/total)*100);
+        bar.style.width = p + "%";
+        pctEl.textContent = p + "%";
+        if(done < total){
+          setTimeout(function(){ processTile(done % tilesX, Math.floor(done / tilesX)); }, 10);
+        } else {
+          imgImproved = c.toDataURL("image/png");
+          document.getElementById("imgAfter").src = imgImproved;
+          document.getElementById("infoAfter").innerHTML = "<b>" + w + " x " + h + " px</b> · PNG";
+          document.getElementById("btnDlImp").disabled = false;
+          document.getElementById("imgStatus").textContent = "Listo. Imagen mejorada.";
+          document.getElementById("btnImprove").disabled = false;
+          setTimeout(function(){ document.getElementById("aiProgress").style.display = "none"; }, 1200);
+        }
+      }
+      processTile(0, 0);
+    };
+    img.src = imgOriginal;
   }
   document.getElementById("btnImprove").addEventListener("click", improveImage);
   document.getElementById("btnReset").addEventListener("click", function(){
