@@ -1,11 +1,10 @@
 from flask import Flask, request, jsonify, render_template_string
-import psycopg2
 import os
 from datetime import datetime
 import random
 import string
 import requests
-import base64
+import time
 
 app = Flask(__name__)
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -13,33 +12,51 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 REPLICATE_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
 
 def get_conn():
-    return psycopg2.connect(DATABASE_URL)
+    if not DATABASE_URL:
+        return None
+    try:
+        import psycopg2
+        return psycopg2.connect(DATABASE_URL)
+    except Exception as e:
+        print("DB error:", e)
+        return None
 
 def init_db():
     conn = get_conn()
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS codes (
-        code TEXT PRIMARY KEY,
-        plan TEXT,
-        days INTEGER,
-        created_at TEXT,
-        email TEXT
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS usages (
-        id SERIAL PRIMARY KEY,
-        code TEXT,
-        "user" TEXT,
-        plan TEXT,
-        used_at TEXT
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS canva_daily (
-        day TEXT PRIMARY KEY,
-        used INTEGER DEFAULT 0
-    )''')
-    conn.commit()
-    conn.close()
+    if not conn:
+        print("No DB, skipping init")
+        return
+    try:
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS codes (
+            code TEXT PRIMARY KEY,
+            plan TEXT,
+            days INTEGER,
+            created_at TEXT,
+            email TEXT
+        )''')
+        c.execute('''CREATE TABLE IF NOT EXISTS usages (
+            id SERIAL PRIMARY KEY,
+            code TEXT,
+            "user" TEXT,
+            plan TEXT,
+            used_at TEXT
+        )''')
+        c.execute('''CREATE TABLE IF NOT EXISTS canva_daily (
+            day TEXT PRIMARY KEY,
+            used INTEGER DEFAULT 0
+        )''')
+        conn.commit()
+    except Exception as e:
+        print("Init error:", e)
+    finally:
+        conn.close()
 
 init_db()
+
+@app.route("/")
+def home():
+    return "Cruz Sublime API OK"
 
 @app.route("/api/verify", methods=["POST"])
 def verify():
@@ -49,53 +66,69 @@ def verify():
     if not code or not user:
         return jsonify({"valid": False, "message": "Faltan datos"})
     conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT plan, email FROM codes WHERE code = %s", (code,))
-    row = c.fetchone()
-    if not row:
+    if not conn:
+        return jsonify({"valid": False, "message": "Base de datos no disponible"})
+    try:
+        c = conn.cursor()
+        c.execute("SELECT plan, email FROM codes WHERE code = %s", (code,))
+        row = c.fetchone()
+        if not row:
+            return jsonify({"valid": False, "message": "Código inválido"})
+        plan, email = row
+        if email and email.lower() != user.lower():
+            return jsonify({"valid": False, "message": "Este código está asociado a otro correo"})
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        c.execute('INSERT INTO usages (code, "user", plan, used_at) VALUES (%s, %s, %s, %s)', (code, user, plan, now))
+        conn.commit()
+        return jsonify({"valid": True, "plan": plan})
+    except Exception as e:
+        print("Verify error:", e)
+        return jsonify({"valid": False, "message": "Error interno"})
+    finally:
         conn.close()
-        return jsonify({"valid": False, "message": "Código inválido"})
-    plan, email = row
-    if email and email.lower() != user.lower():
-        conn.close()
-        return jsonify({"valid": False, "message": "Este código está asociado a otro correo"})
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    c.execute("INSERT INTO usages (code, \"user\", plan, used_at) VALUES (%s, %s, %s, %s)", (code, user, plan, now))
-    conn.commit()
-    conn.close()
-    return jsonify({"valid": True, "plan": plan})
 
 @app.route("/api/canva/status", methods=["GET"])
 def canva_status():
     today = datetime.now().strftime("%Y-%m-%d")
     conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT used FROM canva_daily WHERE day = %s", (today,))
-    row = c.fetchone()
-    used = row[0] if row else 0
-    conn.close()
-    left = max(0, 15 - used)
-    return jsonify({"day": today, "used": used, "left": left, "max": 15})
+    if not conn:
+        return jsonify({"day": today, "used": 0, "left": 15, "max": 15})
+    try:
+        c = conn.cursor()
+        c.execute("SELECT used FROM canva_daily WHERE day = %s", (today,))
+        row = c.fetchone()
+        used = row[0] if row else 0
+        return jsonify({"day": today, "used": used, "left": max(0, 15-used), "max": 15})
+    except:
+        return jsonify({"day": today, "used": 0, "left": 15, "max": 15})
+    finally:
+        conn.close()
 
 @app.route("/api/canva/use", methods=["POST"])
 def canva_use():
     today = datetime.now().strftime("%Y-%m-%d")
     conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT used FROM canva_daily WHERE day = %s", (today,))
-    row = c.fetchone()
-    used = row[0] if row else 0
-    if used >= 15:
+    if not conn:
+        return jsonify({"ok": False, "left": 0, "message": "DB no disponible"})
+    try:
+        c = conn.cursor()
+        c.execute("SELECT used FROM canva_daily WHERE day = %s", (today,))
+        row = c.fetchone()
+        used = row[0] if row else 0
+        if used >= 15:
+            return jsonify({"ok": False, "left": 0, "message": "Agotado"})
+        new_used = used + 1
+        c.execute("""
+            INSERT INTO canva_daily (day, used) VALUES (%s, %s)
+            ON CONFLICT (day) DO UPDATE SET used = %s
+        """, (today, new_used, new_used))
+        conn.commit()
+        return jsonify({"ok": True, "left": 15 - new_used, "used": new_used})
+    except Exception as e:
+        print("Canva error:", e)
+        return jsonify({"ok": False, "left": 0, "message": "Error"})
+    finally:
         conn.close()
-        return jsonify({"ok": False, "left": 0, "message": "Agotado"})
-    new_used = used + 1
-    c.execute("""
-        INSERT INTO canva_daily (day, used) VALUES (%s, %s)
-        ON CONFLICT (day) DO UPDATE SET used = %s
-    """, (today, new_used, new_used))
-    conn.commit()
-    conn.close()
-    return jsonify({"ok": True, "left": 15 - new_used, "used": new_used})
 
 @app.route("/api/upscale", methods=["POST"])
 def upscale():
@@ -113,21 +146,24 @@ def upscale():
         "version": "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
         "input": {"image": image_b64, "scale": 2}
     }
-    r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload)
-    if r.status_code != 201:
-        return jsonify({"error": "Error al iniciar predicción"}), 500
-    pred = r.json()
-    pred_id = pred.get("id")
-    for _ in range(30):
-        r2 = requests.get(f"https://api.replicate.com/v1/predictions/{pred_id}", headers=headers)
-        result = r2.json()
-        if result.get("status") == "succeeded":
-            return jsonify({"image": result["output"]})
-        if result.get("status") == "failed":
-            return jsonify({"error": "Falló el procesamiento"}), 500
-        import time
-        time.sleep(2)
-    return jsonify({"error": "Tiempo agotado"}), 500
+    try:
+        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=30)
+        if r.status_code != 201:
+            return jsonify({"error": "Error al iniciar predicción", "detail": r.text}), 500
+        pred = r.json()
+        pred_id = pred.get("id")
+        for _ in range(40):
+            r2 = requests.get(f"https://api.replicate.com/v1/predictions/{pred_id}", headers=headers, timeout=30)
+            result = r2.json()
+            status = result.get("status")
+            if status == "succeeded":
+                return jsonify({"image": result["output"]})
+            if status == "failed":
+                return jsonify({"error": "Falló el procesamiento", "detail": result.get("error")}), 500
+            time.sleep(2)
+        return jsonify({"error": "Tiempo agotado"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/admin")
 def admin():
@@ -135,12 +171,18 @@ def admin():
     if password != ADMIN_PASSWORD:
         return "Acceso denegado", 403
     conn = get_conn()
-    c = conn.cursor()
-    c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
-    codes = c.fetchall()
-    c.execute("SELECT code, \"user\", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50")
-    usages = c.fetchall()
-    conn.close()
+    codes, usages = [], []
+    if conn:
+        try:
+            c = conn.cursor()
+            c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
+            codes = c.fetchall()
+            c.execute('SELECT code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
+            usages = c.fetchall()
+        except Exception as e:
+            print("Admin query error:", e)
+        finally:
+            conn.close()
     html = """
     <html><body style="font-family:Arial;background:#111;color:#eee;padding:20px">
     <h2>Panel Cruz Sublime</h2>
@@ -185,11 +227,16 @@ def admin_generate():
     code = f"{code[:4]}-{code[4:]}"
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_conn()
-    c = conn.cursor()
-    c.execute("INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)",
-              (code, plan, days, now, email or None))
-    conn.commit()
-    conn.close()
+    if conn:
+        try:
+            c = conn.cursor()
+            c.execute("INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)",
+                      (code, plan, days, now, email or None))
+            conn.commit()
+        except Exception as e:
+            print("Generate error:", e)
+        finally:
+            conn.close()
     return f"""
     <html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center">
     <h2>Código generado</h2>
