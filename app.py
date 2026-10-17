@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string
+from flask_cors import CORS
 import os
 from datetime import datetime
 import random
@@ -7,6 +8,7 @@ import requests
 import time
 
 app = Flask(__name__)
+CORS(app)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 REPLICATE_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
