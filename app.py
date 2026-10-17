@@ -28,7 +28,7 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS usages (
         id SERIAL PRIMARY KEY,
         code TEXT,
-        user TEXT,
+        "user" TEXT,
         plan TEXT,
         used_at TEXT
     )''')
@@ -60,7 +60,7 @@ def verify():
         conn.close()
         return jsonify({"valid": False, "message": "Este código está asociado a otro correo"})
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    c.execute("INSERT INTO usages (code, user, plan, used_at) VALUES (%s, %s, %s, %s)", (code, user, plan, now))
+    c.execute("INSERT INTO usages (code, \"user\", plan, used_at) VALUES (%s, %s, %s, %s)", (code, user, plan, now))
     conn.commit()
     conn.close()
     return jsonify({"valid": True, "plan": plan})
@@ -138,7 +138,7 @@ def admin():
     c = conn.cursor()
     c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
     codes = c.fetchall()
-    c.execute("SELECT code, user, plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50")
+    c.execute("SELECT code, \"user\", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50")
     usages = c.fetchall()
     conn.close()
     html = """
