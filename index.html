@@ -144,6 +144,10 @@
     .design-row .rm{grid-column:1/-1}
   }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@upscalerjs/default-model@latest/dist/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/upscaler@latest/dist/browser/umd/upscaler.min.js"></script>
 </head>
 <body>
 <div id="gate" style="display:none">
@@ -1087,53 +1091,27 @@
   function sharpen(data, w, h, amount){
     return convolve(data, w, h, [0,-amount,0,-amount,1+4*amount,-amount,0,-amount,0]);
   }
-  function improveImage(){
+  async function improveImage(){
     if(!imgOriginal) return;
     var scale = parseInt(document.getElementById("imgScale").value,10);
-    var sharpAmt = parseFloat(document.getElementById("imgSharp").value);
-    var contr = parseFloat(document.getElementById("imgContr").value);
-    var sat = parseFloat(document.getElementById("imgSat").value);
-    var img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = function(){
-      var w = img.width*scale, h = img.height*scale;
-      var c = document.createElement("canvas");
-      c.width = w; c.height = h;
-      var ctx = c.getContext("2d");
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(img, 0, 0, w, h);
-      var imgData = ctx.getImageData(0, 0, w, h);
-      var d = new Float32Array(imgData.data);
-      // Stronger sharpening (unsharp mask style)
-      if(sharpAmt > 0){
-        var amount = sharpAmt * 1.3;
-        d = sharpen(d, w, h, amount);
-        // Second pass for extra crispness
-        // Second pass removed for cleaner result
-      }
-      var out = imgData.data, mid = 128;
-      for(var i=0;i<d.length;i+=4){
-        var r2=(d[i]-mid)*contr+mid, g2=(d[i+1]-mid)*contr+mid, b2=(d[i+2]-mid)*contr+mid;
-        var gray = 0.299*r2+0.587*g2+0.114*b2;
-        // Stronger saturation + slight brightness
-        var r3 = gray+(r2-gray)*sat * 1.1;
-        var g3 = gray+(g2-gray)*sat * 1.1;
-        var b3 = gray+(b2-gray)*sat * 1.1;
-        out[i]=Math.max(0,Math.min(255,r3 * 1.04));
-        out[i+1]=Math.max(0,Math.min(255,g3 * 1.04));
-        out[i+2]=Math.max(0,Math.min(255,b3 * 1.04));
-        out[i+3]=d[i+3];
-      }
-      ctx.putImageData(imgData, 0, 0);
-      imgImproved = c.toDataURL("image/png");
+    document.getElementById("imgStatus").textContent = "Procesando con IA... (puede tardar un momento la primera vez)";
+    document.getElementById("btnImprove").disabled = true;
+    try {
+      var upscaler = new Upscaler({
+        model: DefaultUpscalerJSModel,
+        scale: scale === 4 ? 4 : 2
+      });
+      var upscaled = await upscaler.upscale(imgOriginal);
+      imgImproved = upscaled;
       document.getElementById("imgAfter").src = imgImproved;
-      document.getElementById("infoAfter").innerHTML = "<b>" + w + " x " + h + " px</b> · PNG";
+      document.getElementById("infoAfter").innerHTML = "<b>Mejorada con IA</b> · PNG";
       document.getElementById("btnDlImp").disabled = false;
-      document.getElementById("imgStatus").innerHTML = "Imagen mejorada: <b>" + w + " x " + h + " px</b>.";
-    };
-    img.onerror = function(){ document.getElementById("imgStatus").textContent = "Error al procesar."; };
-    img.src = imgOriginal;
+      document.getElementById("imgStatus").textContent = "Listo. Imagen mejorada con super-resolución.";
+    } catch(e) {
+      console.error(e);
+      document.getElementById("imgStatus").textContent = "Error al procesar. Intenta con una imagen más pequeña.";
+    }
+    document.getElementById("btnImprove").disabled = false;
   }
   document.getElementById("btnImprove").addEventListener("click", improveImage);
   document.getElementById("btnReset").addEventListener("click", function(){
