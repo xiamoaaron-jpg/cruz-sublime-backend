@@ -354,7 +354,7 @@
       <input type="file" id="imgFile" accept="image/*" style="display:none">
       <div class="status" id="imgStatus">Ninguna imagen cargada.</div>
       <div id="aiNote" style="font-size:12px;color:var(--muted);margin-top:8px;display:none">
-        ⏳ Procesa por partes para aguantar imágenes grandes. Puede tardar según el tamaño.
+        ⏳ Usando IA profesional en la nube. Puede tardar 15-40 segundos según el tamaño.
       </div>
       <div id="aiProgress" style="display:none;margin-top:10px">
         <div style="height:6px;background:var(--panel2);border-radius:6px;overflow:hidden">
@@ -1100,16 +1100,49 @@
   function sharpen(data, w, h, amount){
     return convolve(data, w, h, [0,-amount,0,-amount,1+4*amount,-amount,0,-amount,0]);
   }
-  function improveImage(){
+  async function improveImage(){
     if(!imgOriginal) return;
-    var scale = parseInt(document.getElementById("imgScale").value,10);
-    var sharp = parseFloat(document.getElementById("imgSharp").value) || 1.5;
-    var contr = parseFloat(document.getElementById("imgContr").value) || 1.2;
-    var sat = parseFloat(document.getElementById("imgSat").value) || 1.15;
     document.getElementById("aiNote").style.display = "block";
     document.getElementById("aiProgress").style.display = "block";
-    document.getElementById("imgStatus").textContent = "Mejorando imagen (procesando por partes)...";
+    document.getElementById("imgStatus").textContent = "Enviando a IA profesional...";
     document.getElementById("btnImprove").disabled = true;
+    var bar = document.getElementById("aiBar");
+    var pctEl = document.getElementById("aiPct");
+    var fake = 0;
+    var timer = setInterval(function(){
+      fake = Math.min(fake + Math.random()*6, 85);
+      bar.style.width = fake + "%";
+      pctEl.textContent = Math.round(fake) + "%";
+    }, 800);
+    try {
+      var res = await fetch("https://cruz-sublime-api.onrender.com/api/upscale", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ image: imgOriginal })
+      });
+      var data = await res.json();
+      clearInterval(timer);
+      if(data.image){
+        bar.style.width = "100%";
+        pctEl.textContent = "100%";
+        imgImproved = data.image;
+        document.getElementById("imgAfter").src = imgImproved;
+        document.getElementById("infoAfter").innerHTML = "<b>Mejorada con IA</b> · PNG";
+        document.getElementById("btnDlImp").disabled = false;
+        document.getElementById("imgStatus").textContent = "Listo. Imagen mejorada.";
+        setTimeout(function(){ document.getElementById("aiProgress").style.display = "none"; }, 1200);
+      } else {
+        document.getElementById("imgStatus").textContent = "Error: " + (data.error || "No se pudo mejorar");
+        document.getElementById("aiProgress").style.display = "none";
+      }
+    } catch(e) {
+      clearInterval(timer);
+      document.getElementById("imgStatus").textContent = "Error de conexión. Intenta de nuevo.";
+      document.getElementById("aiProgress").style.display = "none";
+    }
+    document.getElementById("btnImprove").disabled = false;
+  }
+  document.getElementById("btnImprove").disabled = true;
     var bar = document.getElementById("aiBar");
     var pctEl = document.getElementById("aiPct");
     var img = new Image();
