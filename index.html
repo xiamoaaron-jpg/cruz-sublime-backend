@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cruz Sublime — Membresía VIP</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#050505; --panel:#0d0d0d; --panel2:#141414;
@@ -616,6 +617,7 @@
             <li>Sin marca de agua</li>
             <li>Efectos premium</li>
           </ul>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20CapCut" target="_blank" class="btn" style="text-decoration:none;margin-top:12px;display:inline-block">Me interesa CapCut</a>
         </div>
         <div class="plan">
           <img src="https://i.pinimg.com/1200x/b3/fa/8a/b3fa8a5ba9258f2836ef39acddc2ba80.jpg" style="width:48px;height:48px;object-fit:contain;margin-bottom:8px" alt="Cricut Design Space"><h3>Cricut Design Space</h3>
@@ -625,6 +627,7 @@
             <li>Fuentes y gráficos</li>
             <li>Para sublimación y vinil</li>
           </ul>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20Cricut" target="_blank" class="btn" style="text-decoration:none;margin-top:12px;display:inline-block">Me interesa Cricut</a>
         </div>
         <div class="plan">
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/120px-Spotify_logo_without_text.svg.png" style="width:48px;height:48px;object-fit:contain;margin-bottom:8px" alt="Spotify Premium"><h3>Spotify Premium</h3>
@@ -634,6 +637,7 @@
             <li>Descarga offline</li>
             <li>Calidad alta</li>
           </ul>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20Spotify" target="_blank" class="btn" style="text-decoration:none;margin-top:12px;display:inline-block">Me interesa Spotify</a>
         </div>
         <div class="plan">
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/120px-YouTube_full-color_icon_%282017%29.svg.png" style="width:48px;height:48px;object-fit:contain;margin-bottom:8px" alt="YouTube Premium"><h3>YouTube Premium</h3>
@@ -643,18 +647,23 @@
             <li>YouTube Music incluido</li>
             <li>Descargas</li>
           </ul>
+          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20YouTube%20Premium" target="_blank" class="btn" style="text-decoration:none;margin-top:12px;display:inline-block">Me interesa YouTube</a>
         </div>
       </div>
-      <div class="card" style="margin-top:18px;text-align:center;background:linear-gradient(90deg,rgba(59,130,246,.08),rgba(236,72,153,.08));border:1px solid var(--pink)">
-        <h2><span class="num">💬</span> ¿Te interesa una cuenta?</h2>
-        <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Contáctame por WhatsApp y te la armo al 50%.</p>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20CapCut" target="_blank" class="btn" style="text-decoration:none">Me interesa CapCut</a>
-          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20Cricut" target="_blank" class="btn" style="text-decoration:none">Me interesa Cricut</a>
-          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20Spotify" target="_blank" class="btn" style="text-decoration:none">Me interesa Spotify</a>
-          <a href="https://wa.me/525669717042?text=Hola%2C%20me%20interesa%20YouTube%20Premium" target="_blank" class="btn" style="text-decoration:none">Me interesa YouTube</a>
-        </div>
+
+    </div>
+
+
+    <div class="card" style="margin-top:22px;text-align:center">
+      <h2><span class="num">🏦</span> Pago por transferencia</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Si no tienes Mercado Pago, puedes transferir directamente.</p>
+      <div class="res-block">
+        <div class="res-line"><span>Nombre</span><span class="val">Aaron Alcantara</span></div>
+        <div class="res-line"><span>Banco</span><span class="val">Banorte</span></div>
+        <div class="res-line"><span>CLABE</span><span class="val" id="clabeVal">072580013897956190</span></div>
       </div>
+      <button class="btn" id="btnCopyClabe" style="margin-top:12px">Copiar CLABE</button>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">Después de transferir, mándanos el comprobante por WhatsApp.</p>
     </div>
 
     <div class="card" id="testimonios">
@@ -1566,6 +1575,15 @@
       lastX = e.clientX;
       renderMockup();
     }
+  });
+
+
+  document.getElementById("btnCopyClabe").addEventListener("click", function(){
+    var clabe = document.getElementById("clabeVal").textContent;
+    navigator.clipboard.writeText(clabe).then(function(){
+      document.getElementById("btnCopyClabe").textContent = "¡Copiada!";
+      setTimeout(function(){ document.getElementById("btnCopyClabe").textContent = "Copiar CLABE"; }, 1500);
+    });
   });
 
   var mpBasico = "https://mpago.li/27dgBVR";
