@@ -1107,10 +1107,10 @@
       var d = new Float32Array(imgData.data);
       // Stronger sharpening (unsharp mask style)
       if(sharpAmt > 0){
-        var amount = sharpAmt * 2.2;
+        var amount = sharpAmt * 1.3;
         d = sharpen(d, w, h, amount);
         // Second pass for extra crispness
-        d = sharpen(d, w, h, amount * 0.5);
+        // Second pass removed for cleaner result
       }
       var out = imgData.data, mid = 128;
       for(var i=0;i<d.length;i+=4){
