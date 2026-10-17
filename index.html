@@ -1102,6 +1102,24 @@
   }
   async function improveImage(){
     if(!imgOriginal) return;
+    var email = localStorage.getItem("cruz_sublime_user") || "";
+    var plan = localStorage.getItem("cruz_sublime_plan") || "basico";
+    if(!email){ document.getElementById("imgStatus").textContent = "Inicia sesión para usar el mejorador."; return; }
+    document.getElementById("imgStatus").textContent = "Verificando límite...";
+    try {
+      var st = await fetch("https://cruz-sublime-api.onrender.com/api/upscale/status", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email: email, plan: plan })
+      });
+      var sdata = await st.json();
+      if(sdata.left <= 0){
+        document.getElementById("imgStatus").textContent = "Límite mensual alcanzado (" + sdata.max + " mejoras).";
+        return;
+      }
+    } catch(e){
+      console.log("Error verificando límite", e);
+    }
     document.getElementById("aiNote").style.display = "block";
     document.getElementById("aiProgress").style.display = "block";
     document.getElementById("imgStatus").textContent = "Enviando a IA profesional...";
@@ -1130,6 +1148,11 @@
         document.getElementById("infoAfter").innerHTML = "<b>Mejorada con IA</b> · PNG";
         document.getElementById("btnDlImp").disabled = false;
         document.getElementById("imgStatus").textContent = "Listo. Imagen mejorada.";
+        fetch("https://cruz-sublime-api.onrender.com/api/upscale/use", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ email: email, plan: plan })
+        }).catch(function(){});
         setTimeout(function(){ document.getElementById("aiProgress").style.display = "none"; }, 1200);
       } else {
         document.getElementById("imgStatus").textContent = "Error: " + (data.error || "No se pudo mejorar");
