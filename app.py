@@ -184,17 +184,32 @@ def admin():
         finally:
             conn.close()
     html = """
-    <html><body style="font-family:Arial;background:#111;color:#eee;padding:20px">
+    <html><head>
+    <style>
+      body{font-family:'Segoe UI',system-ui,sans-serif;background:#050505;color:#f2f2f2;padding:30px}
+      h2{background:linear-gradient(90deg,#3b82f6,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:28px;margin-bottom:20px}
+      h3{color:#3b82f6;margin-top:30px}
+      form{background:#141414;padding:16px;border-radius:12px;border:1px solid #1f1f1f;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+      input,select,button{background:#0d0d0d;color:#f2f2f2;border:1px solid #1f1f1f;padding:8px 12px;border-radius:8px;font-size:14px}
+      button{background:linear-gradient(90deg,#3b82f6,#ec4899);color:#fff;font-weight:700;border:none;cursor:pointer}
+      button:hover{opacity:.9}
+      table{width:100%;border-collapse:collapse;margin-top:12px;background:#0d0d0d;border-radius:12px;overflow:hidden}
+      th{background:#141414;color:#ec4899;padding:10px;text-align:left;font-size:13px}
+      td{padding:10px;border-top:1px solid #1f1f1f;font-size:13px}
+      tr:hover td{background:#141414}
+      a{color:#3b82f6;text-decoration:none}
+    </style>
+    </head><body>
     <h2>Panel Cruz Sublime</h2>
     <form action="/admin/generate" method="post">
       <input type="hidden" name="p" value="{{ password }}">
       Plan: <select name="plan"><option value="basico">Básico</option><option value="medio">Medio</option><option value="anual">Anual</option></select>
-      Días: <input type="number" name="days" value="30" style="width:60px">
+      Días: <input type="number" name="days" value="30" style="width:70px">
       Email: <input type="email" name="email" placeholder="correo@ejemplo.com">
       <button type="submit">Generar código</button>
     </form>
     <h3>Códigos</h3>
-    <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+    <table>
     <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Email</th></tr>
     {% for c in codes %}
     <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[4] or '—' }}</td></tr>
@@ -203,7 +218,7 @@ def admin():
     {% endfor %}
     </table>
     <h3>Usos recientes</h3>
-    <table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+    <table>
     <tr><th>Código</th><th>Usuario</th><th>Plan</th><th>Fecha</th></tr>
     {% for u in usages %}
     <tr><td>{{ u[0] }}</td><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td></tr>
