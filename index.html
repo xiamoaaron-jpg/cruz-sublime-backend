@@ -1105,14 +1105,24 @@
       ctx.drawImage(img, 0, 0, w, h);
       var imgData = ctx.getImageData(0, 0, w, h);
       var d = new Float32Array(imgData.data);
-      if(sharpAmt > 0) d = sharpen(d, w, h, sharpAmt);
+      // Stronger sharpening (unsharp mask style)
+      if(sharpAmt > 0){
+        var amount = sharpAmt * 2.2;
+        d = sharpen(d, w, h, amount);
+        // Second pass for extra crispness
+        d = sharpen(d, w, h, amount * 0.5);
+      }
       var out = imgData.data, mid = 128;
       for(var i=0;i<d.length;i+=4){
         var r2=(d[i]-mid)*contr+mid, g2=(d[i+1]-mid)*contr+mid, b2=(d[i+2]-mid)*contr+mid;
         var gray = 0.299*r2+0.587*g2+0.114*b2;
-        out[i]=Math.max(0,Math.min(255,gray+(r2-gray)*sat));
-        out[i+1]=Math.max(0,Math.min(255,gray+(g2-gray)*sat));
-        out[i+2]=Math.max(0,Math.min(255,gray+(b2-gray)*sat));
+        // Stronger saturation + slight brightness
+        var r3 = gray+(r2-gray)*sat * 1.1;
+        var g3 = gray+(g2-gray)*sat * 1.1;
+        var b3 = gray+(b2-gray)*sat * 1.1;
+        out[i]=Math.max(0,Math.min(255,r3 * 1.04));
+        out[i+1]=Math.max(0,Math.min(255,g3 * 1.04));
+        out[i+2]=Math.max(0,Math.min(255,b3 * 1.04));
         out[i+3]=d[i+3];
       }
       ctx.putImageData(imgData, 0, 0);
