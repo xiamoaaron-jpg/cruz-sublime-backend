@@ -353,6 +353,15 @@
       </div>
       <input type="file" id="imgFile" accept="image/*" style="display:none">
       <div class="status" id="imgStatus">Ninguna imagen cargada.</div>
+      <div id="aiNote" style="font-size:12px;color:var(--muted);margin-top:8px;display:none">
+        ⏳ La primera vez descarga el modelo de IA (~17 MB). Después es más rápido.
+      </div>
+      <div id="aiProgress" style="display:none;margin-top:10px">
+        <div style="height:6px;background:var(--panel2);border-radius:6px;overflow:hidden">
+          <div id="aiBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--pink));transition:width .3s"></div>
+        </div>
+        <div id="aiPct" style="font-size:12px;color:var(--muted);margin-top:4px;text-align:center">0%</div>
+      </div>
     </div>
     <div class="card">
       <h2><span class="num">2</span> Ajustes de mejora</h2>
@@ -1094,22 +1103,39 @@
   async function improveImage(){
     if(!imgOriginal) return;
     var scale = parseInt(document.getElementById("imgScale").value,10);
-    document.getElementById("imgStatus").textContent = "Procesando con IA... (puede tardar un momento la primera vez)";
+    document.getElementById("aiNote").style.display = "block";
+    document.getElementById("aiProgress").style.display = "block";
+    document.getElementById("imgStatus").textContent = "Descargando modelo de IA...";
     document.getElementById("btnImprove").disabled = true;
+    var bar = document.getElementById("aiBar");
+    var pct = document.getElementById("aiPct");
+    var fake = 0;
+    var timer = setInterval(function(){
+      fake = Math.min(fake + Math.random()*8, 90);
+      bar.style.width = fake + "%";
+      pct.textContent = Math.round(fake) + "%";
+    }, 600);
     try {
       var upscaler = new Upscaler({
         model: DefaultUpscalerJSModel,
         scale: scale === 4 ? 4 : 2
       });
+      document.getElementById("imgStatus").textContent = "Mejorando imagen...";
       var upscaled = await upscaler.upscale(imgOriginal);
+      clearInterval(timer);
+      bar.style.width = "100%";
+      pct.textContent = "100%";
       imgImproved = upscaled;
       document.getElementById("imgAfter").src = imgImproved;
       document.getElementById("infoAfter").innerHTML = "<b>Mejorada con IA</b> · PNG";
       document.getElementById("btnDlImp").disabled = false;
-      document.getElementById("imgStatus").textContent = "Listo. Imagen mejorada con super-resolución.";
+      document.getElementById("imgStatus").textContent = "Listo. Imagen mejorada.";
+      setTimeout(function(){ document.getElementById("aiProgress").style.display = "none"; }, 1500);
     } catch(e) {
+      clearInterval(timer);
       console.error(e);
-      document.getElementById("imgStatus").textContent = "Error al procesar. Intenta con una imagen más pequeña.";
+      document.getElementById("imgStatus").textContent = "Error. Prueba con una imagen más pequeña o recarga la página.";
+      document.getElementById("aiProgress").style.display = "none";
     }
     document.getElementById("btnImprove").disabled = false;
   }
