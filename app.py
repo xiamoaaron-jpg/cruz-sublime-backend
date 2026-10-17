@@ -167,6 +167,82 @@ def upscale():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# ===== CONTADOR MENSUAL DE MEJORAS =====
+LIMITS = {"basico": 20, "medio": 50, "anual": 200}
+
+@app.route("/api/upscale/status", methods=["POST"])
+def upscale_status():
+    data = request.get_json() or {}
+    email = data.get("email", "").strip().lower()
+    plan = data.get("plan", "basico")
+    if not email:
+        return jsonify({"error": "Falta email"}), 400
+    month = datetime.now().strftime("%Y-%m")
+    conn = get_conn()
+    if not conn:
+        return jsonify({"used": 0, "left": LIMITS.get(plan, 20), "max": LIMITS.get(plan, 20)})
+    try:
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS upscale_monthly (
+                email TEXT,
+                month TEXT,
+                used INTEGER DEFAULT 0,
+                PRIMARY KEY (email, month)
+            )
+        """)
+        c.execute("SELECT used FROM upscale_monthly WHERE email = %s AND month = %s", (email, month))
+        row = c.fetchone()
+        used = row[0] if row else 0
+        max_ = LIMITS.get(plan, 20)
+        return jsonify({"used": used, "left": max(0, max_ - used), "max": max_})
+    except Exception as e:
+        print("Status error:", e)
+        return jsonify({"used": 0, "left": LIMITS.get(plan, 20), "max": LIMITS.get(plan, 20)})
+    finally:
+        conn.close()
+
+@app.route("/api/upscale/use", methods=["POST"])
+def upscale_use():
+    data = request.get_json() or {}
+    email = data.get("email", "").strip().lower()
+    plan = data.get("plan", "basico")
+    if not email:
+        return jsonify({"ok": False, "message": "Falta email"}), 400
+    month = datetime.now().strftime("%Y-%m")
+    max_ = LIMITS.get(plan, 20)
+    conn = get_conn()
+    if not conn:
+        return jsonify({"ok": False, "message": "DB no disponible"})
+    try:
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS upscale_monthly (
+                email TEXT,
+                month TEXT,
+                used INTEGER DEFAULT 0,
+                PRIMARY KEY (email, month)
+            )
+        """)
+        c.execute("SELECT used FROM upscale_monthly WHERE email = %s AND month = %s", (email, month))
+        row = c.fetchone()
+        used = row[0] if row else 0
+        if used >= max_:
+            return jsonify({"ok": False, "left": 0, "message": "Límite mensual alcanzado"})
+        new_used = used + 1
+        c.execute("""
+            INSERT INTO upscale_monthly (email, month, used) VALUES (%s, %s, %s)
+            ON CONFLICT (email, month) DO UPDATE SET used = %s
+        """, (email, month, new_used, new_used))
+        conn.commit()
+        return jsonify({"ok": True, "used": new_used, "left": max_ - new_used, "max": max_})
+    except Exception as e:
+        print("Use error:", e)
+        return jsonify({"ok": False, "message": "Error interno"})
+    finally:
+        conn.close()
+
 @app.route("/admin")
 def admin():
     password = request.args.get("p", "")
