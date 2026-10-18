@@ -539,6 +539,7 @@ def admin_generate():
     code = f"{code[:4]}-{code[4:]}"
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_conn()
+    error_msg = ""
     if conn:
         try:
             c = conn.cursor()
@@ -546,14 +547,18 @@ def admin_generate():
                       (code, plan, days, now, email or None))
             conn.commit()
         except Exception as e:
+            error_msg = str(e)
             print("Generate error:", e)
         finally:
             conn.close()
+    else:
+        error_msg = "No hay conexión a la base de datos"
     return f"""
     <html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center">
     <h2>Código generado</h2>
     <p style="font-size:28px;font-weight:bold;color:#ec4899">{code}</p>
     <p>Plan: {plan} · Días: {days}</p>
+    {"<p style='color:#e63946'>Error: " + error_msg + "</p>" if error_msg else "<p style='color:#10b981'>Guardado correctamente</p>"}
     <a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a>
     </body></html>
     """
