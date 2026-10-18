@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
-import stripe
 import os
 from datetime import datetime
 import random
@@ -28,9 +27,6 @@ CORS(app)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 REPLICATE_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
-STRIPE_SECRET = os.environ.get("STRIPE_SECRET_KEY")
-STRIPE_PUBLIC = os.environ.get("STRIPE_PUBLIC_KEY")
-stripe.api_key = STRIPE_SECRET
 
 def get_conn():
     if not DATABASE_URL:
@@ -215,7 +211,7 @@ def upscale():
         "version": "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         "input": {
             "image": image_b64,
-            "scale_factor": 4
+            "scale_factor": 2
         }
     }
     try:
@@ -238,35 +234,6 @@ def upscale():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-
-@app.route("/api/checkout", methods=["POST"])
-def checkout():
-    if not STRIPE_SECRET:
-        return jsonify({"error": "Stripe no configurado"}), 500
-    data = request.get_json() or {}
-    plan = data.get("plan", "basico")
-    prices = {"basico": 5000, "medio": 9900, "anual": 49900}
-    if plan not in prices:
-        return jsonify({"error": "Plan invalido"}), 400
-    try:
-        session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            line_items=[{
-                "price_data": {
-                    "currency": "mxn",
-                    "product_data": {"name": f"Cruz Sublime - Plan {plan}"},
-                    "unit_amount": prices[plan],
-                },
-                "quantity": 1,
-            }],
-            mode="payment",
-            success_url="https://cruz-sublime-page.onrender.com/?pago=ok",
-            cancel_url="https://cruz-sublime-page.onrender.com/?pago=cancel",
-        )
-        return jsonify({"url": session.url})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 # ===== CONTADOR MENSUAL DE MEJORAS =====
 LIMITS = {"basico": 20, "medio": 50, "anual": 200}
