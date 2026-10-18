@@ -1182,14 +1182,22 @@
     if(!imgOriginal) return;
     imgDownload(imgOriginal, "cruz_sublime_original.png");
   });
-  document.getElementById("btnDlImp").addEventListener("click", function(){
+  document.getElementById("btnDlImp").addEventListener("click", async function(){
     if(!imgImproved) return;
-    var a = document.createElement("a");
-    a.href = imgImproved;
-    a.download = "cruz_sublime_mejorada.png";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    try {
+      var resp = await fetch(imgImproved);
+      var blob = await resp.blob();
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "cruz_sublime_mejorada.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch(e) {
+      window.open(imgImproved, "_blank");
+    }
   });
 
   // ===== VERIFICADOR DTF =====
