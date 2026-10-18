@@ -1461,10 +1461,12 @@ document.addEventListener("DOMContentLoaded", function(){
     r.onload = function(e){ mockDesign = e.target.result; document.getElementById("btnMock").disabled = false; };
     r.readAsDataURL(f);
   }
+  if(mockDrop){
   mockDrop.addEventListener("click", function(){ mockFile.click(); });
   mockDrop.addEventListener("dragover", function(e){ e.preventDefault(); });
   mockDrop.addEventListener("drop", function(e){ e.preventDefault(); if(e.dataTransfer.files[0]) mockLoad(e.dataTransfer.files[0]); });
-  mockFile.addEventListener("change", function(e){ if(e.target.files[0]) mockLoad(e.target.files[0]); });
+  }
+  if(mockFile) mockFile.addEventListener("change", function(e){ if(e.target.files[0]) mockLoad(e.target.files[0]); });
   var el_btnMock = document.getElementById("btnMock"); if(el_btnMock) el_btnMock.addEventListener("click", function(){
     if(!mockDesign) return;
     var c = document.createElement("canvas");
@@ -1553,11 +1555,13 @@ document.addEventListener("DOMContentLoaded", function(){
     r.onload = function(e){ mockDesign = e.target.result; document.getElementById("btnMock").disabled = false; document.getElementById("mockStatus").textContent = "Diseño cargado. Genera el mockup."; };
     r.readAsDataURL(f);
   }
+  if(mockDrop){
   mockDrop.addEventListener("click", function(){ mockFile.click(); });
   mockDrop.addEventListener("dragover", function(e){ e.preventDefault(); mockDrop.classList.add("drag"); });
   mockDrop.addEventListener("dragleave", function(){ mockDrop.classList.remove("drag"); });
   mockDrop.addEventListener("drop", function(e){ e.preventDefault(); mockDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) mockLoad(e.dataTransfer.files[0]); });
-  mockFile.addEventListener("change", function(e){ if(e.target.files[0]) mockLoad(e.target.files[0]); });
+  }
+  if(mockFile) mockFile.addEventListener("change", function(e){ if(e.target.files[0]) mockLoad(e.target.files[0]); });
 
   function renderMockup(){
     if(!mockDesign) return;
