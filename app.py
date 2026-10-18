@@ -157,7 +157,7 @@ def upscale():
         "Content-Type": "application/json"
     }
     payload = {
-        "version": "cc898696",
+        "version": "2177c1e3a177f5a76c632e467c32b413e424c23d84e43f7b036a965e305f6557",
         "input": {"image": image_b64}
     }
     try:
