@@ -157,8 +157,15 @@ def upscale():
         "Content-Type": "application/json"
     }
     payload = {
-        "version": "2177c1e3a177f5a76c632e467c32b413e424c23d84e43f7b036a965e305f6557",
-        "input": {"image": image_b64}
+        "version": "ede69f6a5ae7d09f769d683347325b08d2f83a93d136ed89747941205e0a71da",
+        "input": {
+            "image": image_b64,
+            "upscale": 2,
+            "min_size": 1024,
+            "edm_steps": 50,
+            "a_prompt": "high quality, sharp, detailed",
+            "n_prompt": "blurry, low quality, compressed"
+        }
     }
     try:
         r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=30)
