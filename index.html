@@ -12,9 +12,9 @@
     --border:#1f1f1f; --shadow:0 10px 30px rgba(59,130,246,.15);
   }
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
-  body{background:radial-gradient(900px 500px at 10% -10%,rgba(59,130,246,.25) 0%,transparent 60%),radial-gradient(800px 450px at 100% 0%,rgba(236,72,153,.22) 0%,transparent 55%),var(--bg);color:var(--text);min-height:100vh;position:relative}
-body::before{content:"";position:fixed;inset:-100%;background:conic-gradient(from 0deg at 50% 50%,transparent 0%,rgba(59,130,246,.15) 20%,transparent 40%,rgba(236,72,153,.12) 60%,transparent 80%,rgba(59,130,246,.1) 100%);animation:spin 20s linear infinite;pointer-events:none;z-index:0}
-@keyframes spin{to{transform:rotate(360deg)}}
+  body{background:#050510;color:var(--text);min-height:100vh;position:relative}
+body::before{content:"";position:fixed;inset:-50%;background:radial-gradient(ellipse 80% 60% at 20% 30%,rgba(88,28,135,.4) 0%,transparent 50%),radial-gradient(ellipse 70% 50% at 80% 70%,rgba(59,130,246,.35) 0%,transparent 45%),radial-gradient(ellipse 60% 40% at 50% 50%,rgba(236,72,153,.25) 0%,transparent 40%),radial-gradient(ellipse 50% 30% at 30% 80%,rgba(139,92,246,.3) 0%,transparent 35%);animation:nebula 15s ease-in-out infinite alternate;pointer-events:none;z-index:0}
+@keyframes nebula{0%{transform:translate(0,0) scale(1)}50%{transform:translate(-3%,2%) scale(1.05)}100%{transform:translate(2%,-2%) scale(1.02)}}
 body>*{position:relative;z-index:1}
   .ticker{background:linear-gradient(90deg,var(--blue),var(--pink),var(--blue));color:#fff;font-weight:800;font-size:13px;letter-spacing:2.5px;padding:9px 0;text-align:center;white-space:nowrap;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,.4)}
   .ticker span{display:inline-block;padding-left:100%;animation:scroll 16s linear infinite}
