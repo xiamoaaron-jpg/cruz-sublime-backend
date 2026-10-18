@@ -933,59 +933,63 @@ document.addEventListener("DOMContentLoaded", function(){
 
   function applySemi(){
     if(!semiOriginalImg) return;
-    var dotSize = parseInt(document.getElementById("semiDot").value,10);
-    var angle = parseInt(document.getElementById("semiAngle").value,10) * Math.PI / 180;
-    var target = hexToRgb(document.getElementById("semiColor").value);
-    var tolerance = parseInt(document.getElementById("semiTol").value,10);
+    var dotSize = parseInt(document.getElementById("semiDot").value,10) || 10;
+    var angle = parseInt(document.getElementById("semiAngle").value,10) || 45;
+    var tolerance = parseInt(document.getElementById("semiTol").value,10) || 50;
 
     var c = document.createElement("canvas");
     c.width = semiOriginalImg.width;
     c.height = semiOriginalImg.height;
     var ctx = c.getContext("2d");
+    
+    // Draw original image
     ctx.drawImage(semiOriginalImg, 0, 0);
     var imgData = ctx.getImageData(0, 0, c.width, c.height);
     var data = imgData.data;
 
-    // Detect background from corners
+    // Sample background color from corners
     var corners = [0, (c.width-1)*4, (c.height-1)*c.width*4, ((c.height-1)*c.width + c.width-1)*4];
-    var br=0,bg=0,bb=0;
-    corners.forEach(function(i){ br+=data[i]; bg+=data[i+1]; bb+=data[i+2]; });
-    br/=4; bg/=4; bb/=4;
+    var br=0,bg=0,bb=0,cnt=0;
+    corners.forEach(function(i){ 
+      if(data[i+3]>200){ br+=data[i]; bg+=data[i+1]; bb+=data[i+2]; cnt++; }
+    });
+    if(cnt>0){ br/=cnt; bg/=cnt; bb/=cnt; }
 
-    // Clear canvas and redraw only the design with dots
-    ctx.clearRect(0,0,c.width,c.height);
+    // Create output canvas
+    var out = document.createElement("canvas");
+    out.width = c.width;
+    out.height = c.height;
+    var octx = out.getContext("2d");
+    octx.clearRect(0,0,out.width,out.height);
 
-    var cos = Math.cos(angle), sin = Math.sin(angle);
-    var step = Math.max(3, Math.round(dotSize * 0.7));
+    var step = Math.max(2, Math.round(dotSize * 0.5));
+    var angleRad = angle * Math.PI / 180;
 
     for(var y=0; y<c.height; y+=step){
       for(var x=0; x<c.width; x+=step){
-        var i = (y * c.width + x) * 4;
-        if(data[i+3] < 40) continue;
+        var i = (Math.floor(y) * c.width + Math.floor(x)) * 4;
+        if(i >= data.length) continue;
+        if(data[i+3] < 30) continue;
 
         var r=data[i], g=data[i+1], b=data[i+2];
         var distBg = Math.sqrt((r-br)**2 + (g-bg)**2 + (b-bb)**2);
-        // Skip if this pixel is background
         if(distBg <= tolerance) continue;
 
-        // Luminance of the design pixel
         var lum = (0.299*r + 0.587*g + 0.114*b) / 255;
-        // Bigger dots where the design is darker
-        var rDot = (dotSize * 0.45) * (1 - lum);
-        if(rDot < 0.4) continue;
+        var radius = Math.max(0.5, (dotSize * 0.4) * (1 - lum * 0.7));
 
-        ctx.beginPath();
-        ctx.arc(x, y, rDot, 0, Math.PI*2);
-        ctx.fillStyle = "rgba(0,0,0,0.92)";
-        ctx.fill();
+        octx.beginPath();
+        octx.arc(x, y, radius, 0, Math.PI*2);
+        octx.fillStyle = "rgba(0,0,0,0.95)";
+        octx.fill();
       }
     }
 
-    semiResultData = c.toDataURL("image/png");
+    semiResultData = out.toDataURL("image/png");
     document.getElementById("semiAfter").src = semiResultData;
-    document.getElementById("semiAfterInfo").innerHTML = "<b>" + c.width + " x " + c.height + " px</b> · PNG transparente";
+    document.getElementById("semiAfterInfo").innerHTML = "<b>" + out.width + " x " + out.height + " px</b> · PNG transparente";
     document.getElementById("btnSemiDl").disabled = false;
-    document.getElementById("semiInfo").innerHTML = "Semitono aplicado al diseño. El fondo se mantiene limpio.";
+    document.getElementById("semiInfo").innerHTML = "Semitono aplicado. Puntos negros sobre fondo transparente.";
   }
   var el_btnSemi = document.getElementById("btnSemi"); if(el_btnSemi) el_btnSemi.addEventListener("click", applySemi);
 
