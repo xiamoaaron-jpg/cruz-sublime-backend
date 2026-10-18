@@ -5,6 +5,9 @@ from datetime import datetime
 import random
 import string
 import requests
+from PIL import Image
+import io
+import base64
 import time
 
 app = Flask(__name__)
@@ -144,6 +147,44 @@ def canva_use():
     finally:
         conn.close()
 
+
+def fix_color(original_b64, upscaled_url):
+    try:
+        # Download upscaled image
+        r = requests.get(upscaled_url, timeout=30)
+        upscaled = Image.open(io.BytesIO(r.content)).convert("RGB")
+        
+        # Decode original
+        if original_b64.startswith("data:"):
+            original_b64 = original_b64.split(",", 1)[1]
+        original = Image.open(io.BytesIO(base64.b64decode(original_b64))).convert("RGB")
+        
+        # Resize original to match upscaled for color transfer
+        original_resized = original.resize(upscaled.size, Image.Resampling.LANCZOS)
+        
+        # Simple color transfer: match mean and std per channel
+        import numpy as np
+        up_arr = np.array(upscaled).astype(np.float32)
+        orig_arr = np.array(original_resized).astype(np.float32)
+        
+        for c in range(3):
+            up_mean = up_arr[:,:,c].mean()
+            up_std = up_arr[:,:,c].std() + 1e-6
+            orig_mean = orig_arr[:,:,c].mean()
+            orig_std = orig_arr[:,:,c].std() + 1e-6
+            up_arr[:,:,c] = (up_arr[:,:,c] - up_mean) * (orig_std / up_std) + orig_mean
+        
+        up_arr = np.clip(up_arr, 0, 255).astype(np.uint8)
+        result = Image.fromarray(up_arr)
+        
+        # Save to base64
+        buf = io.BytesIO()
+        result.save(buf, format="PNG")
+        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception as e:
+        print("Color fix error:", e)
+        return upscaled_url
+
 @app.route("/api/upscale", methods=["POST"])
 def upscale():
     if not REPLICATE_TOKEN:
@@ -178,7 +219,8 @@ def upscale():
             result = r2.json()
             status = result.get("status")
             if status == "succeeded":
-                return jsonify({"image": result["output"]})
+                fixed = fix_color(image_b64, result["output"])
+                return jsonify({"image": fixed})
             if status == "failed":
                 return jsonify({"error": "Falló el procesamiento", "detail": result.get("error")}), 500
             time.sleep(2)
