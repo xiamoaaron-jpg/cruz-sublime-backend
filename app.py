@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
+import stripe
 import os
 from datetime import datetime
 import random
@@ -27,6 +28,9 @@ CORS(app)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
 REPLICATE_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
+STRIPE_SECRET = os.environ.get("STRIPE_SECRET_KEY")
+STRIPE_PUBLIC = os.environ.get("STRIPE_PUBLIC_KEY")
+stripe.api_key = STRIPE_SECRET
 
 def get_conn():
     if not DATABASE_URL:
@@ -148,53 +152,6 @@ def canva_use():
         conn.close()
 
 
-def fix_color(original_b64, upscaled_url):
-    try:
-        # Download upscaled image
-        r = requests.get(upscaled_url, timeout=30)
-        upscaled = Image.open(io.BytesIO(r.content)).convert("RGB")
-        
-        # Decode original
-        if original_b64.startswith("data:"):
-            original_b64 = original_b64.split(",", 1)[1]
-        original = Image.open(io.BytesIO(base64.b64decode(original_b64))).convert("RGB")
-        
-        # Resize original to match upscaled for color transfer
-        original_resized = original.resize(upscaled.size, Image.Resampling.LANCZOS)
-        
-        # Simple color transfer: match mean and std per channel
-        import numpy as np
-        up_arr = np.array(upscaled).astype(np.float32)
-        orig_arr = np.array(original_resized).astype(np.float32)
-        
-        for c in range(3):
-            up_mean = up_arr[:,:,c].mean()
-            up_std = up_arr[:,:,c].std() + 1e-6
-            orig_mean = orig_arr[:,:,c].mean()
-            orig_std = orig_arr[:,:,c].std() + 1e-6
-            up_arr[:,:,c] = (up_arr[:,:,c] - up_mean) * (orig_std / up_std) + orig_mean
-        
-        # Boost vibrance
-        up_arr = np.clip(up_arr, 0, 255)
-        # Convert to HSV, boost saturation
-        import colorsys
-        h, s, v = np.vectorize(colorsys.rgb_to_hsv)(up_arr[:,:,0]/255, up_arr[:,:,1]/255, up_arr[:,:,2]/255)
-        s = np.clip(s * 1.25, 0, 1)
-        r, g, b = np.vectorize(colorsys.hsv_to_rgb)(h, s, v)
-        up_arr[:,:,0] = r * 255
-        up_arr[:,:,1] = g * 255
-        up_arr[:,:,2] = b * 255
-        up_arr = np.clip(up_arr, 0, 255).astype(np.uint8)
-        result = Image.fromarray(up_arr)
-        
-        # Save to base64
-        buf = io.BytesIO()
-        result.save(buf, format="PNG")
-        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
-    except Exception as e:
-        print("Color fix error:", e)
-        return upscaled_url
-
 @app.route("/api/upscale", methods=["POST"])
 def upscale():
     if not REPLICATE_TOKEN:
@@ -211,7 +168,7 @@ def upscale():
         "version": "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         "input": {
             "image": image_b64,
-            "scale_factor": 2
+            "scale_factor": 4
         }
     }
     try:
@@ -225,8 +182,7 @@ def upscale():
             result = r2.json()
             status = result.get("status")
             if status == "succeeded":
-                fixed = fix_color(image_b64, result["output"])
-                return jsonify({"image": fixed})
+                return jsonify({"image": result["output"]})
             if status == "failed":
                 return jsonify({"error": "Falló el procesamiento", "detail": result.get("error")}), 500
             time.sleep(2)
@@ -234,6 +190,35 @@ def upscale():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+
+@app.route("/api/checkout", methods=["POST"])
+def checkout():
+    if not STRIPE_SECRET:
+        return jsonify({"error": "Stripe no configurado"}), 500
+    data = request.get_json() or {}
+    plan = data.get("plan", "basico")
+    prices = {"basico": 5000, "medio": 9900, "anual": 49900}
+    if plan not in prices:
+        return jsonify({"error": "Plan invalido"}), 400
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{
+                "price_data": {
+                    "currency": "mxn",
+                    "product_data": {"name": f"Cruz Sublime - Plan {plan}"},
+                    "unit_amount": prices[plan],
+                },
+                "quantity": 1,
+            }],
+            mode="payment",
+            success_url="https://cruz-sublime-page.onrender.com/?pago=ok",
+            cancel_url="https://cruz-sublime-page.onrender.com/?pago=cancel",
+        )
+        return jsonify({"url": session.url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # ===== CONTADOR MENSUAL DE MEJORAS =====
 LIMITS = {"basico": 20, "medio": 50, "anual": 200}
