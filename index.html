@@ -931,10 +931,15 @@ document.addEventListener("DOMContentLoaded", function(){
     return Math.sqrt((c1.r-c2.r)**2 + (c1.g-c2.g)**2 + (c1.b-c2.b)**2);
   }
 
+  function hexToRgb(hex) {
+    var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return m ? { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) } : {r:255,g:255,b:255};
+  }
   function applySemi(){
     if(!semiOriginalImg) return;
     var dotSize = parseInt(document.getElementById("semiDot").value,10) || 6;
-    var tolerance = parseInt(document.getElementById("semiTol").value,10) || 60;
+    var tolerance = parseInt(document.getElementById("semiTol").value,10) || 50;
+    var target = hexToRgb(document.getElementById("semiColor").value);
 
     var maxW = 600;
     var scale = Math.min(1, maxW / semiOriginalImg.width);
@@ -948,28 +953,21 @@ document.addEventListener("DOMContentLoaded", function(){
     var imgData = ctx.getImageData(0, 0, w, h);
     var data = imgData.data;
 
-    var corners = [0, (w-1)*4, (h-1)*w*4, ((h-1)*w + w-1)*4];
-    var br=0,bg=0,bb=0,cnt=0;
-    corners.forEach(function(i){
-      if(data[i+3]>200){ br+=data[i]; bg+=data[i+1]; bb+=data[i+2]; cnt++; }
-    });
-    if(cnt>0){ br/=cnt; bg/=cnt; bb/=cnt; }
-
     var out = document.createElement("canvas");
     out.width = w; out.height = h;
     var octx = out.getContext("2d");
     octx.clearRect(0,0,w,h);
 
-    var step = Math.max(3, Math.round(dotSize * 1.2));
+    var step = Math.max(3, Math.round(dotSize * 1.1));
     for(var y=0; y<h; y+=step){
       for(var x=0; x<w; x+=step){
         var i = (Math.floor(y) * w + Math.floor(x)) * 4;
         if(i >= data.length || data[i+3] < 30) continue;
         var r=data[i], g=data[i+1], b=data[i+2];
-        var dist = Math.sqrt((r-br)**2 + (g-bg)**2 + (b-bb)**2);
+        var dist = Math.sqrt((r-target.r)**2 + (g-target.g)**2 + (b-target.b)**2);
         if(dist <= tolerance) continue;
         var lum = (0.299*r + 0.587*g + 0.114*b) / 255;
-        var radius = Math.max(0.3, (dotSize * 0.25) * (1 - lum * 0.5));
+        var radius = Math.max(0.3, (dotSize * 0.22) * (1 - lum * 0.4));
         octx.beginPath();
         octx.arc(x, y, radius, 0, Math.PI*2);
         octx.fillStyle = "rgba(0,0,0,0.9)";
