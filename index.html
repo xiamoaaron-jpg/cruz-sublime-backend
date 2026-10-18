@@ -758,6 +758,30 @@ body>*{position:relative;z-index:1}
 </div>
 <footer>Cruz Sublime — Membresía VIP · Calculadora DTF · Semitonos Master · Mejorador AI</footer>
 <script>
+  async function checkStoredAccess(){
+    var code = localStorage.getItem("cruz_sublime_code");
+    var user = localStorage.getItem("cruz_sublime_user");
+    if(!code || !user) return;
+    try {
+      var r = await fetch("https://cruz-sublime-api.onrender.com/api/verify", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({code: code, user: user})
+      });
+      var d = await r.json();
+      if(!d.valid){
+        localStorage.removeItem("cruz_sublime_unlocked");
+        localStorage.removeItem("cruz_sublime_code");
+        localStorage.removeItem("cruz_sublime_user");
+        localStorage.removeItem("cruz_sublime_plan");
+        document.getElementById("gate").style.display = "flex";
+      }
+    } catch(e) {
+      localStorage.removeItem("cruz_sublime_unlocked");
+    }
+  }
+  checkStoredAccess();
+
 document.addEventListener("DOMContentLoaded", function(){
   var API_URL = "https://cruz-sublime-api.onrender.com/api/verify";
   async function verificarCodigo(code, user) {
