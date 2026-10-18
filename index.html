@@ -1192,8 +1192,15 @@ body>*{position:relative;z-index:1}
       var blob = await resp.blob();
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
+      var now = new Date();
+      var name = "cruz_sublime_" + now.getFullYear() + 
+        String(now.getMonth()+1).padStart(2,"0") + 
+        String(now.getDate()).padStart(2,"0") + "_" + 
+        String(now.getHours()).padStart(2,"0") + 
+        String(now.getMinutes()).padStart(2,"0") + 
+        String(now.getSeconds()).padStart(2,"0") + ".png";
       a.href = url;
-      a.download = "cruz_sublime_mejorada.png";
+      a.download = name;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
