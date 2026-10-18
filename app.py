@@ -256,6 +256,28 @@ def upscale_use():
         conn.close()
 
 
+
+@app.route("/admin/delete-usage", methods=["POST"])
+def admin_delete_usage():
+    password = request.form.get("p", "")
+    if password != ADMIN_PASSWORD:
+        return "Acceso denegado", 403
+    usage_id = request.form.get("id", "").strip()
+    if not usage_id:
+        return "Falta ID", 400
+    conn = get_conn()
+    if not conn:
+        return "DB no disponible", 500
+    try:
+        c = conn.cursor()
+        c.execute("DELETE FROM usages WHERE id = %s", (usage_id,))
+        conn.commit()
+    except Exception as e:
+        print("Delete usage error:", e)
+    finally:
+        conn.close()
+    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Uso eliminado</h2><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
+
 @app.route("/admin/delete", methods=["POST"])
 def admin_delete():
     password = request.form.get("p", "")
@@ -332,9 +354,9 @@ def admin():
     </table>
     <h3>Usos recientes</h3>
     <table>
-    <tr><th>Código</th><th>Usuario</th><th>Plan</th><th>Fecha</th></tr>
+    <tr><th>Código</th><th>Usuario</th><th>Plan</th><th>Fecha</th><th>Acción</th></tr>
     {% for u in usages %}
-    <tr><td>{{ u[0] }}</td><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td></tr>
+    <tr><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td><td>{{ u[4] }}</td><td><form action="/admin/delete-usage" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="id" value="{{ u[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
     {% else %}
     <tr><td colspan="4">Sin usos</td></tr>
     {% endfor %}
