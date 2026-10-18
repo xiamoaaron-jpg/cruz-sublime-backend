@@ -36,4 +36,219 @@ body>*{position:relative;z-index:1}
   .panel.active{display:block}
   .card{background:var(--panel);background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 100%);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:20px;padding:28px;box-shadow:var(--shadow);margin-bottom:22px}
   .card h2{font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
-  .card h2 .num{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 4px
+  .card h2 .num{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 4px 10px rgba(59,130,246,.4)}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .field input[type="number"],.field input[type="text"],.field input[type="email"],.field input[type="password"],.field select{width:100%;background:var(--panel2);border:1.5px solid var(--border);border-radius:12px;padding:11px 13px;color:var(--text);font-size:14.5px;outline:none;transition:border .2s,box-shadow .2s}
+  .field input:focus,.field select:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(236,72,153,.15)}
+  .field .row{display:flex;gap:8px}
+  .field .unit{color:var(--muted);font-size:12px;align-self:center;white-space:nowrap;font-weight:700}
+  .field input[type="range"]{width:100%;accent-color:var(--pink)}
+  .field .val{color:var(--text);font-weight:800;font-size:13px;float:right}
+  .design-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:10px;align-items:end}
+  .design-row .rm{background:none;border:1.5px solid #e63946;color:#e63946;border-radius:12px;padding:11px 12px;cursor:pointer;font-size:13px;font-weight:700;transition:background .2s}
+  .design-row .rm:hover{background:rgba(230,57,70,.08)}
+  .btn-add{background:linear-gradient(90deg,rgba(59,130,246,.08),rgba(236,72,153,.08));border:2px dashed var(--pink);color:var(--pink);border-radius:12px;padding:11px;width:100%;cursor:pointer;font-size:13.5px;font-weight:700;margin-bottom:16px;transition:background .2s}
+  .btn-add:hover{background:linear-gradient(90deg,rgba(59,130,246,.16),rgba(236,72,153,.16))}
+  .btn{background:linear-gradient(90deg,var(--blue),var(--pink));border:none;color:#fff;font-weight:800;font-size:14px;padding:12px 22px;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(59,130,246,.3);transition:transform .15s;text-decoration:none;display:inline-block;text-align:center}
+  .btn:hover{transform:translateY(-2px)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn.ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);box-shadow:none}
+  .btn.ghost:hover{border-color:var(--pink)}
+  .btn.stripe-btn{background:linear-gradient(90deg,#635bff,#00d4ff);margin-top:8px}
+  .btn.big{width:100%;font-size:14.5px;padding:13px;border-radius:14px;margin-top:8px}
+  .drop{border:2px dashed var(--border);border-radius:16px;padding:50px 20px;text-align:center;cursor:pointer;transition:border .2s,background .2s;background:var(--panel2)}
+  .drop:hover,.drop.drag{border-color:var(--pink);background:rgba(236,72,153,.06)}
+  .drop .ico{font-size:42px;margin-bottom:10px}
+  .drop p{color:var(--muted);font-size:14px}
+  .drop p b{color:var(--pink)}
+  .preview{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  @media(max-width:700px){.preview{grid-template-columns:1fr}}
+  .pv{background:var(--panel2);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:14px;padding:12px;text-align:center}
+  .pv h4{font-size:12px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:800}
+  .pv img{max-width:100%;max-height:320px;border-radius:10px;background:#000}
+  .status{color:var(--muted);font-size:13px;margin-top:10px}
+  .status b{color:var(--pink)}
+  .results{background:var(--panel);background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 100%);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:20px;padding:24px;min-height:300px;box-shadow:var(--shadow)}
+  .results h2{font-size:17px;margin-bottom:6px}
+  .results .hint{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .res-block{margin-bottom:20px}
+  .res-block h3{font-size:13px;color:var(--pink);margin-bottom:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:800}
+  .res-line{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:14.5px}
+  .res-line .val{font-weight:800}
+  .res-line.highlight{background:linear-gradient(90deg,rgba(59,130,246,.1),rgba(236,72,153,.1));border-radius:10px;padding:12px 10px;border:none;margin-top:6px}
+  .res-line.highlight .val{color:#2a9d8f;font-size:18px}
+  .empty{color:var(--muted);font-size:13.5px;text-align:center;padding:50px 10px}
+  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:10px}
+  .plan{background:var(--panel);background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 100%);border:1.5px solid var(--border);border-radius:20px;padding:28px;text-align:center;box-shadow:var(--shadow);position:relative;transition:transform .2s}
+  .plan:hover{transform:translateY(-4px)}
+  .plan.featured{border-color:var(--pink);box-shadow:0 10px 30px rgba(236,72,153,.25)}
+  .plan .badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--blue),var(--pink));color:#fff;font-size:11px;font-weight:800;padding:5px 14px;border-radius:20px;box-shadow:0 4px 10px rgba(236,72,153,.35)}
+  .plan h3{font-size:19px;margin-bottom:6px}
+  .plan .price{font-size:34px;font-weight:800;background:linear-gradient(90deg,var(--blue),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .plan .price span{font-size:14px;color:var(--muted);font-weight:600}
+  .plan ul{list-style:none;margin:18px 0;text-align:left}
+  .plan ul li{padding:8px 0;font-size:13.5px;color:#bdbdbd;border-bottom:1px solid var(--border)}
+  .plan ul li::before{content:"✓ ";color:var(--pink);font-weight:800}
+  .login-box{max-width:420px;margin:0 auto}
+  .login-box h3{font-size:17px;margin-bottom:6px;text-align:center}
+  .login-box p{color:var(--muted);font-size:13px;text-align:center;margin-bottom:18px}
+  .link-soft{color:var(--pink);text-decoration:none;font-weight:700;font-size:13.5px}
+  .link-soft:hover{text-decoration:underline}
+  .support{text-align:center;color:var(--muted);font-size:12.5px;margin-top:26px}
+  .support a{color:var(--blue);text-decoration:none;font-weight:700}
+  .support a:hover{text-decoration:underline}
+  footer{text-align:center;color:var(--muted);font-size:12.5px;padding:24px;font-weight:600}
+  #gate{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:999}
+  #gate .box{background:var(--panel);background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 100%);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:20px;padding:32px;width:100%;max-width:420px;text-align:center}
+  .logo-header{display:block;margin:0 auto 16px;max-width:200px;height:auto;filter:drop-shadow(0 6px 18px rgba(212,175,55,.45))}
+  .logo-gate{display:block;margin:0 auto 14px;max-width:140px;height:auto;filter:drop-shadow(0 4px 12px rgba(212,175,55,.4))}
+  .logo-footer{display:block;margin:0 auto 10px;max-width:90px;height:auto;opacity:.85;filter:drop-shadow(0 2px 8px rgba(212,175,55,.3))}
+  .canva-counter{background:var(--panel2);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:14px;padding:14px;margin-top:12px;text-align:center;font-size:13.5px}
+  .canva-counter b{color:var(--pink);font-size:18px}
+  .canva-agotado{background:#3a1a1a;color:#ff6b6b;border-color:#ff6b6b}
+
+  /* Checkerboard para preview de semitono */
+
+  .magnifier {
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border: 3px solid #3b82f6;
+    border-radius: 50%;
+    pointer-events: none;
+    display: none;
+    overflow: hidden;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    background: #111;
+  }
+  .magnifier canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .pv { position: relative; }
+
+  .size-chip{background:var(--panel2);border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+  .size-chip.active{background:linear-gradient(90deg,var(--blue),var(--pink));border-color:transparent;color:#fff}
+
+  .checker {
+    background-image:
+      linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+      linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+      linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  }
+  @media(max-width:800px){
+    .design-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}
+    .design-row .rm{grid-column:1/-1}
+  }
+</style>
+</head>
+<body>
+
+<!-- TICKER / MARQUESINA -->
+<div class="ticker">
+  <span>CRUZ SUBLIME • MEMBRESÍA VIP • RECURSOS Y DISEÑOS EXCLUSIVOS • ACCESO INMEDIATO •</span>
+</div>
+
+<header>
+  <span class="badge-top">CRUZ SUBLIME</span>
+  <h1>Membresía VIP</h1>
+  <p class="sub">Acceso exclusivo a diseños y recursos de alta calidad</p>
+  <p class="desc">Selecciona el plan que mejor se adapte a tus necesidades y obtén acceso inmediato a todo nuestro catálogo de recursos digitales.</p>
+</header>
+
+<div class="wrap">
+  
+  <!-- SECCIÓN DE PLANES / PAQUETES -->
+  <div class="plans">
+    
+    <!-- PAQUETE 1: $55 MXN -->
+    <div class="plan">
+      <h3>Paquete Básico</h3>
+      <div class="price">$55 <span>MXN</span></div>
+      <ul>
+        <li>Acceso a catálogo básico</li>
+        <li>Descarga de recursos seleccionados</li>
+        <li>Soporte estándar</li>
+      </ul>
+      
+      <!-- BOTÓN MERCADO PAGO -->
+      <a href="https://mpago.li/27dgBVR" target="_blank" rel="noopener noreferrer" class="btn big">
+        Mercado Pago ($55)
+      </a>
+      
+      <!-- BOTÓN STRIPE -->
+      <a href="https://buy.stripe.com/28E14p8cq9b57zzcA5aEE01" target="_blank" rel="noopener noreferrer" class="btn big stripe-btn">
+        Pagar con Stripe
+      </a>
+    </div>
+
+    <!-- PAQUETE 2: $99 MXN (DESTACADO) -->
+    <div class="plan featured">
+      <span class="badge">MÁS POPULAR</span>
+      <h3>Paquete VIP</h3>
+      <div class="price">$99 <span>MXN</span></div>
+      <ul>
+        <li>Acceso ilimitado al catálogo completo</li>
+        <li>Actualizaciones semanales</li>
+        <li>Soporte prioritario</li>
+      </ul>
+      
+      <!-- BOTÓN MERCADO PAGO -->
+      <a href="https://mpago.li/15vftKy" target="_blank" rel="noopener noreferrer" class="btn big">
+        Mercado Pago ($99)
+      </a>
+      
+      <!-- BOTÓN STRIPE -->
+      <a href="https://buy.stripe.com/7sYfZj78mbjd7zzbw1aEE00" target="_blank" rel="noopener noreferrer" class="btn big stripe-btn">
+        Pagar con Stripe
+      </a>
+    </div>
+
+    <!-- PAQUETE 3: $499 MXN -->
+    <div class="plan">
+      <h3>Paquete Premium / Cell Player</h3>
+      <div class="price">$499 <span>MXN</span></div>
+      <ul>
+        <li>Acceso VIP Total + Cell Player</li>
+        <li>Recursos exclusivos alta resolución</li>
+        <li>Asistencia directa y personalizada</li>
+      </ul>
+      
+      <!-- BOTÓN MERCADO PAGO -->
+      <a href="https://mpago.li/29YTyPn" target="_blank" rel="noopener noreferrer" class="btn big">
+        Mercado Pago ($499)
+      </a>
+      
+      <!-- BOTÓN STRIPE -->
+      <a href="https://buy.stripe.com/14A5kFgIW4UPaLL57DaEE02" target="_blank" rel="noopener noreferrer" class="btn big stripe-btn">
+        Pagar con Stripe
+      </a>
+    </div>
+
+  </div>
+
+  <div class="support">
+    <p>¿Tienes dudas sobre los pagos? <a href="#">Contáctanos por soporte</a></p>
+  </div>
+
+</div>
+
+<footer>
+  <p>© Cruz Sublime — Todos los derechos reservados</p>
+</footer>
+
+<!-- CONTENEDOR OCULTO GATE Y RECURSOS -->
+<div id="gate" style="display:none">
+  <div class="box">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAbUAAAIQCAYAAAAGk/AdAAC5U0lEQVR4nO39d3obN/f4gZ4z7JT83UGsajUv4EZ24iRqLmre6bXckqi5qHkB13KL67uDnyX2Gdw/yDMCQWAaZ4ZDEp/ncRxL5FQAB6cjYww0gw9jDBhj8O7xLekLX9g+Q8YYGIYR96VpBgDGGCAiAAC8ffRr2xi7vryH165da/uMRhM2NL70CqpRaEKjXq8rf6cFmiYOtFAbIhARbjx43bGyTN59gYioFx1N18iEGiKCtghp4kILtSGBhFYmk4Gpey9t6fXL0i4WCgX7MxpNN3zdXVJKLy3YNHGQ7vUFaOIFESGXy8HC9hnSvzWabnETWNqfpokLLdSGFH4R0ouNJkr06NLEiRZqQ4j2n2nCxlET02NNEyPap6bRaDSagUERNY1Go9EMDFqoaTSaSNGmbk2caKGm0WgiR4fza+JCCzWNRhMpWlPTxIkWahqNJlIMw9CCTRMbWqhpNJqucRJauki2Jk70aNNoNJGiNTVNnGihptFouoa0MSq/JvudFmyaONBCTaPRhAJVqpm8+8KWXvNbp7oDhCZWUIfaajSasNEFjDVxo5uEajSayNACTdMrtFDTaDQazcCghZpGo9FoBgYt1DQajUYzMGihptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqBQQs1jUaj0QwMWqhpNBqNZmDQQk2j0Wg0A4MWahqNRqMZGLRQ02g0Gs3AoIWhptFoNJqB4/8BG/Qd/fI6sSoAAAAASUVORK5CYII=" class="logo-gate">
+  </div>
+</div>
+
+</body>
+</html>
