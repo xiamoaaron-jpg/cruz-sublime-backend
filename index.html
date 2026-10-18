@@ -757,7 +757,7 @@ body>*{position:relative;z-index:1}
 </div>
 <footer>Cruz Sublime — Membresía VIP · Calculadora DTF · Semitonos Master · Mejorador AI</footer>
 <script>
-(function(){
+document.addEventListener("DOMContentLoaded", function(){
   var API_URL = "https://cruz-sublime-api.onrender.com/api/verify";
   async function verificarCodigo(code, user) {
     try {
@@ -1680,7 +1680,7 @@ body>*{position:relative;z-index:1}
   bind("btnBasicoMP", function(){ window.open(mpLinks.basico, "_blank"); });
   bind("btnMedioMP", function(){ window.open(mpLinks.medio, "_blank"); });
   bind("btnAnualMP", function(){ window.open(mpLinks.anual, "_blank"); });
-})();
+});
 </script>
 
 <a href="https://wa.me/525669717042?text=Hola%2C%20quiero%20información%20de%20Cruz%20Sublime" target="_blank" style="position:fixed;bottom:24px;right:24px;background:#25d366;color:#fff;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 6px 20px rgba(37,211,102,.4);z-index:999;text-decoration:none">💬</a>
@@ -1688,7 +1688,7 @@ body>*{position:relative;z-index:1}
 
 <canvas id="stars" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>
 <script>
-(function(){
+document.addEventListener("DOMContentLoaded", function(){
   var c = document.getElementById("stars");
   var ctx = c.getContext("2d");
   var w, h, stars = [];
@@ -1720,7 +1720,7 @@ body>*{position:relative;z-index:1}
   }
   window.addEventListener("resize", function(){ resize(); init(); });
   resize(); init(); draw();
-})();
+});
 </script>
 </body>
 </html>
