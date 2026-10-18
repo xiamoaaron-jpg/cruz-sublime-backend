@@ -7,9 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#050505; --panel:#0d0d0d; --panel2:#141414;
-    --text:#f2f2f2; --muted:#8a8a8a; --blue:#3b82f6; --pink:#ec4899;
-    --border:#1f1f1f; --shadow:0 10px 30px rgba(59,130,246,.15);
+    --bg:#050510; --panel:linear-gradient(135deg,#0a0a1a 0%,#1a0a30 50%,#0a1a30 100%); --panel2:#0d0d1a;
+    --text:#ffffff; --muted:#b0b0c0; --blue:#00d4ff; --pink:#ff2d95;
+    --border:rgba(255,45,149,.4); --shadow:0 0 30px rgba(0,212,255,.3),0 0 60px rgba(255,45,149,.2);
+    --glow:0 0 25px rgba(0,212,255,.5);
   }
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
   body{background:#050510;color:var(--text);min-height:100vh;position:relative}
@@ -33,7 +34,7 @@ body>*{position:relative;z-index:1}
   .tab.active{background:linear-gradient(90deg,var(--blue),var(--pink));border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(59,130,246,.35)}
   .panel{display:none}
   .panel.active{display:block}
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:var(--shadow);margin-bottom:22px}
+  .card{background:var(--panel);background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 100%);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:20px;padding:28px;box-shadow:var(--shadow);margin-bottom:22px}
   .card h2{font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
   .card h2 .num{background:linear-gradient(135deg,var(--blue),var(--pink));color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 4px 10px rgba(59,130,246,.4)}
   .field{margin-bottom:15px}
@@ -62,12 +63,12 @@ body>*{position:relative;z-index:1}
   .drop p b{color:var(--pink)}
   .preview{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
   @media(max-width:700px){.preview{grid-template-columns:1fr}}
-  .pv{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:12px;text-align:center}
+  .pv{background:var(--panel2);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:14px;padding:12px;text-align:center}
   .pv h4{font-size:12px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:800}
   .pv img{max-width:100%;max-height:320px;border-radius:10px;background:#000}
   .status{color:var(--muted);font-size:13px;margin-top:10px}
   .status b{color:var(--pink)}
-  .results{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:24px;min-height:300px;box-shadow:var(--shadow)}
+  .results{background:var(--panel);background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 100%);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:20px;padding:24px;min-height:300px;box-shadow:var(--shadow)}
   .results h2{font-size:17px;margin-bottom:6px}
   .results .hint{color:var(--muted);font-size:13px;margin-bottom:18px}
   .res-block{margin-bottom:20px}
@@ -78,7 +79,7 @@ body>*{position:relative;z-index:1}
   .res-line.highlight .val{color:#2a9d8f;font-size:18px}
   .empty{color:var(--muted);font-size:13.5px;text-align:center;padding:50px 10px}
   .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:10px}
-  .plan{background:var(--panel);border:1.5px solid var(--border);border-radius:20px;padding:28px;text-align:center;box-shadow:var(--shadow);position:relative;transition:transform .2s}
+  .plan{background:var(--panel);background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 100%);border:1.5px solid var(--border);border-radius:20px;padding:28px;text-align:center;box-shadow:var(--shadow);position:relative;transition:transform .2s}
   .plan:hover{transform:translateY(-4px)}
   .plan.featured{border-color:var(--pink);box-shadow:0 10px 30px rgba(236,72,153,.25)}
   .plan .badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,var(--blue),var(--pink));color:#fff;font-size:11px;font-weight:800;padding:5px 14px;border-radius:20px;box-shadow:0 4px 10px rgba(236,72,153,.35)}
@@ -98,11 +99,11 @@ body>*{position:relative;z-index:1}
   .support a:hover{text-decoration:underline}
   footer{text-align:center;color:var(--muted);font-size:12.5px;padding:24px;font-weight:600}
   #gate{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:999}
-  #gate .box{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:420px;text-align:center}
+  #gate .box{background:var(--panel);background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 100%);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:20px;padding:32px;width:100%;max-width:420px;text-align:center}
   .logo-header{display:block;margin:0 auto 16px;max-width:200px;height:auto;filter:drop-shadow(0 6px 18px rgba(212,175,55,.45))}
   .logo-gate{display:block;margin:0 auto 14px;max-width:140px;height:auto;filter:drop-shadow(0 4px 12px rgba(212,175,55,.4))}
   .logo-footer{display:block;margin:0 auto 10px;max-width:90px;height:auto;opacity:.85;filter:drop-shadow(0 2px 8px rgba(212,175,55,.3))}
-  .canva-counter{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:12px;text-align:center;font-size:13.5px}
+  .canva-counter{background:var(--panel2);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:14px;padding:14px;margin-top:12px;text-align:center;font-size:13.5px}
   .canva-counter b{color:var(--pink);font-size:18px}
   .canva-agotado{background:#3a1a1a;color:#ff6b6b;border-color:#ff6b6b}
 
@@ -741,7 +742,7 @@ body>*{position:relative;z-index:1}
     <div class="card">
       <h2><span class="num">C</span> Canva + CapCut Pro 7 días</h2>
       <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">Incluido en tu plan de $99.</p>
-      <div style="background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;margin-bottom:16px">
+      <div style="background:var(--panel2);border:1px solid rgba(0,212,255,.4);box-shadow:0 0 20px rgba(0,212,255,.3),0 0 40px rgba(255,45,149,.2);border-radius:14px;padding:20px;text-align:center;margin-bottom:16px">
         <p style="font-size:15px;line-height:1.6;color:#e0e0e0">
           Tu cuenta de <b>Canva</b> y tu acceso de <b>CapCut Pro (7 días)</b> serán enviados a tu correo electrónico.<br><br>
           En breve recibirás los datos. Si no llegan, mándanos un mensaje por WhatsApp.
