@@ -91,17 +91,23 @@ def verify():
         return jsonify({"valid": False, "message": "Base de datos no disponible"})
     try:
         c = conn.cursor()
-        c.execute("SELECT plan, email FROM codes WHERE code = %s", (code,))
+        c.execute("SELECT plan, email, days, created_at FROM codes WHERE code = %s", (code,))
         row = c.fetchone()
         if not row:
             return jsonify({"valid": False, "message": "Código inválido"})
-        plan, email = row
+        plan, email, days, created_at = row
         if email and email.lower() != user.lower():
             return jsonify({"valid": False, "message": "Este código está asociado a otro correo"})
+        # Check expiration
+        from datetime import datetime, timedelta
+        created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+        expires = created + timedelta(days=days)
+        if datetime.now() > expires:
+            return jsonify({"valid": False, "message": "Código expirado"})
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         c.execute('INSERT INTO usages (code, "user", plan, used_at) VALUES (%s, %s, %s, %s)', (code, user, plan, now))
         conn.commit()
-        return jsonify({"valid": True, "plan": plan})
+        return jsonify({"valid": True, "plan": plan, "expires": expires.strftime("%Y-%m-%d %H:%M:%S")})
     except Exception as e:
         print("Verify error:", e)
         return jsonify({"valid": False, "message": "Error interno"})
@@ -406,6 +412,39 @@ def admin_delete():
         conn.close()
     return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{code}</p><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
 
+
+@app.route("/api/halftone", methods=["POST"])
+def halftone():
+    if not REPLICATE_TOKEN:
+        return jsonify({"error": "Token no configurado"}), 500
+    data = request.get_json() or {}
+    image_b64 = data.get("image", "")
+    if not image_b64:
+        return jsonify({"error": "Falta imagen"}), 400
+    if not image_b64.startswith("data:"):
+        image_b64 = "data:image/png;base64," + image_b64
+    headers = {"Authorization": f"Bearer {REPLICATE_TOKEN}", "Content-Type": "application/json"}
+    payload = {
+        "version": "aa0216c7968dd050f73f3f3d5eee023c07bc5d265cb06b44c6dd94fb31ce973b",
+        "input": {"image": image_b64, "halftone_only": True}
+    }
+    r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=30)
+    if r.status_code != 201:
+        return jsonify({"error": f"Replicate: {r.status_code}"}), 500
+    pred = r.json()
+    poll_url = pred["urls"]["get"]
+    for _ in range(60):
+        time.sleep(2)
+        pr = requests.get(poll_url, headers=headers, timeout=30)
+        if pr.status_code != 200:
+            continue
+        result = pr.json()
+        if result["status"] == "succeeded":
+            return jsonify({"image": result["output"]})
+        if result["status"] == "failed":
+            return jsonify({"error": "Falló el procesamiento"}), 500
+    return jsonify({"error": "Timeout"}), 500
+
 @app.route("/admin")
 def admin():
     password = request.args.get("p", "")
@@ -417,7 +456,13 @@ def admin():
         try:
             c = conn.cursor()
             c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
-            codes = c.fetchall()
+            codes_raw = c.fetchall()
+            codes = []
+            for row in codes_raw:
+                code_val, plan, days, created_at, email = row
+                created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+                expires = (created + timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+                codes.append((code_val, plan, days, created_at, email, expires))
             c.execute('SELECT code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
             usages = c.fetchall()
         except Exception as e:
@@ -451,9 +496,9 @@ def admin():
     </form>
     <h3>Códigos</h3>
     <table>
-    <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Email</th><th>Acción</th></tr>
+    <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Expira</th><th>Email</th><th>Acción</th></tr>
     {% for c in codes %}
-    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
+    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[5] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
     {% else %}
     <tr><td colspan="5">No hay códigos</td></tr>
     {% endfor %}
