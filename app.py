@@ -174,6 +174,16 @@ def fix_color(original_b64, upscaled_url):
             orig_std = orig_arr[:,:,c].std() + 1e-6
             up_arr[:,:,c] = (up_arr[:,:,c] - up_mean) * (orig_std / up_std) + orig_mean
         
+        # Boost vibrance
+        up_arr = np.clip(up_arr, 0, 255)
+        # Convert to HSV, boost saturation
+        import colorsys
+        h, s, v = np.vectorize(colorsys.rgb_to_hsv)(up_arr[:,:,0]/255, up_arr[:,:,1]/255, up_arr[:,:,2]/255)
+        s = np.clip(s * 1.25, 0, 1)
+        r, g, b = np.vectorize(colorsys.hsv_to_rgb)(h, s, v)
+        up_arr[:,:,0] = r * 255
+        up_arr[:,:,1] = g * 255
+        up_arr[:,:,2] = b * 255
         up_arr = np.clip(up_arr, 0, 255).astype(np.uint8)
         result = Image.fromarray(up_arr)
         
