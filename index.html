@@ -771,7 +771,7 @@ body>*{position:relative;z-index:1}
       return { valid: false, message: "Error de conexion con el servidor" };
     }
   }
-  document.getElementById("btnUnlock").addEventListener("click", async function() {
+  var el_btnUnlock = document.getElementById("btnUnlock"); if(el_btnUnlock) el_btnUnlock.addEventListener("click", async function() {
     var code = document.getElementById("codeInput").value.trim();
     var user = document.getElementById("userInput").value.trim();
     if (!code) { document.getElementById("gateMsg").textContent = "Ingresa un codigo"; return; }
@@ -827,7 +827,7 @@ body>*{position:relative;z-index:1}
       '<button class="rm" onclick="this.parentNode.remove()">x Quitar</button>';
     document.getElementById("designs").appendChild(div);
   }
-  document.getElementById("btnAddDesign").addEventListener("click", function(){ addDesign(); });
+  var el_btnAddDesign = document.getElementById("btnAddDesign"); if(el_btnAddDesign) el_btnAddDesign.addEventListener("click", function(){ addDesign(); });
   addDesign(10,10); addDesign(15,15); addDesign(20,20);
   function calcular(){
     var sheetPrice = parseFloat(document.getElementById("sheetPrice").value) || 0;
@@ -883,7 +883,7 @@ body>*{position:relative;z-index:1}
     });
   });
 
-  document.getElementById("btnCalc").addEventListener("click", calcular);
+  var el_btnCalc = document.getElementById("btnCalc"); if(el_btnCalc) el_btnCalc.addEventListener("click", calcular);
 
   // ===== SEMITONOS MEJORADO =====
   var semiFileInput = document.getElementById("semiFile");
@@ -986,7 +986,7 @@ body>*{position:relative;z-index:1}
     document.getElementById("btnSemiDl").disabled = false;
     document.getElementById("semiInfo").innerHTML = "Semitono aplicado al diseño. El fondo se mantiene limpio.";
   }
-  document.getElementById("btnSemi").addEventListener("click", applySemi);
+  var el_btnSemi = document.getElementById("btnSemi"); if(el_btnSemi) el_btnSemi.addEventListener("click", applySemi);
 
   // ===== LUPA SEMITONO =====
   var semiMag = document.getElementById("semiMag");
@@ -1035,7 +1035,7 @@ body>*{position:relative;z-index:1}
     semiMagCtx.restore();
   });
 
-  document.getElementById("btnSemiDl").addEventListener("click", function(){
+  var el_btnSemiDl = document.getElementById("btnSemiDl"); if(el_btnSemiDl) el_btnSemiDl.addEventListener("click", function(){
     if(!semiResultData) return;
     var a = document.createElement("a");
     a.href = semiResultData;
@@ -1171,8 +1171,8 @@ body>*{position:relative;z-index:1}
     }
     document.getElementById("btnImprove").disabled = false;
   }
-  document.getElementById("btnImprove").addEventListener("click", improveImage);
-  document.getElementById("btnReset").addEventListener("click", function(){
+  var el_btnImprove = document.getElementById("btnImprove"); if(el_btnImprove) el_btnImprove.addEventListener("click", improveImage);
+  var el_btnReset = document.getElementById("btnReset"); if(el_btnReset) el_btnReset.addEventListener("click", function(){
     if(!imgOriginal) return;
     document.getElementById("imgScale").value = 2; imgSetVal("vScale","2x");
     document.getElementById("imgSharp").value = 1.2; imgSetVal("vSharp","1.2");
@@ -1184,11 +1184,11 @@ body>*{position:relative;z-index:1}
     document.getElementById("btnDlImp").disabled = true;
     document.getElementById("imgStatus").textContent = "Ajustes restablecidos.";
   });
-  document.getElementById("btnDlOrig").addEventListener("click", function(){
+  var el_btnDlOrig = document.getElementById("btnDlOrig"); if(el_btnDlOrig) el_btnDlOrig.addEventListener("click", function(){
     if(!imgOriginal) return;
     imgDownload(imgOriginal, "cruz_sublime_original.png");
   });
-  document.getElementById("btnDlImp").addEventListener("click", async function(){
+  var el_btnDlImp = document.getElementById("btnDlImp"); if(el_btnDlImp) el_btnDlImp.addEventListener("click", async function(){
     if(!imgImproved) return;
     try {
       var resp = await fetch(imgImproved);
@@ -1245,7 +1245,7 @@ body>*{position:relative;z-index:1}
   checkDrop.addEventListener("drop", function(e){ e.preventDefault(); checkDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) checkLoad(e.dataTransfer.files[0]); });
   checkFileInput.addEventListener("change", function(e){ if(e.target.files[0]) checkLoad(e.target.files[0]); });
 
-  document.getElementById("btnCheck").addEventListener("click", function(){
+  var el_btnCheck = document.getElementById("btnCheck"); if(el_btnCheck) el_btnCheck.addEventListener("click", function(){
     if(!checkOriginal) return;
     var img = new Image();
     img.crossOrigin = "anonymous";
@@ -1332,7 +1332,7 @@ body>*{position:relative;z-index:1}
   document.getElementById("qrSize").oninput = function(e){
     document.getElementById("vQrSize").textContent = e.target.value;
   };
-  document.getElementById("btnQr").addEventListener("click", function(){
+  var el_btnQr = document.getElementById("btnQr"); if(el_btnQr) el_btnQr.addEventListener("click", function(){
     var type = document.getElementById("qrType").value;
     var content = document.getElementById("qrContent").value.trim();
     var size = document.getElementById("qrSize").value;
@@ -1349,7 +1349,7 @@ body>*{position:relative;z-index:1}
     preview.innerHTML = '<img src="' + url + '" style="max-width:100%;border-radius:12px" id="qrImg">';
     document.getElementById("btnQrDl").disabled = false;
   });
-  document.getElementById("btnQrDl").addEventListener("click", function(){
+  var el_btnQrDl = document.getElementById("btnQrDl"); if(el_btnQrDl) el_btnQrDl.addEventListener("click", function(){
     var img = document.getElementById("qrImg");
     if(!img) return;
     var a = document.createElement("a");
@@ -1385,7 +1385,7 @@ body>*{position:relative;z-index:1}
   bgDrop.addEventListener("dragleave", function(){ bgDrop.classList.remove("drag"); });
   bgDrop.addEventListener("drop", function(e){ e.preventDefault(); bgDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) bgLoad(e.dataTransfer.files[0]); });
   bgFileInput.addEventListener("change", function(e){ if(e.target.files[0]) bgLoad(e.target.files[0]); });
-  document.getElementById("btnBg").addEventListener("click", function(){
+  var el_btnBg = document.getElementById("btnBg"); if(el_btnBg) el_btnBg.addEventListener("click", function(){
     if(!bgOriginal) return;
     var img = new Image();
     img.onload = function(){
@@ -1411,7 +1411,7 @@ body>*{position:relative;z-index:1}
     };
     img.src = bgOriginal;
   });
-  document.getElementById("btnBgDl").addEventListener("click", function(){
+  var el_btnBgDl = document.getElementById("btnBgDl"); if(el_btnBgDl) el_btnBgDl.addEventListener("click", function(){
     if(!bgResult) return;
     var a = document.createElement("a");
     a.href = bgResult; a.download = "cruz_sublime_sin_fondo.png";
@@ -1431,7 +1431,7 @@ body>*{position:relative;z-index:1}
 
 
   // ===== COTIZADOR =====
-  document.getElementById("btnQuote").addEventListener("click", function(){
+  var el_btnQuote = document.getElementById("btnQuote"); if(el_btnQuote) el_btnQuote.addEventListener("click", function(){
     var qty = +document.getElementById("qQty").value || 1;
     var blank = +document.getElementById("qBlank").value || 0;
     var ink = +document.getElementById("qInk").value || 0;
@@ -1465,7 +1465,7 @@ body>*{position:relative;z-index:1}
   mockDrop.addEventListener("dragover", function(e){ e.preventDefault(); });
   mockDrop.addEventListener("drop", function(e){ e.preventDefault(); if(e.dataTransfer.files[0]) mockLoad(e.dataTransfer.files[0]); });
   mockFile.addEventListener("change", function(e){ if(e.target.files[0]) mockLoad(e.target.files[0]); });
-  document.getElementById("btnMock").addEventListener("click", function(){
+  var el_btnMock = document.getElementById("btnMock"); if(el_btnMock) el_btnMock.addEventListener("click", function(){
     if(!mockDesign) return;
     var c = document.createElement("canvas");
     c.width = 500; c.height = 500;
@@ -1486,7 +1486,7 @@ body>*{position:relative;z-index:1}
     };
     img.src = mockDesign;
   });
-  document.getElementById("btnMockDl").addEventListener("click", function(){
+  var el_btnMockDl = document.getElementById("btnMockDl"); if(el_btnMockDl) el_btnMockDl.addEventListener("click", function(){
     var img = document.getElementById("mockImg");
     if(!img) return;
     var a = document.createElement("a"); a.href = img.src; a.download = "mockup.png"; a.click();
@@ -1507,7 +1507,7 @@ body>*{position:relative;z-index:1}
   sepDrop.addEventListener("dragover", function(e){ e.preventDefault(); });
   sepDrop.addEventListener("drop", function(e){ e.preventDefault(); if(e.dataTransfer.files[0]) sepLoad(e.dataTransfer.files[0]); });
   sepFile.addEventListener("change", function(e){ if(e.target.files[0]) sepLoad(e.target.files[0]); });
-  document.getElementById("btnSep").addEventListener("click", function(){
+  var el_btnSep = document.getElementById("btnSep"); if(el_btnSep) el_btnSep.addEventListener("click", function(){
     if(!sepOriginal) return;
     var n = +document.getElementById("sepColors").value;
     var img = new Image();
@@ -1629,10 +1629,10 @@ body>*{position:relative;z-index:1}
     img.src = mockDesign;
   }
 
-  document.getElementById("btnMock").addEventListener("click", renderMockup);
-  document.getElementById("btnMockPrev").addEventListener("click", function(){ mockAngle = (mockAngle - 1 + mockAngles.length) % mockAngles.length; renderMockup(); });
-  document.getElementById("btnMockNext").addEventListener("click", function(){ mockAngle = (mockAngle + 1) % mockAngles.length; renderMockup(); });
-  document.getElementById("btnMockDl").addEventListener("click", function(){
+  var el_btnMock = document.getElementById("btnMock"); if(el_btnMock) el_btnMock.addEventListener("click", renderMockup);
+  var el_btnMockPrev = document.getElementById("btnMockPrev"); if(el_btnMockPrev) el_btnMockPrev.addEventListener("click", function(){ mockAngle = (mockAngle - 1 + mockAngles.length) % mockAngles.length; renderMockup(); });
+  var el_btnMockNext = document.getElementById("btnMockNext"); if(el_btnMockNext) el_btnMockNext.addEventListener("click", function(){ mockAngle = (mockAngle + 1) % mockAngles.length; renderMockup(); });
+  var el_btnMockDl = document.getElementById("btnMockDl"); if(el_btnMockDl) el_btnMockDl.addEventListener("click", function(){
     var img = document.getElementById("mockImg");
     if(!img) return;
     var a = document.createElement("a"); a.href = img.src; a.download = "mockup-cruz-sublime.png"; a.click();
@@ -1654,7 +1654,7 @@ body>*{position:relative;z-index:1}
   });
 
 
-  document.getElementById("btnCopyClabe").addEventListener("click", function(){
+  var el_btnCopyClabe = document.getElementById("btnCopyClabe"); if(el_btnCopyClabe) el_btnCopyClabe.addEventListener("click", function(){
     var clabe = document.getElementById("clabeVal").textContent;
     navigator.clipboard.writeText(clabe).then(function(){
       document.getElementById("btnCopyClabe").textContent = "¡Copiada!";
