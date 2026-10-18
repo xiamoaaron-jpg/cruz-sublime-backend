@@ -1326,18 +1326,7 @@ body>*{position:relative;z-index:1}
   }
   updateCanvaUI();
 
-  document.getElementById("btnMedio").addEventListener("click", async function(){
-    try {
-      var res = await fetch(API_BASE + "/api/canva/use", { method: "POST" });
-      var data = await res.json();
-      if(!data.ok){
-        alert("Cuentas Canva agotadas por hoy.");
-      }
-      updateCanvaUI();
-    } catch(e){
-      console.log(e);
-    }
-  });
+
 
   // ===== GENERADOR QR =====
   document.getElementById("qrSize").oninput = function(e){
