@@ -56,6 +56,10 @@ def init_db():
             created_at TEXT,
             email TEXT
         )''')
+        try:
+            c.execute("ALTER TABLE codes ADD COLUMN IF NOT EXISTS email TEXT")
+        except:
+            pass
         c.execute('''CREATE TABLE IF NOT EXISTS usages (
             id SERIAL PRIMARY KEY,
             code TEXT,
