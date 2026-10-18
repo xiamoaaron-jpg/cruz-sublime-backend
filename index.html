@@ -1670,18 +1670,19 @@ body>*{position:relative;z-index:1}
     });
   });
 
-  var mpBasico = "https://mpago.li/27dgBVR";
-  var mpMedio  = "https://mpago.li/15vftKy";
-  var mpAnual  = "https://mpago.li/29YTyPn";
-  document.getElementById("btnBasico").addEventListener("click", function(){
-    window.open(mpBasico, "_blank");
-  });
-  document.getElementById("btnMedio").addEventListener("click", function(){
-    window.open(mpMedio, "_blank");
-  });
-  document.getElementById("btnAnual").addEventListener("click", function(){
-    window.open(mpAnual, "_blank");
-  });
+  function goStripe(plan){
+    fetch("https://cruz-sublime-api.onrender.com/api/checkout", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({plan: plan})
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if(d.url) window.location.href = d.url;
+      else alert("Error: " + (d.error || "No se pudo crear el pago"));
+    }).catch(function(e){ alert("Error de conexión"); });
+  }
+  document.getElementById("btnBasico").addEventListener("click", function(){ goStripe("basico"); });
+  document.getElementById("btnMedio").addEventListener("click", function(){ goStripe("medio"); });
+  document.getElementById("btnAnual").addEventListener("click", function(){ goStripe("anual"); });
 })();
 </script>
 
