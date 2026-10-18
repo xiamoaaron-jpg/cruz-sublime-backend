@@ -933,10 +933,10 @@ document.addEventListener("DOMContentLoaded", function(){
 
   function applySemi(){
     if(!semiOriginalImg) return;
-    var dotSize = parseInt(document.getElementById("semiDot").value,10) || 8;
-    var tolerance = parseInt(document.getElementById("semiTol").value,10) || 40;
+    var dotSize = parseInt(document.getElementById("semiDot").value,10) || 6;
+    var tolerance = parseInt(document.getElementById("semiTol").value,10) || 60;
 
-    var maxW = 800;
+    var maxW = 600;
     var scale = Math.min(1, maxW / semiOriginalImg.width);
     var w = Math.round(semiOriginalImg.width * scale);
     var h = Math.round(semiOriginalImg.height * scale);
@@ -960,7 +960,7 @@ document.addEventListener("DOMContentLoaded", function(){
     var octx = out.getContext("2d");
     octx.clearRect(0,0,w,h);
 
-    var step = Math.max(2, Math.round(dotSize * 0.6));
+    var step = Math.max(3, Math.round(dotSize * 1.2));
     for(var y=0; y<h; y+=step){
       for(var x=0; x<w; x+=step){
         var i = (Math.floor(y) * w + Math.floor(x)) * 4;
@@ -969,10 +969,10 @@ document.addEventListener("DOMContentLoaded", function(){
         var dist = Math.sqrt((r-br)**2 + (g-bg)**2 + (b-bb)**2);
         if(dist <= tolerance) continue;
         var lum = (0.299*r + 0.587*g + 0.114*b) / 255;
-        var radius = Math.max(0.4, (dotSize * 0.35) * (1 - lum * 0.6));
+        var radius = Math.max(0.3, (dotSize * 0.25) * (1 - lum * 0.5));
         octx.beginPath();
         octx.arc(x, y, radius, 0, Math.PI*2);
-        octx.fillStyle = "rgba(0,0,0,0.95)";
+        octx.fillStyle = "rgba(0,0,0,0.9)";
         octx.fill();
       }
     }
