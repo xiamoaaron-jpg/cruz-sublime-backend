@@ -257,6 +257,25 @@ def upscale_use():
 
 
 
+
+@app.route("/admin/clear-usages", methods=["POST"])
+def admin_clear_usages():
+    password = request.form.get("p", "")
+    if password != ADMIN_PASSWORD:
+        return "Acceso denegado", 403
+    conn = get_conn()
+    if not conn:
+        return "DB no disponible", 500
+    try:
+        c = conn.cursor()
+        c.execute("DELETE FROM usages")
+        conn.commit()
+    except Exception as e:
+        print("Clear usages error:", e)
+    finally:
+        conn.close()
+    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Usos vaciados</h2><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
+
 @app.route("/admin/delete-usage", methods=["POST"])
 def admin_delete_usage():
     password = request.form.get("p", "")
@@ -352,7 +371,7 @@ def admin():
     <tr><td colspan="5">No hay códigos</td></tr>
     {% endfor %}
     </table>
-    <h3>Usos recientes</h3>
+    <h3>Usos recientes <form action="/admin/clear-usages" method="post" style="display:inline;margin-left:12px"><input type="hidden" name="p" value="{{ password }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Vaciar todos</button></form></h3>
     <table>
     <tr><th>Código</th><th>Usuario</th><th>Plan</th><th>Fecha</th><th>Acción</th></tr>
     {% for u in usages %}
