@@ -782,6 +782,7 @@ document.addEventListener("DOMContentLoaded", function(){
     if (r && (r.status === "ok" || r.valid === true)) {
       document.getElementById("gate").style.display = "none";
       localStorage.setItem("cruz_sublime_unlocked", "1");
+      localStorage.setItem("cruz_sublime_code", code);
       localStorage.setItem("cruz_sublime_user", user);
       localStorage.setItem("cruz_sublime_plan", r.plan || "basico");
       updateCanvaVisibility();
