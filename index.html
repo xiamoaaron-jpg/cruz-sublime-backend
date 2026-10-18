@@ -1684,12 +1684,13 @@ body>*{position:relative;z-index:1}
     }).catch(function(e){ alert("Error de conexión"); });
   }
   var mpLinks = {basico:"https://mpago.li/27dgBVR", medio:"https://mpago.li/15vftKy", anual:"https://mpago.li/29YTyPn"};
-  document.getElementById("btnBasico").addEventListener("click", function(){ goStripe("basico"); });
-  document.getElementById("btnMedio").addEventListener("click", function(){ goStripe("medio"); });
-  document.getElementById("btnAnual").addEventListener("click", function(){ goStripe("anual"); });
-  document.getElementById("btnBasicoMP").addEventListener("click", function(){ window.open(mpLinks.basico, "_blank"); });
-  document.getElementById("btnMedioMP").addEventListener("click", function(){ window.open(mpLinks.medio, "_blank"); });
-  document.getElementById("btnAnualMP").addEventListener("click", function(){ window.open(mpLinks.anual, "_blank"); });
+  function bind(id, fn){ var el = document.getElementById(id); if(el) el.addEventListener("click", fn); }
+  bind("btnBasico", function(){ goStripe("basico"); });
+  bind("btnMedio", function(){ goStripe("medio"); });
+  bind("btnAnual", function(){ goStripe("anual"); });
+  bind("btnBasicoMP", function(){ window.open(mpLinks.basico, "_blank"); });
+  bind("btnMedioMP", function(){ window.open(mpLinks.medio, "_blank"); });
+  bind("btnAnualMP", function(){ window.open(mpLinks.anual, "_blank"); });
 })();
 </script>
 
