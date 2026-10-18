@@ -985,6 +985,7 @@ document.addEventListener("DOMContentLoaded", function(){
     document.getElementById("semiInfo").innerHTML = "Semitono aplicado. Elige el color del fondo y ajusta el tamaño.";
   }
   var el_btnSemi = document.getElementById("btnSemi"); if(el_btnSemi) el_btnSemi.addEventListener("click", applySemi);
+  var el_btnDtfWiz = document.getElementById("btnDtfWiz"); if(el_btnDtfWiz) el_btnDtfWiz.addEventListener("click", function(){ window.open("https://dtfwiz.com/tools/halftone", "_blank"); });
 
   // ===== LUPA SEMITONO =====
   var semiMag = document.getElementById("semiMag");
