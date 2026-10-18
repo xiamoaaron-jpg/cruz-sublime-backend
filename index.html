@@ -935,34 +935,54 @@ document.addEventListener("DOMContentLoaded", function(){
     var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return m ? { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) } : {r:255,g:255,b:255};
   }
-  async function applySemi(){
+  function applySemi(){
     if(!semiOriginalImg) return;
-    document.getElementById("semiInfo").innerHTML = "Procesando...";
+    var cellSize = parseInt(document.getElementById("semiDot").value,10) || 8;
+    var tolerance = parseInt(document.getElementById("semiTol").value,10) || 50;
+    var target = hexToRgb(document.getElementById("semiColor").value);
+
+    var maxW = 800;
+    var scale = Math.min(1, maxW / semiOriginalImg.width);
+    var w = Math.round(semiOriginalImg.width * scale);
+    var h = Math.round(semiOriginalImg.height * scale);
+
     var c = document.createElement("canvas");
-    c.width = semiOriginalImg.width;
-    c.height = semiOriginalImg.height;
+    c.width = w; c.height = h;
     var ctx = c.getContext("2d");
-    ctx.drawImage(semiOriginalImg, 0, 0);
-    var imageB64 = c.toDataURL("image/png");
-    try {
-      var res = await fetch("https://cruz-sublime-api.onrender.com/api/halftone", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({image: imageB64})
-      });
-      var data = await res.json();
-      if(data.image){
-        semiResultData = data.image;
-        document.getElementById("semiAfter").src = data.image;
-        document.getElementById("semiAfterInfo").innerHTML = "<b>Procesado con IA</b> · PNG";
-        document.getElementById("btnSemiDl").disabled = false;
-        document.getElementById("semiInfo").innerHTML = "Semitono aplicado con modelo de IA.";
-      } else {
-        document.getElementById("semiInfo").innerHTML = "Error: " + (data.error || "No se pudo procesar");
+    ctx.drawImage(semiOriginalImg, 0, 0, w, h);
+    var imgData = ctx.getImageData(0, 0, w, h);
+    var data = imgData.data;
+
+    var out = document.createElement("canvas");
+    out.width = w; out.height = h;
+    var octx = out.getContext("2d");
+    octx.clearRect(0,0,w,h);
+
+    var half = cellSize / 2;
+    for(var y=0; y<h; y+=cellSize){
+      for(var x=0; x<w; x+=cellSize){
+        var cx = Math.min(w-1, Math.floor(x + half));
+        var cy = Math.min(h-1, Math.floor(y + half));
+        var i = (cy * w + cx) * 4;
+        if(i >= data.length || data[i+3] < 30) continue;
+        var r=data[i], g=data[i+1], b=data[i+2];
+        var dist = Math.sqrt((r-target.r)**2 + (g-target.g)**2 + (b-target.b)**2);
+        if(dist <= tolerance) continue;
+        var lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+        var radius = half * (1 - lum);
+        if(radius < 0.5) continue;
+        octx.beginPath();
+        octx.arc(x + half, y + half, radius, 0, Math.PI*2);
+        octx.fillStyle = "rgba(0,0,0,0.95)";
+        octx.fill();
       }
-    } catch(e) {
-      document.getElementById("semiInfo").innerHTML = "Error de conexión";
     }
+
+    semiResultData = out.toDataURL("image/png");
+    document.getElementById("semiAfter").src = semiResultData;
+    document.getElementById("semiAfterInfo").innerHTML = "<b>" + w + " x " + h + " px</b> · PNG transparente";
+    document.getElementById("btnSemiDl").disabled = false;
+    document.getElementById("semiInfo").innerHTML = "Semitono aplicado. Elige el color del fondo y ajusta el tamaño.";
   }
   var el_btnSemi = document.getElementById("btnSemi"); if(el_btnSemi) el_btnSemi.addEventListener("click", applySemi);
 
