@@ -1469,7 +1469,7 @@ document.addEventListener("DOMContentLoaded", function(){
   mockDrop.addEventListener("drop", function(e){ e.preventDefault(); if(e.dataTransfer.files[0]) mockLoad(e.dataTransfer.files[0]); });
   }
   if(mockFile) mockFile.addEventListener("change", function(e){ if(e.target.files[0]) mockLoad(e.target.files[0]); });
-  var el_btnMock = var _btnMock = document.getElementById("btnMock"); if(_btnMock) _btnMock; if(el_btnMock) el_btnMock.addEventListener("click", function(){
+  var el_btnMock = document.getElementById("btnMock"); if(el_btnMock) el_btnMock.addEventListener("click", function(){
     if(!mockDesign) return;
     var c = document.createElement("canvas");
     c.width = 500; c.height = 500;
