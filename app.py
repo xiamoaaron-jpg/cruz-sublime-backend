@@ -5,6 +5,8 @@ from datetime import datetime
 import random
 import string
 import requests
+import stripe
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
 from PIL import Image
 import io
 import base64
@@ -373,6 +375,32 @@ def admin_delete():
     finally:
         conn.close()
     return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{code}</p><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
+
+
+@app.route("/api/checkout", methods=["POST"])
+def checkout():
+    data = request.get_json() or {}
+    plan = data.get("plan", "basico")
+    prices = {"basico": 5000, "medio": 9900, "anual": 49900}
+    amount = prices.get(plan, 5000)
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{
+                "price_data": {
+                    "currency": "mxn",
+                    "product_data": {"name": f"Cruz Sublime - {plan.capitalize()}"},
+                    "unit_amount": amount,
+                },
+                "quantity": 1,
+            }],
+            mode="payment",
+            success_url="https://cruzsublim.com?pago=ok",
+            cancel_url="https://cruzsublim.com?pago=cancel",
+        )
+        return jsonify({"url": session.url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/admin")
 def admin():
