@@ -933,51 +933,43 @@ document.addEventListener("DOMContentLoaded", function(){
 
   function applySemi(){
     if(!semiOriginalImg) return;
-    var dotSize = parseInt(document.getElementById("semiDot").value,10) || 10;
-    var angle = parseInt(document.getElementById("semiAngle").value,10) || 45;
-    var tolerance = parseInt(document.getElementById("semiTol").value,10) || 50;
+    var dotSize = parseInt(document.getElementById("semiDot").value,10) || 8;
+    var tolerance = parseInt(document.getElementById("semiTol").value,10) || 40;
+
+    var maxW = 800;
+    var scale = Math.min(1, maxW / semiOriginalImg.width);
+    var w = Math.round(semiOriginalImg.width * scale);
+    var h = Math.round(semiOriginalImg.height * scale);
 
     var c = document.createElement("canvas");
-    c.width = semiOriginalImg.width;
-    c.height = semiOriginalImg.height;
+    c.width = w; c.height = h;
     var ctx = c.getContext("2d");
-    
-    // Draw original image
-    ctx.drawImage(semiOriginalImg, 0, 0);
-    var imgData = ctx.getImageData(0, 0, c.width, c.height);
+    ctx.drawImage(semiOriginalImg, 0, 0, w, h);
+    var imgData = ctx.getImageData(0, 0, w, h);
     var data = imgData.data;
 
-    // Sample background color from corners
-    var corners = [0, (c.width-1)*4, (c.height-1)*c.width*4, ((c.height-1)*c.width + c.width-1)*4];
+    var corners = [0, (w-1)*4, (h-1)*w*4, ((h-1)*w + w-1)*4];
     var br=0,bg=0,bb=0,cnt=0;
-    corners.forEach(function(i){ 
+    corners.forEach(function(i){
       if(data[i+3]>200){ br+=data[i]; bg+=data[i+1]; bb+=data[i+2]; cnt++; }
     });
     if(cnt>0){ br/=cnt; bg/=cnt; bb/=cnt; }
 
-    // Create output canvas
     var out = document.createElement("canvas");
-    out.width = c.width;
-    out.height = c.height;
+    out.width = w; out.height = h;
     var octx = out.getContext("2d");
-    octx.clearRect(0,0,out.width,out.height);
+    octx.clearRect(0,0,w,h);
 
-    var step = Math.max(2, Math.round(dotSize * 0.5));
-    var angleRad = angle * Math.PI / 180;
-
-    for(var y=0; y<c.height; y+=step){
-      for(var x=0; x<c.width; x+=step){
-        var i = (Math.floor(y) * c.width + Math.floor(x)) * 4;
-        if(i >= data.length) continue;
-        if(data[i+3] < 30) continue;
-
+    var step = Math.max(2, Math.round(dotSize * 0.6));
+    for(var y=0; y<h; y+=step){
+      for(var x=0; x<w; x+=step){
+        var i = (Math.floor(y) * w + Math.floor(x)) * 4;
+        if(i >= data.length || data[i+3] < 30) continue;
         var r=data[i], g=data[i+1], b=data[i+2];
-        var distBg = Math.sqrt((r-br)**2 + (g-bg)**2 + (b-bb)**2);
-        if(distBg <= tolerance) continue;
-
+        var dist = Math.sqrt((r-br)**2 + (g-bg)**2 + (b-bb)**2);
+        if(dist <= tolerance) continue;
         var lum = (0.299*r + 0.587*g + 0.114*b) / 255;
-        var radius = Math.max(0.5, (dotSize * 0.4) * (1 - lum * 0.7));
-
+        var radius = Math.max(0.4, (dotSize * 0.35) * (1 - lum * 0.6));
         octx.beginPath();
         octx.arc(x, y, radius, 0, Math.PI*2);
         octx.fillStyle = "rgba(0,0,0,0.95)";
@@ -987,7 +979,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
     semiResultData = out.toDataURL("image/png");
     document.getElementById("semiAfter").src = semiResultData;
-    document.getElementById("semiAfterInfo").innerHTML = "<b>" + out.width + " x " + out.height + " px</b> · PNG transparente";
+    document.getElementById("semiAfterInfo").innerHTML = "<b>" + w + " x " + h + " px</b> · PNG transparente";
     document.getElementById("btnSemiDl").disabled = false;
     document.getElementById("semiInfo").innerHTML = "Semitono aplicado. Puntos negros sobre fondo transparente.";
   }
