@@ -430,7 +430,6 @@ def admin():
                 created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
                 expires = (created + timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
                 codes.append((code_val, plan, days, created_at, email, expires))
-            codes = c.fetchall()
             c.execute('SELECT code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
             usages = c.fetchall()
         except Exception as e:
