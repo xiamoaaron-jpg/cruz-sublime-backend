@@ -198,14 +198,10 @@ def upscale():
         "Content-Type": "application/json"
     }
     payload = {
-        "version": "b9c26267b41f3617099b53f09f2d894a621ebf4a59b632bfedb5031eeabd8959",
+        "version": "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
         "input": {
             "image": image_b64,
-            "upscale": 2,
-            "min_size": 1024,
-            "edm_steps": 50,
-            "a_prompt": "high quality, sharp, detailed",
-            "n_prompt": "blurry, low quality, compressed"
+            "scale_factor": 2
         }
     }
     try:
@@ -214,7 +210,7 @@ def upscale():
             return jsonify({"error": "Error al iniciar predicción", "detail": r.text}), 500
         pred = r.json()
         pred_id = pred.get("id")
-        for _ in range(40):
+        for _ in range(90):
             r2 = requests.get(f"https://api.replicate.com/v1/predictions/{pred_id}", headers=headers, timeout=30)
             result = r2.json()
             status = result.get("status")
