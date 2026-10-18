@@ -468,6 +468,7 @@ def admin():
             c = conn.cursor()
             c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
             codes_raw = c.fetchall()
+            print("Codes found:", len(codes_raw))
             codes = []
             for row in codes_raw:
                 code_val, plan, days, created_at, email = row
@@ -476,8 +477,11 @@ def admin():
                 codes.append((code_val, plan, days, created_at, email, expires))
             c.execute('SELECT code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
             usages = c.fetchall()
+            print("Usages found:", len(usages))
         except Exception as e:
             print("Admin query error:", e)
+            import traceback
+            traceback.print_exc()
         finally:
             conn.close()
     html = """
