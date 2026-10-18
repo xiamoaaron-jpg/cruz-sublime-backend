@@ -91,17 +91,23 @@ def verify():
         return jsonify({"valid": False, "message": "Base de datos no disponible"})
     try:
         c = conn.cursor()
-        c.execute("SELECT plan, email FROM codes WHERE code = %s", (code,))
+        c.execute("SELECT plan, email, days, created_at FROM codes WHERE code = %s", (code,))
         row = c.fetchone()
         if not row:
             return jsonify({"valid": False, "message": "Código inválido"})
-        plan, email = row
+        plan, email, days, created_at = row
         if email and email.lower() != user.lower():
             return jsonify({"valid": False, "message": "Este código está asociado a otro correo"})
+        # Check expiration
+        from datetime import datetime, timedelta
+        created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+        expires = created + timedelta(days=days)
+        if datetime.now() > expires:
+            return jsonify({"valid": False, "message": "Código expirado"})
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         c.execute('INSERT INTO usages (code, "user", plan, used_at) VALUES (%s, %s, %s, %s)', (code, user, plan, now))
         conn.commit()
-        return jsonify({"valid": True, "plan": plan})
+        return jsonify({"valid": True, "plan": plan, "expires": expires.strftime("%Y-%m-%d %H:%M:%S")})
     except Exception as e:
         print("Verify error:", e)
         return jsonify({"valid": False, "message": "Error interno"})
@@ -417,6 +423,13 @@ def admin():
         try:
             c = conn.cursor()
             c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
+            codes_raw = c.fetchall()
+            codes = []
+            for row in codes_raw:
+                code_val, plan, days, created_at, email = row
+                created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+                expires = (created + timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+                codes.append((code_val, plan, days, created_at, email, expires))
             codes = c.fetchall()
             c.execute('SELECT code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
             usages = c.fetchall()
@@ -451,9 +464,9 @@ def admin():
     </form>
     <h3>Códigos</h3>
     <table>
-    <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Email</th><th>Acción</th></tr>
+    <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Expira</th><th>Email</th><th>Acción</th></tr>
     {% for c in codes %}
-    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
+    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[5] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
     {% else %}
     <tr><td colspan="5">No hay códigos</td></tr>
     {% endfor %}
