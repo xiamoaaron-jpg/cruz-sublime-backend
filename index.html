@@ -576,7 +576,8 @@ body>*{position:relative;z-index:1}
             <li>Descargas ilimitadas</li>
             <li>Soporte por WhatsApp</li>
           </ul>
-          <button class="btn big" id="btnBasico">Suscribirme con Mercado Pago</button>
+          <button class="btn big" id="btnBasico">Pagar con tarjeta</button>
+          <button class="btn big" id="btnBasicoMP" style="background:#00a8e8;margin-top:8px">Pagar con Mercado Pago</button>
         </div>
         <div class="plan featured">
           <span class="badge">Más popular</span>
@@ -589,7 +590,8 @@ body>*{position:relative;z-index:1}
             <li>Acceso prioritario a novedades</li>
             <li>Soporte prioritario</li>
           </ul>
-          <button class="btn big" id="btnMedio">Suscribirme con Mercado Pago</button>
+          <button class="btn big" id="btnMedio">Pagar con tarjeta</button>
+          <button class="btn big" id="btnMedioMP" style="background:#00a8e8;margin-top:8px">Pagar con Mercado Pago</button>
           <div class="canva-counter" id="canvaCounter">Cuentas Canva disponibles hoy: <b id="canvaLeft">15</b> / 15</div>
         </div>
         <div class="plan">
@@ -603,7 +605,8 @@ body>*{position:relative;z-index:1}
             <li>Ahorra más de 2 meses</li>
             <li>Soporte prioritario</li>
           </ul>
-          <button class="btn big" id="btnAnual">Suscribirme con Mercado Pago</button>
+          <button class="btn big" id="btnAnual">Pagar con tarjeta</button>
+          <button class="btn big" id="btnAnualMP" style="background:#00a8e8;margin-top:8px">Pagar con Mercado Pago</button>
         </div>
       </div>
       <div class="card" style="margin-top:22px;text-align:center">
@@ -1680,11 +1683,7 @@ body>*{position:relative;z-index:1}
       else alert("Error: " + (d.error || "No se pudo crear el pago"));
     }).catch(function(e){ alert("Error de conexión"); });
   }
-  var mpLinks = {
-    basico: "https://mpago.li/27dgBVR",
-    medio: "https://mpago.li/15vftKy",
-    anual: "https://mpago.li/29YTyPn"
-  };
+  var mpLinks = {basico:"https://mpago.li/27dgBVR", medio:"https://mpago.li/15vftKy", anual:"https://mpago.li/29YTyPn"};
   document.getElementById("btnBasico").addEventListener("click", function(){ goStripe("basico"); });
   document.getElementById("btnMedio").addEventListener("click", function(){ goStripe("medio"); });
   document.getElementById("btnAnual").addEventListener("click", function(){ goStripe("anual"); });
