@@ -428,9 +428,16 @@ def halftone():
         "version": "aa0216c7968dd050f73f3f3d5eee023c07bc5d265cb06b44c6dd94fb31ce973b",
         "input": {"image": image_b64, "halftone_only": True}
     }
-    r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=30)
-    if r.status_code != 201:
+    for attempt in range(3):
+        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=30)
+        if r.status_code == 201:
+            break
+        if r.status_code == 429:
+            time.sleep(5)
+            continue
         return jsonify({"error": f"Replicate: {r.status_code}"}), 500
+    if r.status_code != 201:
+        return jsonify({"error": "Replicate ocupado, intenta en un momento"}), 500
     pred = r.json()
     poll_url = pred["urls"]["get"]
     for _ in range(60):
