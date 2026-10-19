@@ -230,7 +230,9 @@ def upscale():
         }
     }
     try:
+        print("Sending to Replicate:", payload["version"])
         r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=30)
+        print("Replicate response:", r.status_code, r.text[:200])
         if r.status_code != 201:
             return jsonify({"error": "Error al iniciar predicción", "detail": r.text}), 500
         pred = r.json()
