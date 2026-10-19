@@ -222,7 +222,7 @@ def upscale():
         "Content-Type": "application/json"
     }
     payload = {
-        "version": "philz1337x/crystal-upscaler:5d917b1444c89ed91055f3052d27e1ad433a1218599a36544510e1dfa9ac26c8",
+        "version": "philz1337x/crystal-upscaler",
         "input": {
             "image": image_b64,
             "scale_factor": 4,
