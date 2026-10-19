@@ -226,6 +226,9 @@ def upscale():
         "Authorization": f"Token {REPLICATE_TOKEN}",
         "Content-Type": "application/json"
     }
+    # Convert base64 to a data URI that Replicate accepts
+    if not image_b64.startswith("data:"):
+        image_b64 = "data:image/png;base64," + image_b64
     payload = {
         "version": "philz1337x/crystal-upscaler",
         "input": {
