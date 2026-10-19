@@ -245,26 +245,23 @@ def upscale():
         }
     }
     try:
-        print("Sending to Replicate:", payload["version"])
-        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=30)
-        print("Replicate response:", r.status_code, r.text[:200])
+        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=20)
         if r.status_code != 201:
-            return jsonify({"error": "Error al iniciar predicción", "detail": r.text}), 500
+            return jsonify({"error": "Error al iniciar", "detail": r.text[:200]}), 500
         pred = r.json()
         pred_id = pred.get("id")
-        for _ in range(90):
-            r2 = requests.get(f"https://api.replicate.com/v1/predictions/{pred_id}", headers=headers, timeout=30)
+        for _ in range(30):
+            r2 = requests.get(f"https://api.replicate.com/v1/predictions/{pred_id}", headers=headers, timeout=15)
             result = r2.json()
             status = result.get("status")
             if status == "succeeded":
-                fixed = fix_color(image_b64, result["output"])
-                return jsonify({"image": fixed})
+                return jsonify({"image": result["output"]})
             if status == "failed":
-                return jsonify({"error": "Falló el procesamiento", "detail": result.get("error")}), 500
+                return jsonify({"error": "Falló", "detail": str(result.get("error", ""))[:100]}), 500
             time.sleep(2)
         return jsonify({"error": "Tiempo agotado"}), 500
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)[:100]}), 500
 
 
 
