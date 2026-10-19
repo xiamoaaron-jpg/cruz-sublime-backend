@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 import stripe
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import string
 import requests
@@ -103,7 +103,7 @@ def verify():
         if email and email.lower() != user.lower():
             return jsonify({"valid": False, "message": "Este código está asociado a otro correo"})
         # Check expiration
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, timedelta
         created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
         expires = created + timedelta(days=days)
         if datetime.now() > expires:
