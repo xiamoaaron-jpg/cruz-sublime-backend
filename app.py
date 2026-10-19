@@ -240,7 +240,7 @@ def upscale():
         "version": "philz1337x/crystal-upscaler",
         "input": {
             "image": image_b64,
-            "scale_factor": 2,
+            "scale_factor": 3,
             "creativity": 0
         }
     }
