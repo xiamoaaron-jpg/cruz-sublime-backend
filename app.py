@@ -222,10 +222,11 @@ def upscale():
         "Content-Type": "application/json"
     }
     payload = {
-        "version": "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+        "version": "philz1337x/crystal-upscaler:5d917b1444c89ed91055f3052d27e1ad433a1218599a36544510e1dfa9ac26c8",
         "input": {
             "image": image_b64,
-            "scale_factor": 4
+            "scale_factor": 4,
+            "creativity": 0
         }
     }
     try:
