@@ -18,10 +18,17 @@ CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=False)
 @app.after_request
 def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, DELETE'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     response.headers['Access-Control-Max-Age'] = '86400'
+    response.headers['Access-Control-Expose-Headers'] = '*'
     return response
+
+@app.errorhandler(500)
+def handle_500(e):
+    response = jsonify({"error": str(e)})
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response, 500
 
 @app.route('/api/<path:path>', methods=['OPTIONS'])
 def handle_options(path):
