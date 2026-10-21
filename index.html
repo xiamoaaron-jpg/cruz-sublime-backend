@@ -147,6 +147,14 @@ body>*{position:relative;z-index:1}
     .design-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}
     .design-row .rm{grid-column:1/-1}
   }
+
+  /* Cruz Sublime: editor de semitonos integrado */
+  #panel-semi .semi-viewport{height:440px;overflow:auto;position:relative;border-radius:12px;cursor:crosshair;text-align:left}
+  #panel-semi #semiCanvas{display:block;max-width:none;image-rendering:auto;transform-origin:top left}
+  #panel-semi #semiAfterWrap{position:relative}
+  #panel-semi #semiMag{z-index:50}
+  #panel-semi .field input[type="checkbox"]{accent-color:var(--pink)}
+  #panel-semi .field input[type="color"]{height:38px;width:70px;background:transparent;border:0}
 </style>
 
 
@@ -324,6 +332,17 @@ body>*{position:relative;z-index:1}
         <label>Tolerancia <span class="val" id="vTol">50</span></label>
         <input type="range" id="semiTol" min="10" max="150" step="5" value="50">
       </div>
+
+      <div class="field"><label>Forma del tramado</label><select id="semiShape"><option value="dot">Puntos</option><option value="square">Cuadros</option><option value="line">Líneas</option></select></div>
+      <div class="field"><label>Grosor <span class="val" id="vThick">90%</span></label><input type="range" id="semiThick" min="10" max="150" value="90"></div>
+      <div class="field"><label>Dureza <span class="val" id="vHard">80%</span></label><input type="range" id="semiHard" min="0" max="100" value="80"></div>
+      <div class="field"><label>Intensidad <span class="val" id="vStrength">100%</span></label><input type="range" id="semiStrength" min="0" max="100" value="100"></div>
+      <div class="field"><label><input type="checkbox" id="semiRemove"> Eliminar color objetivo (hacer transparente)</label></div>
+      <button class="btn ghost" type="button" id="semiPicker">🎯 Elegir color de la imagen</button>
+      <div class="field"><label>Suavidad del color <span class="val" id="vFeather">15</span></label><input type="range" id="semiFeather" min="0" max="100" value="15"></div>
+      <div class="field"><label><input type="checkbox" id="semiLensOn" checked> Activar lupa que sigue al mouse</label></div>
+      <div class="field"><label>Zoom <span class="val" id="vZoom">100%</span></label><input type="range" id="semiZoom" min="50" max="400" step="10" value="100"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"><button class="btn ghost" type="button" id="semiZoomOut">−</button><button class="btn ghost" type="button" id="semiZoomIn">+</button><button class="btn ghost" type="button" id="semiZoomReset">Restablecer zoom</button></div>
       <div class="btns" style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn" id="btnSemi" disabled>Aplicar semitono</button>
         <button class="btn ghost" id="btnSemiDl" disabled>Descargar PNG</button>
@@ -338,7 +357,7 @@ body>*{position:relative;z-index:1}
       </div>
       <div class="pv checker" id="semiAfterWrap">
         <h4>Semitono (preview transparente)</h4>
-        <img id="semiAfter" alt="Despues">
+        <div id="semiViewport" class="semi-viewport"><canvas id="semiCanvas" aria-label="Vista del tramado"></canvas></div>
         <div class="magnifier" id="semiMag">
           <canvas id="semiMagCanvas" width="160" height="160"></canvas>
         </div>
@@ -911,163 +930,131 @@ document.addEventListener("DOMContentLoaded", function(){
 
   var el_btnCalc = document.getElementById("btnCalc"); if(el_btnCalc) el_btnCalc.addEventListener("click", calcular);
 
-  // ===== SEMITONOS MEJORADO =====
-  var semiFileInput = document.getElementById("semiFile");
-  var semiDrop = document.getElementById("semiDrop");
-  var semiOriginalImg = null;
-  var semiResultData = null;
 
-  function semiSetVal(id, v){ document.getElementById(id).textContent = v; }
-  document.getElementById("semiDot").oninput = function(e){ semiSetVal("vDot", e.target.value); };
-  document.getElementById("semiAngle").oninput = function(e){ semiSetVal("vAngle", e.target.value + "°"); };
-  document.getElementById("semiTol").oninput = function(e){ semiSetVal("vTol", e.target.value); };
-
-  function semiLoad(f){
-    if(!f || !f.type || f.type.indexOf("image/") !== 0){ document.getElementById("semiStatus").textContent = "Elige una imagen."; return; }
-    var r = new FileReader();
-    r.onload = function(e){
-      var img = new Image();
-      img.onload = function(){
-        semiOriginalImg = img;
-        document.getElementById("semiBefore").src = e.target.result;
-        document.getElementById("semiBeforeInfo").innerHTML = "<b>" + f.name + "</b> · " + img.width + "x" + img.height;
-        document.getElementById("semiAfter").src = "";
-        document.getElementById("semiAfterInfo").textContent = "—";
-        semiResultData = null;
-        document.getElementById("btnSemi").disabled = false;
-        document.getElementById("btnSemiDl").disabled = true;
-        document.getElementById("semiStatus").innerHTML = "Imagen cargada: <b>" + f.name + "</b>.";
+  // ===== SEMITONOS DTF INTEGRADO · PROCESAMIENTO LOCAL =====
+  (function(){
+    "use strict";
+    const el = id => document.getElementById(id);
+    const input=el("semiFile"), drop=el("semiDrop"), canvas=el("semiCanvas");
+    const ctx=canvas.getContext("2d",{willReadFrequently:true});
+    const viewport=el("semiViewport"), mag=el("semiMag"), magCanvas=el("semiMagCanvas");
+    const magCtx=magCanvas.getContext("2d");
+    let original=null, processed=null, zoom=1, picking=false;
+    function val(id){return Number(el(id).value)}
+    function status(message){el("semiInfo").textContent=message}
+    function bindRange(id,label,suffix=""){el(id).addEventListener("input",()=>el(label).textContent=el(id).value+suffix)}
+    [["semiDot","vDot",""],["semiAngle","vAngle","°"],["semiTol","vTol",""],["semiThick","vThick","%"],["semiHard","vHard","%"],["semiStrength","vStrength","%"],["semiFeather","vFeather",""]].forEach(a=>bindRange(...a));
+    function display(){
+      const c=processed||original;if(!c)return;
+      canvas.width=c.width;canvas.height=c.height;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(c,0,0);
+      canvas.style.width=(c.width*zoom)+"px";canvas.style.height=(c.height*zoom)+"px";
+      el("vZoom").textContent=Math.round(zoom*100)+"%";el("semiZoom").value=Math.round(zoom*100);
+    }
+    function setZoom(next,clientX,clientY){
+      const old=zoom;zoom=Math.max(.5,Math.min(4,next));
+      const r=viewport.getBoundingClientRect();
+      const x=clientX==null?r.width/2:clientX-r.left;
+      const y=clientY==null?r.height/2:clientY-r.top;
+      const ox=(viewport.scrollLeft+x)/old,oy=(viewport.scrollTop+y)/old;
+      display();viewport.scrollLeft=ox*zoom-x;viewport.scrollTop=oy*zoom-y;
+    }
+    el("semiZoom").oninput=()=>setZoom(val("semiZoom")/100);
+    el("semiZoomIn").onclick=()=>setZoom(zoom*1.2);
+    el("semiZoomOut").onclick=()=>setZoom(zoom/1.2);
+    el("semiZoomReset").onclick=()=>setZoom(1);
+    viewport.addEventListener("wheel",e=>{
+      if(!original)return;e.preventDefault();setZoom(zoom*(e.deltaY<0?1.12:1/1.12),e.clientX,e.clientY)
+    },{passive:false});
+    function load(file){
+      if(!file||!file.type.startsWith("image/")){status("Selecciona una imagen válida.");return}
+      const url=URL.createObjectURL(file),img=new Image();
+      img.onload=()=>{
+        if(img.naturalWidth*img.naturalHeight>16000000){status("Imagen demasiado grande: máximo 16 megapíxeles para esta versión.");URL.revokeObjectURL(url);return}
+        original=document.createElement("canvas");original.width=img.naturalWidth;original.height=img.naturalHeight;
+        original.getContext("2d").drawImage(img,0,0);processed=null;zoom=1;
+        el("semiBefore").src=url;el("semiBeforeInfo").textContent=file.name+" · "+img.naturalWidth+" × "+img.naturalHeight+" px";
+        el("semiStatus").textContent="Imagen cargada: "+file.name;
+        el("semiAfterInfo").textContent="Pendiente de procesar";el("btnSemi").disabled=false;el("btnSemiDl").disabled=true;
+        display();status("Imagen lista. Configura los controles y aplica el tramado.");
       };
-      img.src = e.target.result;
-    };
-    r.readAsDataURL(f);
-  }
-  semiDrop.addEventListener("click", function(){ semiFileInput.click(); });
-  semiDrop.addEventListener("dragover", function(e){ e.preventDefault(); semiDrop.classList.add("drag"); });
-  semiDrop.addEventListener("dragleave", function(){ semiDrop.classList.remove("drag"); });
-  semiDrop.addEventListener("drop", function(e){ e.preventDefault(); semiDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) semiLoad(e.dataTransfer.files[0]); });
-  semiFileInput.addEventListener("change", function(e){ if(e.target.files[0]) semiLoad(e.target.files[0]); });
-
-  function hexToRgb(hex) {
-    var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return m ? { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) } : {r:255,g:255,b:255};
-  }
-  function colorDist(c1,c2){
-    return Math.sqrt((c1.r-c2.r)**2 + (c1.g-c2.g)**2 + (c1.b-c2.b)**2);
-  }
-
-  function hexToRgb(hex) {
-    var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return m ? { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) } : {r:255,g:255,b:255};
-  }
-  function applySemi(){
-    if(!semiOriginalImg) return;
-    var cellSize = parseInt(document.getElementById("semiDot").value,10) || 8;
-    var tolerance = parseInt(document.getElementById("semiTol").value,10) || 50;
-    var target = hexToRgb(document.getElementById("semiColor").value);
-
-    var maxW = 800;
-    var scale = Math.min(1, maxW / semiOriginalImg.width);
-    var w = Math.round(semiOriginalImg.width * scale);
-    var h = Math.round(semiOriginalImg.height * scale);
-
-    var c = document.createElement("canvas");
-    c.width = w; c.height = h;
-    var ctx = c.getContext("2d");
-    ctx.drawImage(semiOriginalImg, 0, 0, w, h);
-    var imgData = ctx.getImageData(0, 0, w, h);
-    var data = imgData.data;
-
-    var out = document.createElement("canvas");
-    out.width = w; out.height = h;
-    var octx = out.getContext("2d");
-    octx.clearRect(0,0,w,h);
-
-    var half = cellSize / 2;
-    for(var y=0; y<h; y+=cellSize){
-      for(var x=0; x<w; x+=cellSize){
-        var cx = Math.min(w-1, Math.floor(x + half));
-        var cy = Math.min(h-1, Math.floor(y + half));
-        var i = (cy * w + cx) * 4;
-        if(i >= data.length || data[i+3] < 30) continue;
-        var r=data[i], g=data[i+1], b=data[i+2];
-        var dist = Math.sqrt((r-target.r)**2 + (g-target.g)**2 + (b-target.b)**2);
-        if(dist <= tolerance) continue;
-        var lum = (0.299*r + 0.587*g + 0.114*b) / 255;
-        var radius = half * (1 - lum);
-        if(radius < 0.5) continue;
-        octx.beginPath();
-        octx.arc(x + half, y + half, radius, 0, Math.PI*2);
-        octx.fillStyle = "rgba(0,0,0,0.95)";
-        octx.fill();
+      img.onerror=()=>{status("No se pudo abrir la imagen.");URL.revokeObjectURL(url)};
+      img.src=url;
+    }
+    drop.addEventListener("click",()=>input.click());
+    drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag")});
+    drop.addEventListener("dragleave",()=>drop.classList.remove("drag"));
+    drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("drag");load(e.dataTransfer.files[0])});
+    input.addEventListener("change",e=>load(e.target.files[0]));
+    el("semiPicker").onclick=()=>{picking=true;status("Haz clic sobre un color de la imagen para seleccionarlo.")};
+    function point(e){const r=canvas.getBoundingClientRect();return {x:Math.floor((e.clientX-r.left)/zoom),y:Math.floor((e.clientY-r.top)/zoom)}}
+    canvas.addEventListener("click",e=>{
+      if(!picking||!original)return;const p=point(e);if(p.x<0||p.y<0||p.x>=original.width||p.y>=original.height)return;
+      const d=original.getContext("2d").getImageData(p.x,p.y,1,1).data;
+      el("semiColor").value="#"+[d[0],d[1],d[2]].map(n=>n.toString(16).padStart(2,"0")).join("");
+      el("semiRemove").checked=true;picking=false;status("Color objetivo seleccionado.");
+    });
+    function smooth(a,b,x){if(b<=a)return x>=b?1:0;const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)}
+    function apply(){
+      if(!original)return;
+      const w=original.width,h=original.height,src=original.getContext("2d").getImageData(0,0,w,h).data;
+      const out=document.createElement("canvas");out.width=w;out.height=h;
+      const outCtx=out.getContext("2d"),image=outCtx.createImageData(w,h),dst=image.data;
+      const size=val("semiDot"),angle=val("semiAngle")*Math.PI/180,cs=Math.cos(angle),sn=Math.sin(angle);
+      const thick=val("semiThick")/100,hard=val("semiHard")/100,strength=val("semiStrength")/100;
+      const shape=el("semiShape").value,tolerance=val("semiTol"),feather=val("semiFeather"),remove=el("semiRemove").checked;
+      const hex=el("semiColor").value,target=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+      const cache=new Map();
+      function coverage(cx,cy){
+        const key=cx+","+cy;if(cache.has(key))return cache.get(key);
+        const u=(cx+.5)*size,v=(cy+.5)*size,px=cs*u-sn*v,py=sn*u+cs*v;
+        let sum=0,n=0;
+        for(let dy=-size*.35;dy<=size*.35;dy+=Math.max(1,size/4))
+        for(let dx=-size*.35;dx<=size*.35;dx+=Math.max(1,size/4)){
+          const x=Math.round(px+dx),y=Math.round(py+dy);
+          if(x<0||y<0||x>=w||y>=h)continue;
+          const i=(y*w+x)*4;
+          sum+=(1-(.2126*src[i]+.7152*src[i+1]+.0722*src[i+2])/255)*src[i+3]/255;n++;
+        }
+        const v2=n?sum/n:0;cache.set(key,v2);return v2;
       }
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+        const i=(y*w+x)*4,r=src[i],g=src[i+1],b=src[i+2],a=src[i+3]/255;if(!a)continue;
+        let alpha=a;
+        if(remove){const dist=Math.hypot(r-target[0],g-target[1],b-target[2]);alpha*=feather?smooth(tolerance,tolerance+feather,dist):(dist>tolerance?1:0)}
+        const u=(cs*x+sn*y)/size,v=(-sn*x+cs*y)/size,cx=Math.floor(u),cy=Math.floor(v),fu=u-cx-.5,fv=v-cy-.5;
+        const radius=Math.sqrt(Math.max(0,coverage(cx,cy)))*.5*thick;
+        const d=shape==="dot"?Math.hypot(fu,fv):shape==="square"?Math.max(Math.abs(fu),Math.abs(fv)):Math.abs(fv);
+        const edge=(1-hard)*.14+.008,mask=1-smooth(radius-edge,radius+edge,d);
+        alpha*=1-strength+strength*mask;
+        dst[i]=r;dst[i+1]=g;dst[i+2]=b;dst[i+3]=Math.round(alpha*255);
+      }
+      outCtx.putImageData(image,0,0);processed=out;display();
+      el("btnSemiDl").disabled=false;
+      el("semiAfterInfo").textContent=w+" × "+h+" px · PNG transparente";
+      status("Tramado aplicado localmente. Comprueba los detalles antes de imprimir.");
     }
-
-    semiResultData = out.toDataURL("image/png");
-    document.getElementById("semiAfter").src = semiResultData;
-    document.getElementById("semiAfterInfo").innerHTML = "<b>" + w + " x " + h + " px</b> · PNG transparente";
-    document.getElementById("btnSemiDl").disabled = false;
-    document.getElementById("semiInfo").innerHTML = "Semitono aplicado. Elige el color del fondo y ajusta el tamaño.";
-  }
-  var el_btnSemi = document.getElementById("btnSemi"); if(el_btnSemi) el_btnSemi.addEventListener("click", applySemi);
-  var el_btnDtfWiz = document.getElementById("btnDtfWiz"); if(el_btnDtfWiz) el_btnDtfWiz.addEventListener("click", function(){ window.open("https://dtfwiz.com/tools/halftone", "_blank"); });
-
-  // ===== LUPA SEMITONO =====
-  var semiMag = document.getElementById("semiMag");
-  var semiMagCanvas = document.getElementById("semiMagCanvas");
-  var semiMagCtx = semiMagCanvas.getContext("2d");
-  var semiAfterImg = document.getElementById("semiAfter");
-  var semiAfterWrap = document.getElementById("semiAfterWrap");
-
-  semiAfterWrap.addEventListener("mouseenter", function(){
-    if(semiResultData) semiMag.style.display = "block";
-  });
-  semiAfterWrap.addEventListener("mouseleave", function(){
-    semiMag.style.display = "none";
-  });
-  semiAfterWrap.addEventListener("mousemove", function(e){
-    if(!semiResultData || !semiAfterImg.src) return;
-    var rect = semiAfterImg.getBoundingClientRect();
-    var wrapRect = semiAfterWrap.getBoundingClientRect();
-    var mx = e.clientX - rect.left;
-    var my = e.clientY - rect.top;
-    if(mx < 0 || my < 0 || mx > rect.width || my > rect.height){
-      semiMag.style.display = "none";
-      return;
-    }
-    semiMag.style.display = "block";
-    semiMag.style.left = (e.clientX - wrapRect.left - 80) + "px";
-    semiMag.style.top = (e.clientY - wrapRect.top - 80) + "px";
-
-    var scaleX = semiOriginalImg.width / rect.width;
-    var scaleY = semiOriginalImg.height / rect.height;
-    var srcX = mx * scaleX;
-    var srcY = my * scaleY;
-    var zoom = 4;
-    var magSize = 160;
-
-    semiMagCtx.clearRect(0,0,magSize,magSize);
-    semiMagCtx.save();
-    semiMagCtx.translate(magSize/2, magSize/2);
-    semiMagCtx.scale(zoom, zoom);
-    // Draw from the processed canvas if available, else from image
-    var src = document.createElement("canvas");
-    src.width = semiOriginalImg.width;
-    src.height = semiOriginalImg.height;
-    src.getContext("2d").drawImage(semiAfterImg, 0, 0);
-    semiMagCtx.drawImage(src, -srcX, -srcY);
-    semiMagCtx.restore();
-  });
-
-  var el_btnSemiDl = document.getElementById("btnSemiDl"); if(el_btnSemiDl) el_btnSemiDl.addEventListener("click", function(){
-    if(!semiResultData) return;
-    var a = document.createElement("a");
-    a.href = semiResultData;
-    a.download = "cruz_sublime_semitono.png";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  });
+    el("btnSemi").addEventListener("click",()=>{
+      el("btnSemi").disabled=true;status("Procesando...");
+      setTimeout(()=>{try{apply()}catch(err){status("Error al procesar: "+err.message)}finally{el("btnSemi").disabled=false}},30)
+    });
+    el("btnSemiDl").addEventListener("click",()=>{
+      if(!processed)return;
+      processed.toBlob(blob=>{
+        if(!blob){status("No se pudo exportar el PNG.");return}
+        const url=URL.createObjectURL(blob),a=document.createElement("a");
+        a.href=url;a.download="cruz_sublime_semitonos_DTF.png";a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)
+      },"image/png")
+    });
+    viewport.addEventListener("mousemove",e=>{
+      if(!el("semiLensOn").checked||!original){mag.style.display="none";return}
+      const p=point(e);if(p.x<0||p.y<0||p.x>=canvas.width||p.y>=canvas.height){mag.style.display="none";return}
+      const r=el("semiAfterWrap").getBoundingClientRect(),size=160,factor=4,c=processed||original;
+      mag.style.display="block";mag.style.left=(e.clientX-r.left-size/2)+"px";mag.style.top=(e.clientY-r.top-size/2)+"px";
+      magCtx.clearRect(0,0,size,size);magCtx.imageSmoothingEnabled=false;
+      magCtx.drawImage(c,p.x-size/(factor*2),p.y-size/(factor*2),size/factor,size/factor,0,0,size,size);
+    });
+    viewport.addEventListener("mouseleave",()=>mag.style.display="none");
+  })();
 
   // ===== MEJORADOR =====
   var imgFileInput = document.getElementById("imgFile");
