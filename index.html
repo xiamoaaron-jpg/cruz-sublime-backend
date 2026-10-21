@@ -155,6 +155,29 @@ body>*{position:relative;z-index:1}
   #panel-semi #semiMag{z-index:50}
   #panel-semi .field input[type="checkbox"]{accent-color:var(--pink)}
   #panel-semi .field input[type="color"]{height:38px;width:70px;background:transparent;border:0}
+
+  /* Semitonos Master: herramientas a la izquierda, vistas a la derecha */
+  #panel-semi .semi-workspace{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:18px;align-items:start}
+  #panel-semi .semi-tools,#panel-semi .semi-images{min-width:0}
+  #panel-semi .semi-tools .card{padding:20px;margin-bottom:16px}
+  #panel-semi .semi-tools .drop{padding:22px 12px}
+  #panel-semi .semi-images{position:sticky;top:12px}
+  #panel-semi .semi-images .preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:0}
+  #panel-semi .semi-images .pv{min-width:0;padding:10px;overflow:hidden}
+  #panel-semi .semi-images #semiBefore{display:block;max-width:100%;max-height:65vh;object-fit:contain;margin:auto}
+  #panel-semi .semi-images .semi-viewport{height:min(65vh,620px);max-width:100%}
+  #panel-semi .semi-images .pv h4{font-size:11px;letter-spacing:.7px}
+  @media(max-width:850px){
+    #panel-semi .semi-workspace{grid-template-columns:1fr}
+    #panel-semi .semi-images{position:static}
+    #panel-semi .semi-images .preview{grid-template-columns:repeat(2,minmax(0,1fr))}
+    #panel-semi .semi-images .semi-viewport{height:320px}
+  }
+  @media(max-width:540px){
+    #panel-semi .semi-images .preview{grid-template-columns:1fr}
+    #panel-semi .semi-images .semi-viewport{height:340px}
+  }
+
 </style>
 
 
@@ -304,6 +327,8 @@ body>*{position:relative;z-index:1}
   </div>
   <!-- SEMITONOS MASTER MEJORADO -->
   <div class="panel" id="panel-semi">
+    <div class="semi-workspace">
+      <div class="semi-tools">
     <div class="card">
       <h2><span class="num">1</span> Sube tu imagen</h2>
       <div class="drop" id="semiDrop">
@@ -349,6 +374,8 @@ body>*{position:relative;z-index:1}
       </div>
       <div class="status" id="semiInfo">El preview se ve sobre cuadrícula para que notes la transparencia.</div>
     </div>
+      </div>
+      <div class="semi-images">
     <div class="preview">
       <div class="pv">
         <h4>Original</h4>
@@ -362,6 +389,8 @@ body>*{position:relative;z-index:1}
           <canvas id="semiMagCanvas" width="160" height="160"></canvas>
         </div>
         <div class="status" id="semiAfterInfo">—</div>
+      </div>
+    </div>
       </div>
     </div>
   </div>
