@@ -183,6 +183,28 @@ body>*{position:relative;z-index:1}
 
 
 
+<script>
+/* SOLO PRUEBA: autorización en llamadas de procesamiento y contador VIP */
+(function(){
+  const originalFetch=window.fetch.bind(window);
+  window.fetch=async function(input, init){
+    const url=typeof input==='string'?input:input.url;
+    init=init||{};
+    if(url.includes('/api/upscale') || url.includes('/api/halftone')){
+      const token=sessionStorage.getItem('cruz_member_token');
+      if(token){init.headers=Object.assign({},init.headers||{}, {'Authorization':'Bearer '+token});}
+      if((url.endsWith('/api/upscale')||url.endsWith('/api/halftone'))&&init.body){
+        try{const payload=JSON.parse(init.body);payload.job_id=payload.job_id||crypto.randomUUID();init.body=JSON.stringify(payload);}catch(e){}
+      }
+    }
+    const response=await originalFetch(input,init);
+    if(url.includes('/api/verify') && response.ok){
+      try{const clone=await response.clone().json();if(clone.valid&&clone.token)sessionStorage.setItem('cruz_member_token',clone.token);}catch(e){}
+    }
+    return response;
+  };
+})();
+</script>
 </head>
 <body>
 <div id="gate" style="display:none">
@@ -683,7 +705,7 @@ body>*{position:relative;z-index:1}
           </a>
           <p style="color:var(--muted);font-size:12px;margin-top:14px;line-height:1.5">
             Después de pagar, envía tu comprobante para validar la membresía.
-            La activación y el contador automático de créditos requieren integración con el servidor.
+            La activación se hace después de verificar el pago. El procesamiento GPU requiere un servidor GPU configurado.
           </p>
         </div>
       </div>
@@ -1683,5 +1705,21 @@ document.addEventListener("DOMContentLoaded", function(){
   resize(); init(); draw();
 });
 </script>
-</body>
+<script>
+(function(){
+  const card=document.getElementById('planPremiumVIP');
+  if(!card)return;
+  const p=document.createElement('p');
+  p.style.cssText='color:#00d4ff;font-weight:700;margin-top:12px;font-size:13px';
+  p.textContent='Créditos VIP: inicia sesión para consultar el saldo.';
+  card.appendChild(p);
+  const base='https://cruz-sublime-api.onrender.com';
+  async function update(){
+    const token=sessionStorage.getItem('cruz_member_token');
+    if(!token)return;
+    try{const r=await fetch(base+'/api/vip/credits',{headers:{Authorization:'Bearer '+token}});if(r.ok){const x=await r.json();p.textContent='Créditos VIP disponibles: '+x.left+' de '+x.max;}}catch(e){}
+  }
+  setInterval(update,12000);update();
+})();
+</script></body>
 </html>
