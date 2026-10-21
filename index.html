@@ -610,7 +610,7 @@ body>*{position:relative;z-index:1}
   <div class="panel active" id="panel-plans">
     <div class="card">
       <h2><span class="num">★</span> Elige tu plan</h2>
-      <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">Acceso a las tres herramientas. Elige el que mejor se adapte a ti. Pago seguro con Mercado Pago.</p>
+      <p class="hint" style="color:var(--muted);font-size:13px;margin-bottom:18px">Elige entre nuestros cuatro planes. Premium VIP incluye 50 créditos de IA.</p>
       <div class="plans">
         <div class="plan">
           <h3>Básico</h3>
@@ -656,6 +656,35 @@ body>*{position:relative;z-index:1}
           </ul>
           <button class="btn big" id="btnAnual">Pagar con tarjeta</button>
           <button class="btn big" id="btnAnualMP" style="background:#00a8e8;margin-top:8px">Pagar con Mercado Pago</button>
+        </div>
+
+        <!-- NUEVA MEMBRESÍA PREMIUM VIP: versión de prueba -->
+        <div class="plan featured" id="planPremiumVIP">
+          <span class="badge">Premium VIP + IA</span>
+          <h3>👑 Premium VIP</h3>
+          <div class="price">$280 <span>MXN / 30 días</span></div>
+          <ul>
+            <li>Acceso a todas las herramientas de Cruz Sublime</li>
+            <li>Todos los beneficios de las membresías existentes</li>
+            <li>50 créditos para herramientas de inteligencia artificial</li>
+            <li>1 crédito por operación de IA completada correctamente</li>
+            <li>50 créditos nuevos al renovar; no acumulables</li>
+            <li>Acceso durante 30 días</li>
+          </ul>
+          <a class="btn big" href="https://buy.stripe.com/00wfZj0JY3QL5rr57DaEE03"
+             target="_blank" rel="noopener noreferrer"
+             style="display:block;text-decoration:none;text-align:center">
+            💳 Pagar con Stripe
+          </a>
+          <a class="btn big" href="https://mpago.li/19cwD7D"
+             target="_blank" rel="noopener noreferrer"
+             style="display:block;text-decoration:none;text-align:center;background:#00a8e8;margin-top:8px">
+            💙 Pagar con Mercado Pago
+          </a>
+          <p style="color:var(--muted);font-size:12px;margin-top:14px;line-height:1.5">
+            Después de pagar, envía tu comprobante para validar la membresía.
+            La activación y el contador automático de créditos requieren integración con el servidor.
+          </p>
         </div>
       </div>
       <div class="card" style="margin-top:22px;text-align:center">
