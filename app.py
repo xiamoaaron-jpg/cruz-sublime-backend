@@ -474,7 +474,9 @@ def upscale_use():
 
 
 
-@app.route("/admin")/clear-usages", methods=["POST"])
+
+@app.route("/admin/clear-usages", methods=["POST"])
+
 def admin_clear_usages():
     password = request.form.get("p", "")
     if password != ADMIN_PASSWORD:
