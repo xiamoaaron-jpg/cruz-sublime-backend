@@ -253,7 +253,88 @@ body:has(.panel.active) .wrap{max-width: min(96vw,1900px)}
 #panel-img #cs-v18-frame{height:1500px;min-height:85vh;width:100%;border-radius:16px}
 @media(max-width:1000px){#panel-img #cs-v18-frame{height:1900px}}
 @media(max-width:650px){#panel-img #cs-v18-frame{height:2400px}}
-</style></head>
+</style>
+<style>
+/* CRUZ SUBLIME — FONDO ESPACIAL ANIMADO */
+body {
+  background: #030511 !important;
+  overflow-x: hidden;
+}
+
+/* Nebulosa de colores en movimiento */
+body::before {
+  content: "" !important;
+  position: fixed !important;
+  inset: -30% !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(ellipse at 20% 30%,
+      rgba(0, 180, 255, .38), transparent 42%),
+    radial-gradient(ellipse at 75% 25%,
+      rgba(154, 50, 255, .38), transparent 43%),
+    radial-gradient(ellipse at 55% 75%,
+      rgba(255, 35, 150, .30), transparent 40%),
+    radial-gradient(ellipse at 80% 85%,
+      rgba(0, 240, 220, .20), transparent 35%),
+    #030511;
+  background-size: 110% 110%;
+  animation: cruzNebulosa 18s ease-in-out infinite alternate !important;
+}
+
+/* Estrellas brillantes */
+body::after {
+  content: "" !important;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .55;
+  background-image:
+    radial-gradient(2px 2px at 12% 18%, white 80%, transparent),
+    radial-gradient(2px 2px at 68% 24%, white 80%, transparent),
+    radial-gradient(1px 1px at 35% 70%, white 80%, transparent),
+    radial-gradient(2px 2px at 84% 62%, white 80%, transparent),
+    radial-gradient(1px 1px at 55% 42%, white 80%, transparent),
+    radial-gradient(2px 2px at 22% 88%, white 80%, transparent);
+  background-size: 360px 360px;
+  animation: cruzEstrellas 35s linear infinite;
+}
+
+@keyframes cruzNebulosa {
+  0% {
+    transform: translate(-3%, -2%) scale(1);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: translate(3%, 2%) scale(1.08);
+    filter: hue-rotate(12deg);
+  }
+  100% {
+    transform: translate(-1%, 4%) scale(1.13);
+    filter: hue-rotate(-12deg);
+  }
+}
+
+@keyframes cruzEstrellas {
+  from { background-position: 0 0; opacity: .35; }
+  to { background-position: 180px 260px; opacity: .8; }
+}
+
+/* Mantener el contenido por encima del fondo */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after {
+    animation: none !important;
+  }
+}
+</style>
+</head>
 <body>
 <div id="gate" style="display:none">
   <div class="box">
