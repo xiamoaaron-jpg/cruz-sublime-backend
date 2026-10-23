@@ -334,6 +334,90 @@ body > * {
   }
 }
 </style>
+
+<!-- CRUZ SUBLIME: NEBULOSAS PROFUNDAS -->
+<style>
+/* Nebulosa de varias capas */
+#cs-deep-nebula {
+  position: fixed;
+  inset: -15%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: .85;
+  background:
+    radial-gradient(ellipse 45% 55% at 12% 25%,
+      rgba(0, 175, 255, .32), transparent 75%),
+    radial-gradient(ellipse 45% 50% at 90% 35%,
+      rgba(155, 45, 255, .35), transparent 75%),
+    radial-gradient(ellipse 40% 45% at 65% 85%,
+      rgba(255, 35, 150, .25), transparent 75%),
+    radial-gradient(ellipse 35% 45% at 25% 90%,
+      rgba(0, 230, 210, .18), transparent 75%);
+  filter: blur(25px);
+  animation: csNebulaFloat 35s ease-in-out infinite alternate;
+}
+
+#cs-deep-nebula::before,
+#cs-deep-nebula::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#cs-deep-nebula::before {
+  background:
+    radial-gradient(ellipse 20% 35% at 20% 40%,
+      rgba(50, 110, 255, .35), transparent 90%),
+    radial-gradient(ellipse 25% 35% at 80% 60%,
+      rgba(225, 50, 210, .32), transparent 90%),
+    radial-gradient(ellipse 18% 30% at 48% 75%,
+      rgba(75, 25, 165, .25), transparent 90%);
+  filter: blur(38px);
+  animation: csCloudDrift 48s ease-in-out infinite alternate;
+}
+
+#cs-deep-nebula::after {
+  background:
+    radial-gradient(ellipse 28% 20% at 8% 65%,
+      rgba(0, 220, 255, .25), transparent 80%),
+    radial-gradient(ellipse 30% 22% at 92% 18%,
+      rgba(245, 80, 190, .23), transparent 80%);
+  filter: blur(48px);
+  animation: csCloudDrift 60s ease-in-out infinite
+    alternate-reverse;
+}
+
+@keyframes csNebulaFloat {
+  from { transform: translate(-2%, -2%) scale(1); }
+  to { transform: translate(3%, 3%) scale(1.12); }
+}
+
+@keyframes csCloudDrift {
+  from { transform: translate(-4%, 2%) rotate(-3deg); }
+  to { transform: translate(4%, -3%) rotate(4deg); }
+}
+
+/* Nebulosa detrás del contenido */
+body > #cs-deep-nebula {
+  position: fixed;
+  z-index: 0;
+}
+
+body > *:not(#cs-deep-nebula):not(#cs-galaxy-portal) {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cs-deep-nebula,
+  #cs-deep-nebula::before,
+  #cs-deep-nebula::after {
+    animation: none !important;
+  }
+}
+</style>
 </head>
 <body>
 <div id="gate" style="display:none">
@@ -2186,7 +2270,7 @@ body > *:not(#cs-galaxy-portal) {
 
     for (let i = 0; i < stars.length; i++) {
       const s = stars[i];
-      s.depth -= s.speed * 2.2;
+      s.depth -= s.speed * 0.85;
 
       if (s.depth < 10) {
         stars[i] = makeStar(false);
@@ -2254,5 +2338,5 @@ body > *:not(#cs-galaxy-portal) {
   start();
 })();
 </script>
-</body>
+<div id="cs-deep-nebula" aria-hidden="true"></div></body>
 </html>
