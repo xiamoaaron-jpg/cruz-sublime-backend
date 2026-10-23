@@ -652,7 +652,7 @@ def admin():
     </table>
     </body></html>
     """
-    return render_template_string(html, codes=codes, usages=usages, password=password)
+    return render_template_string(html, codes=codes, usages=usages)
 
 @app.route("/admin/generate", methods=["POST"])
 def admin_generate():
