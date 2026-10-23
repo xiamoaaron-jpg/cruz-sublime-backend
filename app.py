@@ -13,6 +13,110 @@ import time
 
 app = Flask(__name__)
 
+# === INICIO: ACCESO SEGURO AL ADMINISTRADOR ===
+from flask import session, redirect, url_for, render_template_string
+from functools import wraps
+
+app.secret_key = os.environ.get("SESSION_SECRET") or os.environ.get("SECRET_KEY")
+
+def admin_login_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not session.get("cruz_admin_autorizado"):
+            return redirect(url_for("cruz_admin_login"))
+        return func(*args, **kwargs)
+    return wrapper
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def cruz_admin_login():
+    error = ""
+
+    if request.method == "POST":
+        clave = request.form.get("password", "")
+        clave_correcta = os.environ.get("ADMIN_PASSWORD", "")
+
+        if clave_correcta and secrets.compare_digest(clave, clave_correcta):
+            session.clear()
+            session["cruz_admin_autorizado"] = True
+            return redirect("/admin")
+
+        error = "Contraseña incorrecta"
+
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Administrador | Cruz Sublime</title>
+      <style>
+        body {
+          background: radial-gradient(circle at top, #27205b, #070916 75%);
+          color: white;
+          font-family: Arial, sans-serif;
+          min-height: 100vh;
+          margin: 0;
+          display: grid;
+          place-items: center;
+        }
+        .panel {
+          width: min(350px, 85vw);
+          padding: 35px;
+          border: 1px solid #caa65d;
+          border-radius: 18px;
+          background: #111326;
+          text-align: center;
+          box-shadow: 0 0 40px #5b3fb133;
+        }
+        h1 { color: #e9c678; }
+        input, button {
+          box-sizing: border-box;
+          width: 100%;
+          padding: 13px;
+          margin-top: 15px;
+          border-radius: 8px;
+        }
+        input {
+          background: #080b19;
+          color: white;
+          border: 1px solid #777;
+        }
+        button {
+          background: #d8b56b;
+          color: #17121c;
+          font-weight: bold;
+          border: none;
+          cursor: pointer;
+        }
+        .error { color: #ff9090; }
+      </style>
+    </head>
+    <body>
+      <div class="panel">
+        <h1>👑 Cruz Sublime</h1>
+        <p>Acceso al administrador</p>
+        {% if error %}
+          <p class="error">{{ error }}</p>
+        {% endif %}
+        <form method="POST">
+          <input type="password" name="password"
+                 placeholder="Contraseña de administrador"
+                 autocomplete="current-password" required>
+          <button type="submit">Entrar</button>
+        </form>
+      </div>
+    </body>
+    </html>
+    """, error=error)
+
+@app.route("/admin/logout", methods=["POST"])
+def cruz_admin_logout():
+    session.clear()
+    return redirect(url_for("cruz_admin_login"))
+
+# === FIN: ACCESO SEGURO AL ADMINISTRADOR ===
+
+
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=False)
 
 @app.after_request
@@ -370,7 +474,7 @@ def upscale_use():
 
 
 
-@app.route("/admin/clear-usages", methods=["POST"])
+@app.route("/admin")/clear-usages", methods=["POST"])
 def admin_clear_usages():
     password = request.form.get("p", "")
     if password != ADMIN_PASSWORD:
