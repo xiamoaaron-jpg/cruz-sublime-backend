@@ -579,9 +579,10 @@ def halftone():
 
 @app.route("/admin")
 def admin():
-    password = request.args.get("p", "")
-    if password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
+    
+    if not session.get("cruz_admin_autorizado"):
+        return redirect("/admin/login")
+
     conn = get_conn()
     codes, usages = [], []
     if conn:
