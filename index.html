@@ -194,25 +194,21 @@ body>*{position:relative;z-index:1}
 
 
 <script>
-/* SOLO PRUEBA: autorización en llamadas de procesamiento y contador VIP */
+/* Guardar únicamente el token emitido por el servidor tras verificar membresía. */
 (function(){
-  const originalFetch=window.fetch.bind(window);
-  window.fetch=async function(input, init){
-    const url=typeof input==='string'?input:input.url;
-    init=init||{};
-    if(url.includes('/api/upscale') || url.includes('/api/halftone')){
-      const token=sessionStorage.getItem('cruz_member_token');
-      if(token){init.headers=Object.assign({},init.headers||{}, {'Authorization':'Bearer '+token});}
-      if((url.endsWith('/api/upscale')||url.endsWith('/api/halftone'))&&init.body){
-        try{const payload=JSON.parse(init.body);payload.job_id=payload.job_id||crypto.randomUUID();init.body=JSON.stringify(payload);}catch(e){}
-      }
-    }
-    const response=await originalFetch(input,init);
-    if(url.includes('/api/verify') && response.ok){
-      try{const clone=await response.clone().json();if(clone.valid&&clone.token)sessionStorage.setItem('cruz_member_token',clone.token);}catch(e){}
-    }
-    return response;
-  };
+ const nativeFetch=window.fetch.bind(window);
+ window.fetch=async function(input,init){
+   const url=typeof input==='string'?input:input.url;
+   const response=await nativeFetch(input,init);
+   if(url.includes('/api/verify')&&response.ok){
+     try{
+       const data=await response.clone().json();
+       if(data.valid&&data.token)sessionStorage.setItem('cruz_member_token',data.token);
+       else sessionStorage.removeItem('cruz_member_token');
+     }catch(e){}
+   }
+   return response;
+ };
 })();
 </script>
 <style>
@@ -656,13 +652,21 @@ html body #gate .box {
   </div>
   <!-- MEJORADOR AI -->
   <div class="panel" id="panel-premium">
-  <div class="card cs-premium-card">
-    <h2>👑 Mejorador IA Premium 🔒</h2>
-    <p>Exclusivo para membresía Premium VIP. Incluye 50 créditos de IA.</p>
-    <p style="margin-top:14px;color:#f4d789">Próximamente: procesamiento Premium mediante Replicate. La conexión segura y el descuento real de créditos aún no están habilitados.</p>
-    <button class="btn" style="margin-top:20px" onclick="document.querySelector('[data-tab=plans]').click()">Ver plan Premium VIP</button>
+    <div class="card cs-premium-card">
+      <h2>👑 Mejorador IA Premium 🔒</h2>
+      <p>Exclusivo Premium VIP · 50 créditos por membresía.</p>
+      <p id="vipBalance" class="status" aria-live="polite">Consulta tus créditos al ingresar con tu membresía VIP.</p>
+      <div class="field" style="margin-top:18px"><label for="vipFile">Selecciona una imagen (PNG, JPG o WebP)</label>
+        <input id="vipFile" type="file" accept="image/png,image/jpeg,image/webp" style="max-width:100%">
+      </div>
+      <button class="btn" id="vipImprove" type="button">✨ Mejorar imagen con IA</button>
+      <p id="vipMessage" class="status" aria-live="polite"></p>
+      <div class="preview" id="vipPreview" style="display:none">
+        <div class="pv"><h4>Original</h4><img id="vipOriginal" alt="Imagen original"></div>
+        <div class="pv"><h4>Resultado Premium</h4><img id="vipResult" alt="Imagen mejorada"><p><a id="vipDownload" class="btn" target="_blank" rel="noopener noreferrer" download="cruz-sublime-premium.png" style="display:none;margin-top:12px;text-decoration:none">Descargar resultado</a></p></div>
+      </div>
+    </div>
   </div>
-</div>
   <div class="panel" id="panel-img">
     <div class="card cs-v18-card">
       <h2>✨ Mejorador IA V18 · Definición fina</h2>
@@ -2372,5 +2376,48 @@ body > *:not(#cs-galaxy-portal) {
   start();
 })();
 </script>
-<div id="cs-deep-nebula" aria-hidden="true"></div></body>
+<div id="cs-deep-nebula" aria-hidden="true"></div><script>
+/* Mejorador Premium aislado: no modifica las rutas del Mejorador V18 ni Semitonos. */
+(function(){
+ const api='https://cruz-sublime-api.onrender.com';
+ const $=id=>document.getElementById(id);
+ const token=()=>sessionStorage.getItem('cruz_member_token');
+ async function balance(){
+   if(!token()){ $('vipBalance').textContent='Inicia sesión con una membresía Premium VIP para consultar créditos.';return; }
+   try{
+     const r=await fetch(api+'/api/vip/credits',{headers:{Authorization:'Bearer '+token()}});
+     const d=await r.json();
+     $('vipBalance').textContent=r.ok?'Créditos disponibles: '+d.left+' de '+d.max:(d.error||'No se pudo consultar el saldo');
+   }catch(e){$('vipBalance').textContent='No se pudo conectar para consultar los créditos.';}
+ }
+ $('vipImprove').addEventListener('click',async()=>{
+   const file=$('vipFile').files[0];
+   if(!file){$('vipMessage').textContent='Selecciona una imagen primero.';return;}
+   if(!token()){$('vipMessage').textContent='Ingresa con tu código Premium VIP.';return;}
+   if(file.size>8*1024*1024){$('vipMessage').textContent='La imagen no debe superar 8 MB.';return;}
+   const btn=$('vipImprove');btn.disabled=true;
+   $('vipMessage').textContent='Procesando con IA… Esto puede tardar unos minutos.';
+   $('vipDownload').style.display='none';
+   try{
+     const image=await new Promise((resolve,reject)=>{
+       const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('No se pudo leer la imagen'));reader.readAsDataURL(file);
+     });
+     $('vipOriginal').src=image;$('vipPreview').style.display='grid';
+     const response=await fetch(api+'/api/vip/upscale',{
+       method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},
+       body:JSON.stringify({image,job_id:crypto.randomUUID()})
+     });
+     const data=await response.json();
+     if(!response.ok||!data.image)throw new Error(data.error||'No se pudo procesar la imagen');
+     $('vipResult').src=data.image;$('vipDownload').href=data.image;$('vipDownload').style.display='inline-block';
+     $('vipMessage').textContent='¡Imagen mejorada! Ya puedes descargarla.';
+   }catch(err){$('vipMessage').textContent=err.message||'Ocurrió un error.';}
+   finally{btn.disabled=false;balance();}
+ });
+ document.addEventListener('DOMContentLoaded',balance);
+ document.addEventListener('click',e=>{if(e.target.closest('[data-tab="premium"]'))balance();});
+ window.addEventListener('focus',balance);
+})();
+</script>
+</body>
 </html>
