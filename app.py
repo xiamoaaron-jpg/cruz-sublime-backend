@@ -904,17 +904,7 @@ def _process_trial(kind):
     if not isinstance(img,str) or not img or len(img) > 16_000_000:
         return jsonify(error="Imagen faltante o demasiado grande"), 400
     if member["plan"] != VIP_PLAN:
-        if not GPU_WORKER_URL or not GPU_WORKER_KEY:
-            return jsonify(error="GPU pendiente de configurar; no se consumió Replicate"), 503
-        try:
-            r = requests.post(GPU_WORKER_URL + "/" + kind, json={"image":img},
-                headers={"Authorization":"Bearer " + GPU_WORKER_KEY},timeout=150)
-            r.raise_for_status()
-            output = r.json()
-            if not output.get("image"): raise ValueError("GPU sin imagen de salida")
-            return jsonify(image=output["image"],processor="gpu")
-        except Exception:
-            return jsonify(error="El servicio GPU no respondió correctamente"), 502
+        return jsonify(error="Solo Premium VIP"), 403
     job_id = str(data.get("job_id", ""))
     try: uuid.UUID(job_id)
     except (ValueError,AttributeError): return jsonify(error="Se requiere job_id UUID para evitar doble cobro"), 400
@@ -959,8 +949,9 @@ def _process_trial(kind):
         _job_update(job_id,"uncertain")
         return jsonify(error="No se pudo confirmar el resultado; crédito reservado para conciliación"),502
 
-app.view_functions["upscale"] = lambda: _process_trial("upscale")
-app.view_functions["halftone"] = lambda: _process_trial("halftone")
+@app.route("/api/vip/upscale", methods=["POST"])
+def premium_vip_upscale():
+    return _process_trial("upscale")
 # Existing checkout supports fourth plan. Payment confirmation and credit renewals are manual in this test.
 _original_checkout = app.view_functions["checkout"]
 def _checkout_trial():
