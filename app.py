@@ -477,66 +477,68 @@ def upscale_use():
 
 
 @app.route("/admin/clear-usages", methods=["POST"])
-
+@admin_login_required
 def admin_clear_usages():
-    password = request.form.get("p", "")
-    if password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
     conn = get_conn()
     if not conn:
-        return "DB no disponible", 500
+        return "Base de datos no disponible", 503
     try:
-        c = conn.cursor()
-        c.execute("DELETE FROM usages")
+        with conn.cursor() as c:
+            c.execute("DELETE FROM usages")
         conn.commit()
     except Exception as e:
-        print("Clear usages error:", e)
+        conn.rollback()
+        app.logger.exception("Error al vaciar usos")
+        return "No se pudieron borrar los usos", 500
     finally:
         conn.close()
-    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Usos vaciados</h2><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
+    return redirect(url_for("admin"))
+
 
 @app.route("/admin/delete-usage", methods=["POST"])
+@admin_login_required
 def admin_delete_usage():
-    password = request.form.get("p", "")
-    if password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
     usage_id = request.form.get("id", "").strip()
-    if not usage_id:
-        return "Falta ID", 400
+    if not usage_id.isdigit():
+        return "ID de uso inválido", 400
     conn = get_conn()
     if not conn:
-        return "DB no disponible", 500
+        return "Base de datos no disponible", 503
     try:
-        c = conn.cursor()
-        c.execute("DELETE FROM usages WHERE id = %s", (usage_id,))
+        with conn.cursor() as c:
+            c.execute("DELETE FROM usages WHERE id = %s", (int(usage_id),))
         conn.commit()
-    except Exception as e:
-        print("Delete usage error:", e)
+    except Exception:
+        conn.rollback()
+        app.logger.exception("Error al eliminar uso")
+        return "No se pudo eliminar el uso", 500
     finally:
         conn.close()
-    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Uso eliminado</h2><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
+    return redirect(url_for("admin"))
+
 
 @app.route("/admin/delete", methods=["POST"])
+@admin_login_required
 def admin_delete():
-    password = request.form.get("p", "")
-    if password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
     code = request.form.get("code", "").strip().upper()
     if not code:
         return "Falta código", 400
     conn = get_conn()
     if not conn:
-        return "DB no disponible", 500
+        return "Base de datos no disponible", 503
     try:
-        c = conn.cursor()
-        c.execute("DELETE FROM codes WHERE code = %s", (code,))
-        c.execute("DELETE FROM usages WHERE code = %s", (code,))
+        with conn.cursor() as c:
+            c.execute("DELETE FROM usages WHERE code = %s", (code,))
+            c.execute("DELETE FROM vip_credit_jobs WHERE code = %s", (code,))
+            c.execute("DELETE FROM codes WHERE code = %s", (code,))
         conn.commit()
-    except Exception as e:
-        print("Delete error:", e)
+    except Exception:
+        conn.rollback()
+        app.logger.exception("Error al eliminar código")
+        return "No se pudo eliminar el código", 500
     finally:
         conn.close()
-    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{code}</p><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
+    return redirect(url_for("admin"))
 
 
 @app.route("/api/halftone", methods=["POST"])
@@ -598,7 +600,7 @@ def admin():
                 created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
                 expires = (created + timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
                 codes.append((code_val, plan, days, created_at, email, expires))
-            c.execute('SELECT code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
+            c.execute('SELECT id, code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
             usages = c.fetchall()
             print("Usages found:", len(usages))
         except Exception as e:
@@ -625,10 +627,11 @@ def admin():
     </style>
     </head><body>
     <h2>Panel Cruz Sublime</h2>
+    <form action="/admin/logout" method="post" style="display:inline-flex"><button type="submit">Cerrar sesión</button></form>
     <form action="/admin/generate" method="post">
-      <input type="hidden" name="p" value="{{ password }}">
-      Plan: <select name="plan"><option value="basico">Básico</option><option value="medio">Medio</option><option value="anual">Anual</option></select>
-      Días: <input type="number" name="days" value="30" style="width:70px">
+      
+      Plan: <select name="plan"><option value="basico">Básico</option><option value="medio">Medio</option><option value="anual">Anual</option><option value="premium_vip">Premium VIP</option></select>
+      Días: <input type="number" name="days" value="30" min="1" max="3650" required style="width:70px">
       Email: <input type="email" name="email" placeholder="correo@ejemplo.com">
       <button type="submit">Generar código</button>
     </form>
@@ -636,18 +639,18 @@ def admin():
     <table>
     <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Expira</th><th>Email</th><th>Acción</th></tr>
     {% for c in codes %}
-    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[5] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
+    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[5] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" onclick="return confirm('¿Seguro que quieres eliminar este registro?')" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
     {% else %}
-    <tr><td colspan="5">No hay códigos</td></tr>
+    <tr><td colspan="7">No hay códigos</td></tr>
     {% endfor %}
     </table>
-    <h3>Usos recientes <form action="/admin/clear-usages" method="post" style="display:inline;margin-left:12px"><input type="hidden" name="p" value="{{ password }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Vaciar todos</button></form></h3>
+    <h3>Usos recientes <form action="/admin/clear-usages" method="post" style="display:inline;margin-left:12px"><button type="submit" onclick="return confirm('¿Eliminar TODOS los registros de uso?')" style="background:#e63946;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Vaciar todos</button></form></h3>
     <table>
     <tr><th>Código</th><th>Usuario</th><th>Plan</th><th>Fecha</th><th>Acción</th></tr>
     {% for u in usages %}
-    <tr><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td><td>{{ u[4] }}</td><td><form action="/admin/delete-usage" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="id" value="{{ u[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
+    <tr><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td><td>{{ u[4] }}</td><td><form action="/admin/delete-usage" method="post" style="margin:0"><input type="hidden" name="id" value="{{ u[0] }}"><button type="submit" onclick="return confirm('¿Seguro que quieres eliminar este registro?')" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
     {% else %}
-    <tr><td colspan="4">Sin usos</td></tr>
+    <tr><td colspan="5">Sin usos</td></tr>
     {% endfor %}
     </table>
     </body></html>
@@ -655,40 +658,39 @@ def admin():
     return render_template_string(html, codes=codes, usages=usages)
 
 @app.route("/admin/generate", methods=["POST"])
+@admin_login_required
 def admin_generate():
-    password = request.form.get("p", "")
-    if password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
-    plan = request.form.get("plan", "basico")
-    days = int(request.form.get("days", 30))
-    email = request.form.get("email", "").strip()
-    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-    code = f"{code[:4]}-{code[4:]}"
+    plan = request.form.get("plan", "basico").strip()
+    if plan not in ("basico", "medio", "anual", "premium_vip"):
+        return "Plan inválido", 400
+    try:
+        days = int(request.form.get("days", "30"))
+    except (TypeError, ValueError):
+        return "Días inválidos", 400
+    if not 1 <= days <= 3650:
+        return "Los días deben estar entre 1 y 3650", 400
+    email = request.form.get("email", "").strip().lower()
+    if len(email) > 254:
+        return "Correo demasiado largo", 400
+    code = "-".join((secrets.token_hex(4).upper()[:4], secrets.token_hex(4).upper()[:4]))
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_conn()
-    error_msg = ""
-    if conn:
-        try:
-            c = conn.cursor()
-            c.execute("INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)",
-                      (code, plan, days, now, email or None))
-            conn.commit()
-        except Exception as e:
-            error_msg = str(e)
-            print("Generate error:", e)
-        finally:
-            conn.close()
-    else:
-        error_msg = "No hay conexión a la base de datos"
-    return f"""
-    <html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center">
-    <h2>Código generado</h2>
-    <p style="font-size:28px;font-weight:bold;color:#ec4899">{code}</p>
-    <p>Plan: {plan} · Días: {days}</p>
-    {"<p style='color:#e63946'>Error: " + error_msg + "</p>" if error_msg else "<p style='color:#10b981'>Guardado correctamente</p>"}
-    <a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a>
-    </body></html>
-    """
+    if not conn:
+        return "Base de datos no disponible", 503
+    try:
+        with conn.cursor() as c:
+            c.execute(
+                "INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)",
+                (code, plan, days, now, email or None)
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        app.logger.exception("Error al generar código")
+        return "No se pudo guardar el código", 500
+    finally:
+        conn.close()
+    return redirect(url_for("admin"))
 
 
 # ===== PRUEBA: separación GPU / Replicate y créditos VIP =====
