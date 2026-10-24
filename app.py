@@ -581,78 +581,148 @@ def halftone():
     return jsonify({"error": "Timeout"}), 500
 
 @app.route("/admin")
+@admin_login_required
 def admin():
-    
-    if not session.get("cruz_admin_autorizado"):
-        return redirect("/admin/login")
-
+    from datetime import date
+    from urllib.parse import quote
     conn = get_conn()
     codes, usages = [], []
     if conn:
         try:
-            c = conn.cursor()
-            c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
-            codes_raw = c.fetchall()
-            print("Codes found:", len(codes_raw))
-            codes = []
-            for row in codes_raw:
-                code_val, plan, days, created_at, email = row
-                created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
-                expires = (created + timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
-                codes.append((code_val, plan, days, created_at, email, expires))
-            c.execute('SELECT id, code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
-            usages = c.fetchall()
-            print("Usages found:", len(usages))
-        except Exception as e:
-            print("Admin query error:", e)
-            import traceback
-            traceback.print_exc()
+            with conn.cursor() as c:
+                # Un solo resumen por código; funciona incluso con miles de accesos.
+                c.execute("""
+                    SELECT c.code, c.plan, c.days, c.created_at, c.email,
+                           MIN(u.used_at) AS first_used,
+                           COUNT(u.id) AS access_count
+                    FROM codes c
+                    LEFT JOIN usages u ON u.code = c.code
+                    GROUP BY c.code, c.plan, c.days, c.created_at, c.email
+                    ORDER BY c.created_at DESC
+                """)
+                rows = c.fetchall()
+                now = datetime.now()
+                for code, plan, days, created_at, email, first_used, count in rows:
+                    created = datetime.strptime(str(created_at), "%Y-%m-%d %H:%M:%S")
+                    expires = created + timedelta(days=int(days))
+                    remaining = max(0, (expires.date() - now.date()).days)
+                    if expires <= now:
+                        status, css = "⛔ Vencido", "expired"
+                    elif expires - now <= timedelta(days=3):
+                        status, css = "🔴 Urgente", "urgent"
+                    elif expires - now <= timedelta(days=7):
+                        status, css = "🟡 Por vencer", "soon"
+                    else:
+                        status, css = "🟢 Vigente", "active"
+                    first_use = str(first_used) if first_used else None
+                    message = (
+                        "Hola, te saludamos de Cruz Sublime 👑. "
+                        "Tu membresía está próxima a vencer. "
+                        "¿Te gustaría renovarla para seguir usando nuestras herramientas?"
+                    )
+                    codes.append({
+                        "code": code, "plan": plan, "days": days,
+                        "created": str(created_at), "expires": expires.strftime("%Y-%m-%d %H:%M:%S"),
+                        "email": email or "—", "first_used": first_use,
+                        "used": bool(first_use), "count": count,
+                        "remaining": remaining, "status": status, "css": css,
+                        "whatsapp": "https://wa.me/?text=" + quote(message)
+                    })
+                c.execute('SELECT id, code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
+                usages = c.fetchall()
+        except Exception:
+            app.logger.exception("Error al consultar panel de membresías")
+            return "No se pudo cargar el panel. Revisa los logs de Render.", 500
         finally:
             conn.close()
+    else:
+        return "Base de datos no disponible", 503
+
     html = """
-    <html><head>
+    <!doctype html><html lang="es"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Administrador | Cruz Sublime</title>
     <style>
-      body{font-family:'Segoe UI',system-ui,sans-serif;background:#050505;color:#f2f2f2;padding:30px}
-      h2{background:linear-gradient(90deg,#3b82f6,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:28px;margin-bottom:20px}
+      *{box-sizing:border-box}
+      body{font-family:'Segoe UI',system-ui,sans-serif;background:#050505;color:#f2f2f2;padding:25px;margin:0}
+      h2{background:linear-gradient(90deg,#3b82f6,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:28px}
       h3{color:#3b82f6;margin-top:30px}
-      form{background:#141414;padding:16px;border-radius:12px;border:1px solid #1f1f1f;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-      input,select,button{background:#0d0d0d;color:#f2f2f2;border:1px solid #1f1f1f;padding:8px 12px;border-radius:8px;font-size:14px}
+      form{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+      .generator{background:#141414;padding:16px;border-radius:12px;border:1px solid #292929}
+      input,select,button{background:#0d0d0d;color:#f2f2f2;border:1px solid #303030;padding:9px 12px;border-radius:8px;font-size:14px}
       button{background:linear-gradient(90deg,#3b82f6,#ec4899);color:#fff;font-weight:700;border:none;cursor:pointer}
       button:hover{opacity:.9}
-      table{width:100%;border-collapse:collapse;margin-top:12px;background:#0d0d0d;border-radius:12px;overflow:hidden}
+      .table-wrap{overflow-x:auto}
+      table{width:100%;border-collapse:collapse;margin-top:12px;background:#0d0d0d;min-width:1050px}
       th{background:#141414;color:#ec4899;padding:10px;text-align:left;font-size:13px}
-      td{padding:10px;border-top:1px solid #1f1f1f;font-size:13px}
+      td{padding:10px;border-top:1px solid #292929;font-size:13px}
       tr:hover td{background:#141414}
-      a{color:#3b82f6;text-decoration:none}
-    </style>
-    </head><body>
-    <h2>Panel Cruz Sublime</h2>
-    <form action="/admin/logout" method="post" style="display:inline-flex"><button type="submit">Cerrar sesión</button></form>
-    <form action="/admin/generate" method="post">
-      
-      Plan: <select name="plan"><option value="basico">Básico</option><option value="medio">Medio</option><option value="anual">Anual</option><option value="premium_vip">Premium VIP</option></select>
-      Días: <input type="number" name="days" value="30" min="1" max="3650" required style="width:70px">
-      Email: <input type="email" name="email" placeholder="correo@ejemplo.com">
-      <button type="submit">Generar código</button>
+      a{color:#76b4ff;text-decoration:none}
+      .active{color:#4ade80}.soon{color:#fde047}.urgent{color:#fb7185}.expired{color:#a1a1aa}
+      .used{color:#4ade80;font-weight:700}.unused{color:#aaa}
+      .danger{background:#c72c45}.muted{color:#aaa;font-size:13px}
+      .small{font-size:12px;padding:7px 9px}
+      .summary{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0}
+      .summary span{background:#161616;border:1px solid #333;border-radius:9px;padding:10px}
+    </style></head><body>
+    <h2>👑 Panel Cruz Sublime</h2>
+    <form action="/admin/logout" method="post"><button type="submit">Cerrar sesión</button></form>
+    <h3>Generar membresía (después de confirmar el pago)</h3>
+    <form class="generator" action="/admin/generate" method="post">
+      <label>Plan:
+        <select name="plan">
+          <option value="basico">Básico</option>
+          <option value="medio">Medio</option>
+          <option value="anual">Anual</option>
+          <option value="premium_vip">Premium VIP</option>
+        </select>
+      </label>
+      <label>Días: <input type="number" name="days" value="30" min="1" max="3650" required style="width:85px"></label>
+      <label>Correo: <input type="email" name="email" placeholder="correo@ejemplo.com" required></label>
+      <button type="submit">Generar y activar código</button>
     </form>
-    <h3>Códigos</h3>
-    <table>
-    <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Expira</th><th>Email</th><th>Acción</th></tr>
-    {% for c in codes %}
-    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[5] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" onclick="return confirm('¿Seguro que quieres eliminar este registro?')" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
-    {% else %}
-    <tr><td colspan="7">No hay códigos</td></tr>
-    {% endfor %}
-    </table>
-    <h3>Usos recientes <form action="/admin/clear-usages" method="post" style="display:inline;margin-left:12px"><button type="submit" onclick="return confirm('¿Eliminar TODOS los registros de uso?')" style="background:#e63946;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Vaciar todos</button></form></h3>
-    <table>
-    <tr><th>Código</th><th>Usuario</th><th>Plan</th><th>Fecha</th><th>Acción</th></tr>
-    {% for u in usages %}
-    <tr><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td><td>{{ u[4] }}</td><td><form action="/admin/delete-usage" method="post" style="margin:0"><input type="hidden" name="id" value="{{ u[0] }}"><button type="submit" onclick="return confirm('¿Seguro que quieres eliminar este registro?')" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
-    {% else %}
-    <tr><td colspan="5">Sin usos</td></tr>
-    {% endfor %}
-    </table>
+    <p class="muted">La vigencia comienza al generar el código. El primer ingreso del cliente se registra por separado y no cambia el vencimiento.</p>
+    <div class="summary">
+      <span>Total de códigos: <b>{{ codes|length }}</b></span>
+      <span>Ya utilizados: <b>{{ codes|selectattr('used')|list|length }}</b></span>
+      <span>Sin utilizar: <b>{{ codes|rejectattr('used')|list|length }}</b></span>
+    </div>
+    <h3>Membresías y vencimientos</h3>
+    <div class="table-wrap"><table>
+      <tr><th>Código</th><th>Plan</th><th>Correo</th><th>Inicio administrativo</th>
+          <th>Primer ingreso</th><th>Uso</th><th>Vence</th><th>Días restantes</th>
+          <th>Estado</th><th>Renovación</th><th>Acción</th></tr>
+      {% for c in codes %}
+      <tr>
+        <td><b>{{ c.code }}</b></td><td>{{ c.plan }}</td><td>{{ c.email }}</td>
+        <td>{{ c.created }}</td>
+        <td>{{ c.first_used or '—' }}</td>
+        <td>{% if c.used %}<span class="used">✅ Usado</span>{% else %}<span class="unused">⚪ Sin usar</span>{% endif %}</td>
+        <td>{{ c.expires }}</td><td>{{ c.remaining }}</td>
+        <td class="{{ c.css }}">{{ c.status }}</td>
+        <td><a href="{{ c.whatsapp }}" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a></td>
+        <td><form action="/admin/delete" method="post" onsubmit="return confirm('¿Eliminar este código y revocar su acceso definitivamente?')">
+          <input type="hidden" name="code" value="{{ c.code }}">
+          <button type="submit" class="danger small">Eliminar</button>
+        </form></td>
+      </tr>
+      {% else %}<tr><td colspan="11">Todavía no hay códigos.</td></tr>{% endfor %}
+    </table></div>
+    <p class="muted">WhatsApp abre un mensaje preparado; tú eliges al destinatario y lo envías manualmente.</p>
+    <h3>Últimos 50 accesos</h3>
+    <form action="/admin/clear-usages" method="post" onsubmit="return confirm('¿Borrar TODOS los registros de uso? Esto eliminará también el historial de primera conexión.')">
+      <button class="danger small" type="submit">Vaciar historial de usos</button>
+    </form>
+    <div class="table-wrap"><table>
+      <tr><th>Código</th><th>Correo</th><th>Plan</th><th>Fecha</th><th>Acción</th></tr>
+      {% for u in usages %}
+      <tr><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td><td>{{ u[4] }}</td>
+      <td><form action="/admin/delete-usage" method="post" onsubmit="return confirm('¿Eliminar este registro de uso?')">
+        <input type="hidden" name="id" value="{{ u[0] }}">
+        <button type="submit" class="danger small">Eliminar</button>
+      </form></td></tr>
+      {% else %}<tr><td colspan="5">Sin accesos registrados.</td></tr>{% endfor %}
+    </table></div>
     </body></html>
     """
     return render_template_string(html, codes=codes, usages=usages)
@@ -670,8 +740,8 @@ def admin_generate():
     if not 1 <= days <= 3650:
         return "Los días deben estar entre 1 y 3650", 400
     email = request.form.get("email", "").strip().lower()
-    if len(email) > 254:
-        return "Correo demasiado largo", 400
+    if not email or "@" not in email or len(email) > 254:
+        return "Ingresa un correo válido para asociar la membresía", 400
     code = "-".join((secrets.token_hex(4).upper()[:4], secrets.token_hex(4).upper()[:4]))
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_conn()
