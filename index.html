@@ -418,6 +418,30 @@ body > *:not(#cs-deep-nebula):not(#cs-galaxy-portal) {
   }
 }
 </style>
+<style>
+/* Cruz Sublime: fijar la ventana de acceso sin alterar las herramientas */
+html body #gate,
+html body #gate[style*="flex"] {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  z-index: 999999 !important;
+  overflow-y: auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+html body #gate .box {
+  position: relative;
+  flex: 0 1 420px;
+  max-width: 420px;
+  margin: auto;
+}
+</style>
 </head>
 <body>
 <div id="gate" style="display:none">
