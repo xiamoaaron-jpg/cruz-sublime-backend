@@ -489,7 +489,7 @@ html body #gate .box {
     <button class="tab" data-tab="quote">Cotizador <span class="cs-lock" aria-hidden="true">🔒</span></button>
     
     <button class="tab" data-tab="sep">Separar Colores <span class="cs-lock" aria-hidden="true">🔒</span></button>
-    <button class="tab" data-tab="canva" id="tabCanva" style="display:none">Canva + CapCut</button>
+    <button class="tab" data-tab="canva" id="tabCanva">Canva + CapCut <span class="cs-lock" aria-hidden="true">🔒</span></button>
     <button class="tab active" data-tab="plans">Membresía</button>
   </div>
   <!-- CALCULADORA DTF -->
@@ -1393,6 +1393,8 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
         localStorage.removeItem("cruz_sublime_code");
         localStorage.removeItem("cruz_sublime_user");
         localStorage.removeItem("cruz_sublime_plan");
+        sessionStorage.removeItem("cruz_member_token");
+        if(window.csUpdateLocks)window.csUpdateLocks();
         document.getElementById("gate").style.display = "flex";
       }
     } catch(e) {
@@ -1428,21 +1430,30 @@ document.addEventListener("DOMContentLoaded", function(){
       localStorage.setItem("cruz_sublime_code", code);
       localStorage.setItem("cruz_sublime_user", user);
       localStorage.setItem("cruz_sublime_plan", r.plan || "basico");
+      if(r.token) sessionStorage.setItem("cruz_member_token",r.token);
+      else sessionStorage.removeItem("cruz_member_token");
       updateCanvaVisibility();
+      if(window.csVipBalance) window.csVipBalance();
       document.querySelector('[data-tab="calc"]').click();
     } else {
       document.getElementById("gateMsg").textContent = (r && r.message) ? r.message : "Codigo invalido";
     }
   });
+  function csPlan(){return (localStorage.getItem("cruz_sublime_plan")||"").toLowerCase().trim();}
+  function csHasCanva(){return ["medio","anual","premium_vip"].includes(csPlan());}
+  function csHasPremium(){return csPlan()==="premium_vip";}
   function updateCanvaVisibility() {
-    var plan = localStorage.getItem("cruz_sublime_plan") || "basico";
-    var tab = document.getElementById("tabCanva");
-    if (plan === "medio" || plan === "anual") {
-      tab.style.display = "inline-block";
-    } else {
-      tab.style.display = "none";
-    }
+    document.querySelectorAll('.tabs .tab[data-tab]').forEach(function(tab){
+      var kind=tab.getAttribute('data-tab');
+      var allowed=localStorage.getItem('cruz_sublime_unlocked')==='1' &&
+        (kind==='plans'||(kind==='canva'?csHasCanva():(kind==='premium'?csHasPremium():true)));
+      var lock=tab.querySelector('.cs-lock');
+      if(lock) lock.style.display=allowed?'none':'inline';
+      tab.setAttribute('aria-disabled',allowed?'false':'true');
+      if(kind==='canva'||kind==='premium')tab.title=allowed?'Acceso incluido en tu plan':(kind==='premium'?'Exclusivo Premium VIP':'Disponible desde el plan Medio');
+    });
   }
+  window.csUpdateLocks=updateCanvaVisibility;
   updateCanvaVisibility();
   var tabs = document.querySelectorAll(".tab");
   var panels = document.querySelectorAll(".panel");
@@ -1452,6 +1463,12 @@ document.addEventListener("DOMContentLoaded", function(){
       if (tabName !== "plans" && localStorage.getItem("cruz_sublime_unlocked") !== "1") {
         document.getElementById("gate").style.display = "flex";
         return;
+      }
+      if(tabName==='canva'&&!csHasCanva()){
+        alert('🔒 Canva + CapCut está disponible desde la membresía Medio de $99.');return;
+      }
+      if(tabName==='premium'&&!csHasPremium()){
+        alert('🔒 El Mejorador Premium es exclusivo de Premium VIP.');return;
       }
       tabs.forEach(function(x){ x.classList.remove("active"); });
       panels.forEach(function(x){ x.classList.remove("active"); });
@@ -2382,15 +2399,28 @@ body > *:not(#cs-galaxy-portal) {
  const api='https://cruz-sublime-api.onrender.com';
  const $=id=>document.getElementById(id);
  const token=()=>sessionStorage.getItem('cruz_member_token');
+ const isVip=()=>localStorage.getItem('cruz_sublime_plan')==='premium_vip'&&localStorage.getItem('cruz_sublime_unlocked')==='1';
  async function balance(){
-   if(!token()){ $('vipBalance').textContent='Inicia sesión con una membresía Premium VIP para consultar créditos.';return; }
+   if(!isVip()){$('vipBalance').textContent='🔒 Exclusivo de Premium VIP.';return;}
+   if(!token()){ $('vipBalance').textContent='Vuelve a iniciar sesión con tu código VIP para consultar tus créditos.';return; }
    try{
      const r=await fetch(api+'/api/vip/credits',{headers:{Authorization:'Bearer '+token()}});
      const d=await r.json();
      $('vipBalance').textContent=r.ok?'Créditos disponibles: '+d.left+' de '+d.max:(d.error||'No se pudo consultar el saldo');
    }catch(e){$('vipBalance').textContent='No se pudo conectar para consultar los créditos.';}
  }
+ window.csVipBalance=balance;
+ $('vipFile').addEventListener('change',()=>{
+   const file=$('vipFile').files[0];
+   if(!file)return;
+   $('vipOriginal').src=URL.createObjectURL(file);
+   $('vipResult').removeAttribute('src');
+   $('vipPreview').style.display='grid';
+   $('vipDownload').style.display='none';
+   $('vipMessage').textContent='Imagen original lista. Presiona Mejorar imagen con IA para ver el resultado.';
+ });
  $('vipImprove').addEventListener('click',async()=>{
+   if(!isVip()){$('vipMessage').textContent='Esta herramienta es exclusiva de Premium VIP.';return;}
    const file=$('vipFile').files[0];
    if(!file){$('vipMessage').textContent='Selecciona una imagen primero.';return;}
    if(!token()){$('vipMessage').textContent='Ingresa con tu código Premium VIP.';return;}
