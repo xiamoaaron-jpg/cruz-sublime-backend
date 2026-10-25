@@ -2551,6 +2551,38 @@ body > *:not(#cs-galaxy-portal) {
    }
    throw new Error('La imagen sigue en proceso. No vuelvas a enviarla; consulta el estado antes de repetir para evitar cobros duplicados.');
  }
+ // Descarga real: el atributo download no funciona con enlaces externos de Replicate.
+ // Convertimos la imagen en un archivo local (blob) antes de descargarla.
+ $('vipDownload').addEventListener('click',async e=>{
+   e.preventDefault();
+   const button=$('vipDownload');
+   const url=button.getAttribute('href');
+   if(!url){setMessage('Primero mejora una imagen.');return;}
+   if(button.dataset.downloading==='1')return;
+   button.dataset.downloading='1';
+   const label=button.textContent;
+   button.textContent='⏳ Preparando descarga…';
+   try{
+     const response=await fetch(url,{mode:'cors'});
+     if(!response.ok)throw new Error('No se pudo obtener la imagen ('+response.status+').');
+     const blob=await response.blob();
+     if(!blob.type.startsWith('image/'))throw new Error('El resultado no es una imagen válida.');
+     const extension=blob.type.includes('jpeg')?'jpg':blob.type.includes('webp')?'webp':'png';
+     const localUrl=URL.createObjectURL(blob);
+     try{
+       const a=document.createElement('a');
+       a.href=localUrl;
+       a.download='Cruz_Sublime_Premium_'+Date.now()+'.'+extension;
+       a.style.display='none';
+       document.body.appendChild(a);
+       a.click();
+       a.remove();
+       setMessage('Descarga solicitada. Revisa la carpeta Descargas de tu computadora.');
+     }finally{setTimeout(()=>URL.revokeObjectURL(localUrl),60000);}
+   }catch(error){
+     setMessage('No se pudo descargar directamente: '+(error.message||'el servidor de la imagen bloqueó la descarga')+'. La imagen mejorada sigue disponible; no vuelvas a procesarla.');
+   }finally{button.textContent=label;button.dataset.downloading='0';}
+ });
  $('vipImprove').addEventListener('click',async()=>{
    if(running)return;
    if(!isVip()){setMessage('Esta herramienta es exclusiva de Premium VIP.');return;}
