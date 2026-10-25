@@ -683,8 +683,14 @@ html body #gate .box {
             <input id="vipFile" type="file" accept="image/png,image/jpeg,image/webp">
             <p class="status">PNG, JPG o WebP · máximo 8 MB</p>
           </div>
-          <div class="field"><label>2. Mejora con IA</label>
-            <p class="status">La mejora se realiza en Replicate. El crédito se consume únicamente cuando se confirma un resultado exitoso.</p>
+          <div class="field">
+            <label for="vipMode">2. Elige cómo mejorar tu imagen</label>
+            <select id="vipMode" aria-describedby="vipModeInfo" style="width:100%;background:#0d0d1a;color:white;border:1.5px solid rgba(255,45,149,.4);border-radius:12px;padding:12px;font-size:14px">
+              <option value="detalle">✨ Máximo detalle · Clarity · 1 crédito</option>
+              <option value="retrato">📸 Retrato natural · Topaz · 2 créditos</option>
+            </select>
+            <p id="vipModeInfo" class="status" aria-live="polite">Ideal para mascotas, objetos y texturas. Consume 1 crédito si la mejora termina correctamente.</p>
+            <p class="status">Los créditos se reservan durante el procesamiento y solo se consumen si termina correctamente.</p>
           </div>
           <button class="btn big" id="vipImprove" type="button">✨ Mejorar imagen con IA</button>
           <p id="vipMessage" class="status" aria-live="polite"></p>
@@ -2583,17 +2589,28 @@ body > *:not(#cs-galaxy-portal) {
      setMessage('No se pudo descargar directamente: '+(error.message||'el servidor de la imagen bloqueó la descarga')+'. La imagen mejorada sigue disponible; no vuelvas a procesarla.');
    }finally{button.textContent=label;button.dataset.downloading='0';}
  });
+ const vipMode=$('vipMode');
+ const vipModeInfo=$('vipModeInfo');
+ function updateVipMode(){
+   const portrait=vipMode.value==='retrato';
+   vipModeInfo.textContent=portrait
+     ? 'Pensado para fotografías de personas, con apariencia más natural. Consume 2 créditos si la mejora termina correctamente.'
+     : 'Ideal para mascotas, objetos y texturas. Consume 1 crédito si la mejora termina correctamente.';
+   $('vipImprove').textContent=portrait?'📸 Mejorar retrato · 2 créditos':'✨ Mejorar detalle · 1 crédito';
+ }
+ vipMode.addEventListener('change',updateVipMode);
+ updateVipMode();
  $('vipImprove').addEventListener('click',async()=>{
    if(running)return;
    if(!isVip()){setMessage('Esta herramienta es exclusiva de Premium VIP.');return;}
    const file=$('vipFile').files[0];if(!file){setMessage('Selecciona una imagen primero.');return;}
    const t=await ensureToken();if(!t){setMessage('No se pudo validar tu sesión Premium VIP.');return;}
-   const btn=$('vipImprove');running=true;btn.disabled=true;clearResult();
+   const btn=$('vipImprove');running=true;btn.disabled=true;vipMode.disabled=true;clearResult();
    setMessage('Preparando imagen para Replicate…');
    try{
      const image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('No se pudo leer la imagen'));reader.readAsDataURL(file);});
      const jobId=crypto.randomUUID();
-     const r=await fetch(api+'/api/vip/upscale',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({image,job_id:jobId})});
+     const r=await fetch(api+'/api/vip/upscale',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({image,job_id:jobId,mode:$('vipMode').value})});
      const d=await r.json();
      if(!r.ok&&r.status!==202)throw new Error(d.error||'No se pudo procesar la imagen');
      const result=d.image||(d.status==='pending'?await waitForJob(jobId,t):null);
@@ -2601,7 +2618,7 @@ body > *:not(#cs-galaxy-portal) {
      showImage('vipResult',result);$('vipDownload').href=result;$('vipDownload').style.display='inline-block';
      setMessage('¡Imagen mejorada! Ya puedes descargarla.');
    }catch(e){setMessage(e.message||'No se pudo completar la mejora.');}
-   finally{running=false;btn.disabled=false;balance();}
+   finally{running=false;btn.disabled=false;vipMode.disabled=false;balance();}
  });
  document.addEventListener('DOMContentLoaded',balance);
  document.addEventListener('click',e=>{if(e.target.closest('[data-tab="premium"]'))balance();});
