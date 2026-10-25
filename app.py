@@ -999,7 +999,7 @@ def _process_trial(kind):
             return jsonify(error="Replicate no completó el trabajo; sin crédito consumido"), 502
         return jsonify(status="pending", job_id=job_id), 202
     except requests.HTTPError as e:
-    print("ERROR REPLICATE VIP:", e.response.status_code if e.response is not None else "sin respuesta", (e.response.text[:1000] if e.response is not None else str(e)), flush=True)
+        print("ERROR REPLICATE VIP:", e.response.status_code if e.response is not None else "sin respuesta", (e.response.text[:1000] if e.response is not None else str(e)), flush=True)
         # A definite HTTP rejection did not start a prediction.
         _job_update(job_id, "failed")
         return jsonify(error="Replicate rechazó el procesamiento; sin crédito consumido"), 502
