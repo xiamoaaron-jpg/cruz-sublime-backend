@@ -852,9 +852,11 @@ def _vip_status(member):
     if not conn: return None
     try:
         with conn.cursor() as c:
-            c.execute("SELECT COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
-            used = c.fetchone()[0]
-        return {"max":50,"used":used,"left":max(0,50-used)}
+            c.execute("SELECT status, COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s GROUP BY status", (member["code"], _vip_period(member)))
+            counts = dict(c.fetchall())
+        used = counts.get("completed", 0)
+        pending = counts.get("reserved", 0) + counts.get("uncertain", 0)
+        return {"max": 50, "used": used, "pending": pending, "left": max(0, 50-used-pending)}
     finally: conn.close()
 
 @app.route("/api/vip/credits", methods=["GET"])
@@ -896,58 +898,102 @@ def _job_update(job_id, status, result=None):
         conn.commit()
     finally: conn.close()
 
+def _replicate_output(prediction):
+    output = prediction.get("output")
+    if isinstance(output, list): output = output[0] if output else None
+    if not isinstance(output, str) or not output.startswith("https://"):
+        raise RuntimeError("Replicate no devolvió una imagen válida")
+    return output
+
+def _replicate_prediction(prediction_id):
+    # The URL is constructed from an ID issued by Replicate, never from user input.
+    headers = {"Authorization": "Bearer " + REPLICATE_TOKEN}
+    r = requests.get("https://api.replicate.com/v1/predictions/" + prediction_id,
+                     headers=headers, timeout=18)
+    r.raise_for_status()
+    return r.json()
+
+@app.route("/api/vip/job/<job_id>", methods=["GET"])
+def vip_job_status(job_id):
+    member = _member()
+    if not member: return jsonify(error="Inicia sesión con tu código VIP"), 401
+    if member["plan"] != VIP_PLAN: return jsonify(error="Solo Premium VIP"), 403
+    try: uuid.UUID(job_id)
+    except ValueError: return jsonify(error="Trabajo inválido"), 400
+    conn = get_conn()
+    if not conn: return jsonify(error="Base de datos no disponible"), 503
+    try:
+        with conn.cursor() as c:
+            c.execute("SELECT status,result FROM vip_credit_jobs WHERE job_id=%s AND code=%s AND period=%s", (job_id, member["code"], _vip_period(member)))
+            row = c.fetchone()
+    finally: conn.close()
+    if not row: return jsonify(error="Trabajo no encontrado"), 404
+    status, result = row
+    if status == "completed": return jsonify(status="completed", image=result, credits=_vip_status(member))
+    if status == "failed": return jsonify(status="failed", error="Replicate no pudo completar el trabajo; sin crédito consumido", credits=_vip_status(member))
+    if not result or not result.startswith("replicate:"):
+        return jsonify(status="pending", message="Comprobando el resultado con Replicate"), 202
+    if not REPLICATE_TOKEN: return jsonify(error="Replicate no configurado"), 503
+    try:
+        prediction = _replicate_prediction(result.split(":", 1)[1])
+        state = prediction.get("status")
+        if state == "succeeded":
+            image = _replicate_output(prediction)
+            _job_update(job_id, "completed", image)
+            return jsonify(status="completed", image=image, credits=_vip_status(member))
+        if state in ("failed", "canceled"):
+            _job_update(job_id, "failed")
+            return jsonify(status="failed", error="Replicate no completó el trabajo; sin crédito consumido", credits=_vip_status(member))
+        return jsonify(status="pending", message="Replicate sigue procesando"), 202
+    except (requests.RequestException, RuntimeError):
+        return jsonify(status="pending", message="No se pudo confirmar todavía; vuelve a consultar"), 202
+
 def _process_trial(kind):
     member = _member()
-    if not member: return jsonify(error="Inicia sesión con tu código"), 401
+    if not member: return jsonify(error="Inicia sesión con tu código VIP"), 401
+    if member["plan"] != VIP_PLAN: return jsonify(error="Solo Premium VIP"), 403
     data = request.get_json(silent=True) or {}
     img = data.get("image")
-    if not isinstance(img,str) or not img or len(img) > 16_000_000:
-        return jsonify(error="Imagen faltante o demasiado grande"), 400
-    if member["plan"] != VIP_PLAN:
-        return jsonify(error="Solo Premium VIP"), 403
+    if not isinstance(img, str) or not img.startswith("data:image/") or len(img) > 11_000_000:
+        return jsonify(error="Imagen inválida o demasiado grande (máximo 8 MB)"), 400
     job_id = str(data.get("job_id", ""))
     try: uuid.UUID(job_id)
-    except (ValueError,AttributeError): return jsonify(error="Se requiere job_id UUID para evitar doble cobro"), 400
+    except (ValueError, AttributeError): return jsonify(error="Se requiere job_id UUID"), 400
+    if not REPLICATE_TOKEN or not os.environ.get("REPLICATE_UPSCALE_VERSION"):
+        return jsonify(error="Falta configurar Replicate en Render"), 503
     reservation, error = _reserve(member, job_id)
     if error: return jsonify(error=error), 402 if error == "Créditos agotados" else 503
     state, prior_result = reservation
-    if state in ("completed", "already_completed"): return jsonify(image=prior_result, credits=_vip_status(member), processor="replicate")
-    if state in ("uncertain", "failed", "already_reserved", "already_uncertain", "already_failed"):
-        return jsonify(error="Consulta soporte para reconciliar el trabajo anterior"), 409
-    # A concurrent retry of an existing reserved job must not start a second prediction.
-    # For production, use a durable worker queue; synchronous demo marks ambiguous failures uncertain.
+    if state == "already_completed": return jsonify(image=prior_result, credits=_vip_status(member))
+    if state.startswith("already_"):
+        return jsonify(status="pending", job_id=job_id, message="Consulta el estado de este trabajo"), 202
+    prediction_id = None
     try:
-        if not REPLICATE_TOKEN: raise RuntimeError("Replicate no configurado")
-        image_uri = img if img.startswith("data:") else "data:image/png;base64," + img
-        headers = {"Authorization":"Bearer " + REPLICATE_TOKEN, "Content-Type":"application/json"}
-        version = os.environ.get("REPLICATE_UPSCALE_VERSION") if kind == "upscale" else os.environ.get("REPLICATE_HALFTONE_VERSION", "aa0216c7968dd050f73f3f3d5eee023c07bc5d265cb06b44c6dd94fb31ce973b")
-        if not version: raise RuntimeError("Falta REPLICATE_UPSCALE_VERSION")
-        inputs = {"image":image_uri}
-        if kind == "halftone": inputs["halftone_only"] = True
-        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json={"version":version,"input":inputs},timeout=30)
+        headers = {"Authorization": "Bearer " + REPLICATE_TOKEN, "Content-Type": "application/json"}
+        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers,
+            json={"version": os.environ["REPLICATE_UPSCALE_VERSION"], "input": {"image": img}}, timeout=25)
         r.raise_for_status()
         prediction = r.json()
-        url = prediction.get("urls",{}).get("get")
-        if not url: raise RuntimeError("Predicción sin URL")
-        for _ in range(60):
-            poll = requests.get(url,headers=headers,timeout=20)
-            poll.raise_for_status()
-            p = poll.json()
-            if p.get("status") == "succeeded":
-                output = p.get("output")
-                if isinstance(output,list): output = output[0] if output else None
-                if not isinstance(output,str): raise RuntimeError("Salida no compatible")
-                _job_update(job_id,"completed",output)
-                return jsonify(image=output,credits=_vip_status(member),processor="replicate")
-            if p.get("status") in ("failed","canceled"):
-                _job_update(job_id,"failed")
-                return jsonify(error="Replicate no completó el trabajo; crédito liberado"),502
-            time.sleep(2)
-        _job_update(job_id,"uncertain")
-        return jsonify(error="Trabajo pendiente; crédito reservado hasta confirmar resultado"),202
+        prediction_id = prediction.get("id")
+        if not prediction_id: raise RuntimeError("Replicate no devolvió un ID")
+        _job_update(job_id, "reserved", "replicate:" + prediction_id)
+        if prediction.get("status") == "succeeded":
+            image = _replicate_output(prediction)
+            _job_update(job_id, "completed", image)
+            return jsonify(image=image, credits=_vip_status(member))
+        if prediction.get("status") in ("failed", "canceled"):
+            _job_update(job_id, "failed")
+            return jsonify(error="Replicate no completó el trabajo; sin crédito consumido"), 502
+        return jsonify(status="pending", job_id=job_id), 202
+    except requests.HTTPError:
+        # A definite HTTP rejection did not start a prediction.
+        _job_update(job_id, "failed")
+        return jsonify(error="Replicate rechazó el procesamiento; sin crédito consumido"), 502
     except Exception:
-        _job_update(job_id,"uncertain")
-        return jsonify(error="No se pudo confirmar el resultado; crédito reservado para conciliación"),502
+        # A network timeout can leave an unconfirmed prediction running: do not double-charge.
+        _job_update(job_id, "uncertain", "replicate:" + prediction_id if prediction_id else None)
+        return jsonify(status="pending", job_id=job_id,
+            message="No se pudo confirmar aún; consulta el estado antes de reintentar"), 202
 
 @app.route("/api/vip/upscale", methods=["POST"])
 def premium_vip_upscale():
