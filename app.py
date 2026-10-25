@@ -977,7 +977,7 @@ def _process_trial(kind):
                 "input": {
                     "image": img,
                     "scale_factor": 3,
-                    "creativity": -1.0,
+                    "creativity": 0.1,
                     "resemblance": 1.2,
                     "dynamic": 3,
                     "prompt": "Faithful photographic restoration of the exact original image. Preserve the same person, facial features, expression, closed or open mouth, eye color, clothing, objects, background and composition. Improve sharpness and reduce noise only. Photorealistic, natural texture.",
@@ -998,7 +998,8 @@ def _process_trial(kind):
             _job_update(job_id, "failed")
             return jsonify(error="Replicate no completó el trabajo; sin crédito consumido"), 502
         return jsonify(status="pending", job_id=job_id), 202
-    except requests.HTTPError:
+    except requests.HTTPError as e:
+    print("ERROR REPLICATE VIP:", e.response.status_code if e.response is not None else "sin respuesta", (e.response.text[:1000] if e.response is not None else str(e)), flush=True)
         # A definite HTTP rejection did not start a prediction.
         _job_update(job_id, "failed")
         return jsonify(error="Replicate rechazó el procesamiento; sin crédito consumido"), 502
