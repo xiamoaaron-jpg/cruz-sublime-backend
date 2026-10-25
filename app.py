@@ -959,8 +959,8 @@ def _process_trial(kind):
     job_id = str(data.get("job_id", ""))
     try: uuid.UUID(job_id)
     except (ValueError, AttributeError): return jsonify(error="Se requiere job_id UUID"), 400
-    if not REPLICATE_TOKEN or not os.environ.get("REPLICATE_UPSCALE_VERSION"):
-        return jsonify(error="Falta configurar Replicate en Render"), 503
+    if not REPLICATE_TOKEN:
+        return jsonify(error="Falta configurar REPLICATE_API_TOKEN en Render"), 503
     reservation, error = _reserve(member, job_id)
     if error: return jsonify(error=error), 402 if error == "Créditos agotados" else 503
     state, prior_result = reservation
@@ -971,7 +971,20 @@ def _process_trial(kind):
     try:
         headers = {"Authorization": "Bearer " + REPLICATE_TOKEN, "Content-Type": "application/json"}
         r = requests.post("https://api.replicate.com/v1/predictions", headers=headers,
-            json={"version": os.environ["REPLICATE_UPSCALE_VERSION"], "input": {"image": img}}, timeout=25)
+            json={
+                # Solo motor Premium VIP; /api/upscale (V18) permanece intacto.
+                "version": "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+                "input": {
+                    "image": img,
+                    "scale_factor": 3,
+                    "creativity": 0.1,
+                    "resemblance": 1.2,
+                    "dynamic": 3,
+                    "prompt": "Faithful photographic restoration of the exact original image. Preserve the same person, facial features, expression, closed or open mouth, eye color, clothing, objects, background and composition. Improve sharpness and reduce noise only. Photorealistic, natural texture.",
+                    "negative_prompt": "changed face, different eyes, changed eye color, open mouth, added teeth, altered expression, new objects, animals, cartoon, illustration, artificial skin, distortion, hallucinated details",
+                    "output_format": "png"
+                }
+            }, timeout=25)
         r.raise_for_status()
         prediction = r.json()
         prediction_id = prediction.get("id")
