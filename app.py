@@ -839,6 +839,8 @@ def _init_vip():
                 job_id TEXT PRIMARY KEY, code TEXT NOT NULL, period TEXT NOT NULL,
                 status TEXT NOT NULL, result TEXT, created_at TIMESTAMP DEFAULT NOW()
             )""")
+            # Legacy jobs remain one credit; new Topaz jobs can reserve two.
+            c.execute("ALTER TABLE vip_credit_jobs ADD COLUMN IF NOT EXISTS credit_cost INTEGER NOT NULL DEFAULT 1")
         conn.commit()
     finally: conn.close()
 _init_vip()
@@ -852,11 +854,14 @@ def _vip_status(member):
     if not conn: return None
     try:
         with conn.cursor() as c:
-            c.execute("SELECT status, COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s GROUP BY status", (member["code"], _vip_period(member)))
+            c.execute("""SELECT status, COALESCE(SUM(credit_cost), 0)
+                         FROM vip_credit_jobs WHERE code=%s AND period=%s
+                         GROUP BY status""", (member["code"], _vip_period(member)))
             counts = dict(c.fetchall())
-        used = counts.get("completed", 0)
-        pending = counts.get("reserved", 0) + counts.get("uncertain", 0)
-        return {"max": 50, "used": used, "pending": pending, "left": max(0, 50-used-pending)}
+        used = int(counts.get("completed", 0))
+        pending = int(counts.get("reserved", 0)) + int(counts.get("uncertain", 0))
+        return {"max": 50, "used": used, "pending": pending,
+                "left": max(0, 50-used-pending)}
     finally: conn.close()
 
 @app.route("/api/vip/credits", methods=["GET"])
@@ -866,26 +871,33 @@ def vip_credits():
     if member["plan"] != VIP_PLAN: return jsonify(error="Solo Premium VIP"), 403
     return jsonify(_vip_status(member))
 
-def _reserve(member, job_id):
+def _reserve(member, job_id, credit_cost=1):
     conn = get_conn()
     if not conn: return None, "Base de datos no disponible"
     try:
         with conn.cursor() as c:
             c.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (member["code"],))
-            c.execute("SELECT status,result FROM vip_credit_jobs WHERE job_id=%s AND code=%s", (job_id, member["code"]))
+            c.execute("SELECT status,result,credit_cost FROM vip_credit_jobs WHERE job_id=%s AND code=%s",
+                      (job_id, member["code"]))
             prior = c.fetchone()
             if prior:
                 conn.commit()
                 return ("already_" + prior[0], prior[1]), None
-            c.execute("SELECT COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
-            if c.fetchone()[0] >= 50:
+            c.execute("""SELECT COALESCE(SUM(credit_cost), 0) FROM vip_credit_jobs
+                         WHERE code=%s AND period=%s
+                         AND status IN ('reserved','completed','uncertain')""",
+                      (member["code"], _vip_period(member)))
+            if int(c.fetchone()[0]) + credit_cost > 50:
                 conn.commit()
-                return None, "Créditos agotados"
-            c.execute("INSERT INTO vip_credit_jobs(job_id,code,period,status) VALUES (%s,%s,%s,'reserved')", (job_id,member["code"],_vip_period(member)))
+                return None, "Créditos insuficientes"
+            c.execute("""INSERT INTO vip_credit_jobs(job_id,code,period,status,credit_cost)
+                         VALUES (%s,%s,%s,'reserved',%s)""",
+                      (job_id,member["code"],_vip_period(member),credit_cost))
         conn.commit()
         return ("reserved", None), None
     except Exception:
         conn.rollback()
+        app.logger.exception("Error al reservar créditos VIP")
         return None, "Error al reservar crédito"
     finally: conn.close()
 
@@ -961,8 +973,13 @@ def _process_trial(kind):
     except (ValueError, AttributeError): return jsonify(error="Se requiere job_id UUID"), 400
     if not REPLICATE_TOKEN:
         return jsonify(error="Falta configurar REPLICATE_API_TOKEN en Render"), 503
-    reservation, error = _reserve(member, job_id)
-    if error: return jsonify(error=error), 402 if error == "Créditos agotados" else 503
+    # Old clients that send no mode continue to use Clarity (one credit).
+    mode = str(data.get("mode", "detalle")).strip().lower()
+    modes = {"detalle": 1, "retrato": 2}
+    if mode not in modes:
+        return jsonify(error="Modo VIP inválido: usa detalle o retrato"), 400
+    reservation, error = _reserve(member, job_id, modes[mode])
+    if error: return jsonify(error=error), 402 if error == "Créditos insuficientes" else 503
     state, prior_result = reservation
     if state == "already_completed": return jsonify(image=prior_result, credits=_vip_status(member))
     if state.startswith("already_"):
@@ -970,10 +987,21 @@ def _process_trial(kind):
     prediction_id = None
     try:
         headers = {"Authorization": "Bearer " + REPLICATE_TOKEN, "Content-Type": "application/json"}
-        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers,
-            json={
-                # Solo motor Premium VIP; /api/upscale (V18) permanece intacto.
-                "version": "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
+        if mode == "retrato":
+            # Official Topaz endpoint: High Fidelity V2, no face regeneration.
+            endpoint = "https://api.replicate.com/v1/models/topazlabs/image-upscale/predictions"
+            payload = {"input": {
+                "image": img,
+                "enhance_model": "High Fidelity V2",
+                "upscale_factor": "2x",
+                "output_format": "png",
+                "subject_detection": "Foreground",
+                "face_enhancement": False
+            }}
+        else:
+            # Keep the proven Clarity settings unchanged.
+            endpoint = "https://api.replicate.com/v1/predictions"
+            payload = {"version": "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
                 "input": {
                     "image": img,
                     "scale_factor": 3,
@@ -983,8 +1011,8 @@ def _process_trial(kind):
                     "prompt": "Faithful photographic restoration of the exact original image. Preserve the same person, facial features, expression, closed or open mouth, eye color, clothing, objects, background and composition. Improve sharpness and reduce noise only. Photorealistic, natural texture.",
                     "negative_prompt": "changed face, different eyes, changed eye color, open mouth, added teeth, altered expression, new objects, animals, cartoon, illustration, artificial skin, distortion, hallucinated details",
                     "output_format": "png"
-                }
-            }, timeout=25)
+                }}
+        r = requests.post(endpoint, headers=headers, json=payload, timeout=25)
         r.raise_for_status()
         prediction = r.json()
         prediction_id = prediction.get("id")
