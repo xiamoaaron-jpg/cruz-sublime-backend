@@ -200,7 +200,9 @@ body>*{position:relative;z-index:1}
 .cs-vip-imagebox{min-width:0;background:#070b19;border:1px solid rgba(255,45,149,.3);border-radius:14px;padding:10px}
 .cs-vip-imagebox h4{font-size:12px;color:#b9c5df;margin-bottom:10px;text-align:center}
 .cs-vip-viewport{position:relative;display:flex;align-items:center;justify-content:center;height:365px;overflow:hidden;background:repeating-conic-gradient(#1b2131 0% 25%,#111725 0% 50%) 50% / 24px 24px;border-radius:10px;cursor:crosshair}
-.cs-vip-viewport img{display:none;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transform-origin:center center;transition:transform .08s;pointer-events:none}
+.cs-vip-viewport img{display:none;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transform-origin:center center;transition:none;pointer-events:none}
+.cs-vip-viewport.cs-vip-canpan{cursor:grab;touch-action:none}.cs-vip-viewport.cs-vip-dragging{cursor:grabbing;user-select:none}
+.cs-vip-pan-controls{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:10px}.cs-vip-pan-controls .btn{padding:7px 11px;font-size:14px;min-width:36px}.cs-vip-pan-controls small{color:#b9c5df;margin-right:7px}
 .cs-vip-placeholder{font-size:13px;color:#aab4cd;text-align:center;padding:12px}
 .cs-vip-loupe{display:none;position:fixed;width:175px;height:175px;border:3px solid #00d4ff;border-radius:50%;box-shadow:0 6px 35px #000b;pointer-events:none;z-index:9999;background-color:#111;background-repeat:no-repeat}
 @media(max-width:950px){.cs-vip-studio{grid-template-columns:1fr}.cs-vip-viewport{height:310px}}
@@ -697,7 +699,8 @@ html body #gate .box {
             <button type="button" class="btn ghost" id="vipZoomReset" title="Restablecer zoom">Restablecer</button>
             <button type="button" class="btn ghost" id="vipLoupeToggle" aria-pressed="false">🔎 Lupa</button></div>
           </div>
-          <p class="status">Usa la rueda del mouse sobre una imagen para acercar o alejar. Activa la lupa para inspeccionar detalles.</p>
+          <p class="status">Usa la rueda para acercar donde apunta el cursor. Con zoom, arrastra la foto o usa las flechas para recorrerla. La lupa sigue disponible.</p>
+          <div class="cs-vip-pan-controls" aria-label="Mover la imagen ampliada"><small>↔ Mover imagen:</small><button type="button" class="btn ghost" id="vipPanLeft" title="Mover a la izquierda">←</button><button type="button" class="btn ghost" id="vipPanUp" title="Mover hacia arriba">↑</button><button type="button" class="btn ghost" id="vipPanDown" title="Mover hacia abajo">↓</button><button type="button" class="btn ghost" id="vipPanRight" title="Mover a la derecha">→</button></div>
           <div class="cs-vip-images" id="vipPreview">
             <div class="cs-vip-imagebox"><h4>Original</h4>
               <div class="cs-vip-viewport" id="vipOriginalViewport"><img id="vipOriginal" alt="Imagen original seleccionada"><span class="cs-vip-placeholder" id="vipOriginalPlaceholder">Selecciona una imagen para verla aquí</span></div>
@@ -2449,7 +2452,7 @@ body > *:not(#cs-galaxy-portal) {
  const $=id=>document.getElementById(id);
  const token=()=>sessionStorage.getItem('cruz_member_token');
  const isVip=()=>localStorage.getItem('cruz_sublime_plan')==='premium_vip'&&localStorage.getItem('cruz_sublime_unlocked')==='1';
- let originalUrl=null, zoom=1, loupe=false, running=false;
+ let originalUrl=null, zoom=1, panX=0, panY=0, loupe=false, running=false;
  const setMessage=s=>{$('vipMessage').textContent=s;};
  async function ensureToken(){
    if(token())return token();
@@ -2474,9 +2477,25 @@ body > *:not(#cs-galaxy-portal) {
    }catch(e){$('vipBalance').textContent=e.message;}
  }
  window.csVipBalance=balance;
- function showImage(id,src){const img=$(id);img.src=src;img.style.display='block';$(id+'Placeholder').style.display='none';}
+ function showImage(id,src){const img=$(id);img.src=src;img.style.display='block';img.onload=renderView;$(id+'Placeholder').style.display='none';}
  function clearResult(){const img=$('vipResult');img.removeAttribute('src');img.style.display='none';$('vipResultPlaceholder').style.display='block';$('vipDownload').style.display='none';}
- function setZoom(value){zoom=Math.max(1,Math.min(6,value));$('vipZoomLabel').textContent=Math.round(zoom*100)+'%';['vipOriginal','vipResult'].forEach(id=>$(id).style.transform='scale('+zoom+')');}
+ function panLimits(){
+   const viewport=$('vipOriginalViewport'), img=$('vipOriginal');
+   if(!img.getAttribute('src')||!img.offsetWidth)return {x:0,y:0};
+   return {x:Math.max(0,(img.offsetWidth*zoom-viewport.clientWidth)/2),y:Math.max(0,(img.offsetHeight*zoom-viewport.clientHeight)/2)};
+ }
+ function renderView(){
+   const lim=panLimits();panX=Math.max(-lim.x,Math.min(lim.x,panX));panY=Math.max(-lim.y,Math.min(lim.y,panY));
+   $('vipZoomLabel').textContent=Math.round(zoom*100)+'%';
+   ['vipOriginal','vipResult'].forEach(id=>$(id).style.transform='translate('+panX+'px,'+panY+'px) scale('+zoom+')');
+   ['vipOriginalViewport','vipResultViewport'].forEach(id=>$(id).classList.toggle('cs-vip-canpan',zoom>1));
+ }
+ function setZoom(value,anchor){
+   const next=Math.max(1,Math.min(6,value));
+   if(anchor){panX=anchor.x-(anchor.x-panX)*next/zoom;panY=anchor.y-(anchor.y-panY)*next/zoom;}
+   zoom=next;if(zoom===1){panX=0;panY=0;}renderView();
+ }
+ function movePan(dx,dy){panX+=dx;panY+=dy;renderView();}
  $('vipFile').addEventListener('change',()=>{
    const f=$('vipFile').files[0];if(!f)return;
    if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>8*1024*1024){setMessage('Selecciona PNG, JPG o WebP de máximo 8 MB.');$('vipFile').value='';return;}
@@ -2487,10 +2506,26 @@ body > *:not(#cs-galaxy-portal) {
  $('vipZoomIn').addEventListener('click',()=>setZoom(zoom+.25));
  $('vipZoomOut').addEventListener('click',()=>setZoom(zoom-.25));
  $('vipZoomReset').addEventListener('click',()=>setZoom(1));
+ [['vipPanLeft',-55,0],['vipPanRight',55,0],['vipPanUp',0,-55],['vipPanDown',0,55]].forEach(([id,x,y])=>$(id).addEventListener('click',()=>movePan(x,y)));
+ window.addEventListener('resize',renderView);
  $('vipLoupeToggle').addEventListener('click',()=>{loupe=!loupe;$('vipLoupeToggle').setAttribute('aria-pressed',String(loupe));$('vipLoupeToggle').textContent=loupe?'🔎 Lupa activa':'🔎 Lupa';if(!loupe)$('vipLoupe').style.display='none';});
  ['vipOriginalViewport','vipResultViewport'].forEach(id=>{
    const viewport=$(id);
-   viewport.addEventListener('wheel',e=>{if(!viewport.querySelector('img[src]'))return;e.preventDefault();setZoom(zoom+(e.deltaY<0?.2:-.2));},{passive:false});
+   viewport.addEventListener('wheel',e=>{
+     if(!viewport.querySelector('img[src]'))return;e.preventDefault();
+     const r=viewport.getBoundingClientRect();setZoom(zoom+(e.deltaY<0?.2:-.2),{x:e.clientX-r.left-r.width/2,y:e.clientY-r.top-r.height/2});
+   },{passive:false});
+   let drag=null;
+   viewport.addEventListener('pointerdown',e=>{
+     if(zoom<=1||!viewport.querySelector('img[src]')||e.button!==0)return;
+     drag={x:e.clientX,y:e.clientY};viewport.setPointerCapture(e.pointerId);viewport.classList.add('cs-vip-dragging');
+   });
+   viewport.addEventListener('pointermove',e=>{
+     if(!drag)return;
+     movePan(e.clientX-drag.x,e.clientY-drag.y);drag={x:e.clientX,y:e.clientY};
+   });
+   const endDrag=()=>{drag=null;viewport.classList.remove('cs-vip-dragging');};
+   viewport.addEventListener('pointerup',endDrag);viewport.addEventListener('pointercancel',endDrag);viewport.addEventListener('lostpointercapture',endDrag);
    viewport.addEventListener('mousemove',e=>{
      const img=viewport.querySelector('img');if(!loupe||!img||!img.getAttribute('src'))return;
      const rect=img.getBoundingClientRect();if(!rect.width||!rect.height)return;
