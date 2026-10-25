@@ -188,6 +188,23 @@ body>*{position:relative;z-index:1}
     #panel-semi .semi-images .semi-viewport{height:340px}
   }
 
+
+/* Cruz Sublime Premium VIP: editor independiente */
+.cs-vip-studio{display:grid;grid-template-columns:minmax(245px,310px) minmax(0,1fr);gap:18px;align-items:start;margin-top:16px}
+.cs-vip-tools,.cs-vip-output{min-width:0;background:#0b1023;border:1px solid rgba(0,212,255,.35);border-radius:16px;padding:18px}
+.cs-vip-tools h3{margin-bottom:14px}.cs-vip-tools input[type=file]{max-width:100%;width:100%;color:#dce8ff}
+.cs-vip-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.cs-vip-toolbar>div{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.cs-vip-toolbar .btn{padding:7px 11px;font-size:12px}.cs-vip-toolbar span{min-width:44px;text-align:center;font-size:12px}
+.cs-vip-images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.cs-vip-imagebox{min-width:0;background:#070b19;border:1px solid rgba(255,45,149,.3);border-radius:14px;padding:10px}
+.cs-vip-imagebox h4{font-size:12px;color:#b9c5df;margin-bottom:10px;text-align:center}
+.cs-vip-viewport{position:relative;display:flex;align-items:center;justify-content:center;height:365px;overflow:hidden;background:repeating-conic-gradient(#1b2131 0% 25%,#111725 0% 50%) 50% / 24px 24px;border-radius:10px;cursor:crosshair}
+.cs-vip-viewport img{display:none;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transform-origin:center center;transition:transform .08s;pointer-events:none}
+.cs-vip-placeholder{font-size:13px;color:#aab4cd;text-align:center;padding:12px}
+.cs-vip-loupe{display:none;position:fixed;width:175px;height:175px;border:3px solid #00d4ff;border-radius:50%;box-shadow:0 6px 35px #000b;pointer-events:none;z-index:9999;background-color:#111;background-repeat:no-repeat}
+@media(max-width:950px){.cs-vip-studio{grid-template-columns:1fr}.cs-vip-viewport{height:310px}}
+@media(max-width:590px){.cs-vip-images{grid-template-columns:1fr}.cs-vip-viewport{height:310px}}
 </style>
 
 
@@ -650,20 +667,47 @@ html body #gate .box {
       </div>
     </div>
   </div>
-  <!-- MEJORADOR AI -->
+  <!-- MEJORADOR PREMIUM VIP: laboratorio aislado de V18 -->
   <div class="panel" id="panel-premium">
     <div class="card cs-premium-card">
-      <h2>👑 Mejorador IA Premium 🔒</h2>
-      <p>Exclusivo Premium VIP · 50 créditos por membresía.</p>
-      <p id="vipBalance" class="status" aria-live="polite">Consulta tus créditos al ingresar con tu membresía VIP.</p>
-      <div class="field" style="margin-top:18px"><label for="vipFile">Selecciona una imagen (PNG, JPG o WebP)</label>
-        <input id="vipFile" type="file" accept="image/png,image/jpeg,image/webp" style="max-width:100%">
-      </div>
-      <button class="btn" id="vipImprove" type="button">✨ Mejorar imagen con IA</button>
-      <p id="vipMessage" class="status" aria-live="polite"></p>
-      <div class="preview" id="vipPreview" style="display:none">
-        <div class="pv"><h4>Original</h4><img id="vipOriginal" alt="Imagen original"></div>
-        <div class="pv"><h4>Resultado Premium</h4><img id="vipResult" alt="Imagen mejorada"><p><a id="vipDownload" class="btn" target="_blank" rel="noopener noreferrer" download="cruz-sublime-premium.png" style="display:none;margin-top:12px;text-decoration:none">Descargar resultado</a></p></div>
+      <h2>👑 Mejorador IA Premium VIP</h2>
+      <p style="color:#b9c5df;margin-bottom:15px">Mejora de imagen con Replicate · 50 créditos por membresía.</p>
+      <div class="cs-vip-studio">
+        <section class="cs-vip-tools" aria-label="Herramientas Premium">
+          <h3>⚙️ Herramientas</h3>
+          <p id="vipBalance" class="status" aria-live="polite">Consultando créditos VIP…</p>
+          <div class="field" style="margin-top:20px">
+            <label for="vipFile">1. Selecciona tu imagen</label>
+            <input id="vipFile" type="file" accept="image/png,image/jpeg,image/webp">
+            <p class="status">PNG, JPG o WebP · máximo 8 MB</p>
+          </div>
+          <div class="field"><label>2. Mejora con IA</label>
+            <p class="status">La mejora se realiza en Replicate. El crédito se consume únicamente cuando se confirma un resultado exitoso.</p>
+          </div>
+          <button class="btn big" id="vipImprove" type="button">✨ Mejorar imagen con IA</button>
+          <p id="vipMessage" class="status" aria-live="polite"></p>
+          <a id="vipDownload" class="btn ghost" download="cruz-sublime-premium.png" style="display:none;margin-top:12px;text-align:center">⬇️ Descargar resultado</a>
+        </section>
+        <section class="cs-vip-output" aria-label="Original y resultado">
+          <div class="cs-vip-toolbar">
+            <strong>🔍 Vista comparativa</strong>
+            <div><button type="button" class="btn ghost" id="vipZoomOut" title="Alejar">−</button>
+            <span id="vipZoomLabel">100%</span>
+            <button type="button" class="btn ghost" id="vipZoomIn" title="Acercar">+</button>
+            <button type="button" class="btn ghost" id="vipZoomReset" title="Restablecer zoom">Restablecer</button>
+            <button type="button" class="btn ghost" id="vipLoupeToggle" aria-pressed="false">🔎 Lupa</button></div>
+          </div>
+          <p class="status">Usa la rueda del mouse sobre una imagen para acercar o alejar. Activa la lupa para inspeccionar detalles.</p>
+          <div class="cs-vip-images" id="vipPreview">
+            <div class="cs-vip-imagebox"><h4>Original</h4>
+              <div class="cs-vip-viewport" id="vipOriginalViewport"><img id="vipOriginal" alt="Imagen original seleccionada"><span class="cs-vip-placeholder" id="vipOriginalPlaceholder">Selecciona una imagen para verla aquí</span></div>
+            </div>
+            <div class="cs-vip-imagebox"><h4>Resultado Premium</h4>
+              <div class="cs-vip-viewport" id="vipResultViewport"><img id="vipResult" alt="Resultado mejorado con IA"><span class="cs-vip-placeholder" id="vipResultPlaceholder">Aquí aparecerá la imagen mejorada</span></div>
+            </div>
+          </div>
+          <div class="cs-vip-loupe" id="vipLoupe" aria-hidden="true"></div>
+        </section>
       </div>
     </div>
   </div>
@@ -1388,6 +1432,11 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
         body: JSON.stringify({code: code, user: user})
       });
       var d = await r.json();
+      if(d.valid){
+        if(d.token) sessionStorage.setItem("cruz_member_token",d.token);
+        localStorage.setItem("cruz_sublime_plan",d.plan||"basico");
+        if(window.csVipBalance) window.csVipBalance();
+      }
       if(!d.valid){
         localStorage.removeItem("cruz_sublime_unlocked");
         localStorage.removeItem("cruz_sublime_code");
@@ -2394,55 +2443,98 @@ body > *:not(#cs-galaxy-portal) {
 })();
 </script>
 <div id="cs-deep-nebula" aria-hidden="true"></div><script>
-/* Mejorador Premium aislado: no modifica las rutas del Mejorador V18 ni Semitonos. */
+/* Premium VIP: créditos reales, sesión y visor comparativo. No altera V18 ni Semitonos. */
 (function(){
  const api='https://cruz-sublime-api.onrender.com';
  const $=id=>document.getElementById(id);
  const token=()=>sessionStorage.getItem('cruz_member_token');
  const isVip=()=>localStorage.getItem('cruz_sublime_plan')==='premium_vip'&&localStorage.getItem('cruz_sublime_unlocked')==='1';
- async function balance(){
-   if(!isVip()){$('vipBalance').textContent='🔒 Exclusivo de Premium VIP.';return;}
-   if(!token()){ $('vipBalance').textContent='Vuelve a iniciar sesión con tu código VIP para consultar tus créditos.';return; }
+ let originalUrl=null, zoom=1, loupe=false, running=false;
+ const setMessage=s=>{$('vipMessage').textContent=s;};
+ async function ensureToken(){
+   if(token())return token();
+   const code=localStorage.getItem('cruz_sublime_code'),user=localStorage.getItem('cruz_sublime_user');
+   if(!code||!user||!isVip())return null;
    try{
-     const r=await fetch(api+'/api/vip/credits',{headers:{Authorization:'Bearer '+token()}});
+     const r=await fetch(api+'/api/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,user})});
      const d=await r.json();
-     $('vipBalance').textContent=r.ok?'Créditos disponibles: '+d.left+' de '+d.max:(d.error||'No se pudo consultar el saldo');
-   }catch(e){$('vipBalance').textContent='No se pudo conectar para consultar los créditos.';}
+     if(d.valid&&d.plan==='premium_vip'&&d.token){sessionStorage.setItem('cruz_member_token',d.token);return d.token;}
+   }catch(e){}
+   return null;
+ }
+ async function balance(){
+   if(!isVip()){$('vipBalance').textContent='🔒 Exclusivo Premium VIP';return;}
+   const t=await ensureToken();
+   if(!t){$('vipBalance').textContent='No se pudo validar tu sesión VIP. Vuelve a ingresar con tu código.';return;}
+   try{
+     const r=await fetch(api+'/api/vip/credits',{headers:{Authorization:'Bearer '+t}});
+     const d=await r.json();
+     if(!r.ok)throw new Error(d.error||'No se pudo consultar el saldo');
+     $('vipBalance').textContent='👑 Créditos disponibles: '+d.left+' de '+d.max+(d.pending?' · '+d.pending+' en proceso':'');
+   }catch(e){$('vipBalance').textContent=e.message;}
  }
  window.csVipBalance=balance;
+ function showImage(id,src){const img=$(id);img.src=src;img.style.display='block';$(id+'Placeholder').style.display='none';}
+ function clearResult(){const img=$('vipResult');img.removeAttribute('src');img.style.display='none';$('vipResultPlaceholder').style.display='block';$('vipDownload').style.display='none';}
+ function setZoom(value){zoom=Math.max(1,Math.min(6,value));$('vipZoomLabel').textContent=Math.round(zoom*100)+'%';['vipOriginal','vipResult'].forEach(id=>$(id).style.transform='scale('+zoom+')');}
  $('vipFile').addEventListener('change',()=>{
-   const file=$('vipFile').files[0];
-   if(!file)return;
-   $('vipOriginal').src=URL.createObjectURL(file);
-   $('vipResult').removeAttribute('src');
-   $('vipPreview').style.display='grid';
-   $('vipDownload').style.display='none';
-   $('vipMessage').textContent='Imagen original lista. Presiona Mejorar imagen con IA para ver el resultado.';
+   const f=$('vipFile').files[0];if(!f)return;
+   if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>8*1024*1024){setMessage('Selecciona PNG, JPG o WebP de máximo 8 MB.');$('vipFile').value='';return;}
+   if(originalUrl)URL.revokeObjectURL(originalUrl);
+   originalUrl=URL.createObjectURL(f);showImage('vipOriginal',originalUrl);clearResult();setZoom(1);
+   setMessage('Imagen original lista. Puedes inspeccionarla antes de mejorarla.');
  });
+ $('vipZoomIn').addEventListener('click',()=>setZoom(zoom+.25));
+ $('vipZoomOut').addEventListener('click',()=>setZoom(zoom-.25));
+ $('vipZoomReset').addEventListener('click',()=>setZoom(1));
+ $('vipLoupeToggle').addEventListener('click',()=>{loupe=!loupe;$('vipLoupeToggle').setAttribute('aria-pressed',String(loupe));$('vipLoupeToggle').textContent=loupe?'🔎 Lupa activa':'🔎 Lupa';if(!loupe)$('vipLoupe').style.display='none';});
+ ['vipOriginalViewport','vipResultViewport'].forEach(id=>{
+   const viewport=$(id);
+   viewport.addEventListener('wheel',e=>{if(!viewport.querySelector('img[src]'))return;e.preventDefault();setZoom(zoom+(e.deltaY<0?.2:-.2));},{passive:false});
+   viewport.addEventListener('mousemove',e=>{
+     const img=viewport.querySelector('img');if(!loupe||!img||!img.getAttribute('src'))return;
+     const rect=img.getBoundingClientRect();if(!rect.width||!rect.height)return;
+     const x=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+     const y=Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height));
+     const mag=$('vipLoupe');mag.style.display='block';mag.style.left=(e.clientX+22)+'px';mag.style.top=(e.clientY-90)+'px';
+     mag.style.backgroundImage='url('+JSON.stringify(img.src)+')';
+     mag.style.backgroundSize=(rect.width*2.5)+'px '+(rect.height*2.5)+'px';
+     mag.style.backgroundPosition=(87.5-x*rect.width*2.5)+'px '+(87.5-y*rect.height*2.5)+'px';
+   });
+   viewport.addEventListener('mouseleave',()=>{$('vipLoupe').style.display='none';});
+ });
+ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+ async function waitForJob(jobId,t){
+   for(let i=0;i<60;i++){
+     await sleep(3000);
+     const r=await fetch(api+'/api/vip/job/'+encodeURIComponent(jobId),{headers:{Authorization:'Bearer '+t}});
+     const d=await r.json();
+     if(d.status==='completed'&&d.image)return d.image;
+     if(d.status==='failed')throw new Error(d.error||'La mejora no se completó');
+     if(!r.ok&&r.status!==202)throw new Error(d.error||'Error al consultar el trabajo');
+     setMessage('Replicate está mejorando tu imagen… '+Math.round((i+1)*3)+' segundos.');
+   }
+   throw new Error('La imagen sigue en proceso. No vuelvas a enviarla; consulta el estado antes de repetir para evitar cobros duplicados.');
+ }
  $('vipImprove').addEventListener('click',async()=>{
-   if(!isVip()){$('vipMessage').textContent='Esta herramienta es exclusiva de Premium VIP.';return;}
-   const file=$('vipFile').files[0];
-   if(!file){$('vipMessage').textContent='Selecciona una imagen primero.';return;}
-   if(!token()){$('vipMessage').textContent='Ingresa con tu código Premium VIP.';return;}
-   if(file.size>8*1024*1024){$('vipMessage').textContent='La imagen no debe superar 8 MB.';return;}
-   const btn=$('vipImprove');btn.disabled=true;
-   $('vipMessage').textContent='Procesando con IA… Esto puede tardar unos minutos.';
-   $('vipDownload').style.display='none';
+   if(running)return;
+   if(!isVip()){setMessage('Esta herramienta es exclusiva de Premium VIP.');return;}
+   const file=$('vipFile').files[0];if(!file){setMessage('Selecciona una imagen primero.');return;}
+   const t=await ensureToken();if(!t){setMessage('No se pudo validar tu sesión Premium VIP.');return;}
+   const btn=$('vipImprove');running=true;btn.disabled=true;clearResult();
+   setMessage('Preparando imagen para Replicate…');
    try{
-     const image=await new Promise((resolve,reject)=>{
-       const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('No se pudo leer la imagen'));reader.readAsDataURL(file);
-     });
-     $('vipOriginal').src=image;$('vipPreview').style.display='grid';
-     const response=await fetch(api+'/api/vip/upscale',{
-       method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},
-       body:JSON.stringify({image,job_id:crypto.randomUUID()})
-     });
-     const data=await response.json();
-     if(!response.ok||!data.image)throw new Error(data.error||'No se pudo procesar la imagen');
-     $('vipResult').src=data.image;$('vipDownload').href=data.image;$('vipDownload').style.display='inline-block';
-     $('vipMessage').textContent='¡Imagen mejorada! Ya puedes descargarla.';
-   }catch(err){$('vipMessage').textContent=err.message||'Ocurrió un error.';}
-   finally{btn.disabled=false;balance();}
+     const image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('No se pudo leer la imagen'));reader.readAsDataURL(file);});
+     const jobId=crypto.randomUUID();
+     const r=await fetch(api+'/api/vip/upscale',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({image,job_id:jobId})});
+     const d=await r.json();
+     if(!r.ok&&r.status!==202)throw new Error(d.error||'No se pudo procesar la imagen');
+     const result=d.image||(d.status==='pending'?await waitForJob(jobId,t):null);
+     if(!result)throw new Error('Replicate no devolvió una imagen');
+     showImage('vipResult',result);$('vipDownload').href=result;$('vipDownload').style.display='inline-block';
+     setMessage('¡Imagen mejorada! Ya puedes descargarla.');
+   }catch(e){setMessage(e.message||'No se pudo completar la mejora.');}
+   finally{running=false;btn.disabled=false;balance();}
  });
  document.addEventListener('DOMContentLoaded',balance);
  document.addEventListener('click',e=>{if(e.target.closest('[data-tab="premium"]'))balance();});
