@@ -977,7 +977,7 @@ def _process_trial(kind):
                 "input": {
                     "image": img,
                     "scale_factor": 3,
-                    "creativity": 0.1,
+                    "creativity": 0.0,
                     "resemblance": 1.2,
                     "dynamic": 3,
                     "prompt": "Faithful photographic restoration of the exact original image. Preserve the same person, facial features, expression, closed or open mouth, eye color, clothing, objects, background and composition. Improve sharpness and reduce noise only. Photorealistic, natural texture.",
