@@ -10,113 +10,8 @@ from PIL import Image
 import io
 import base64
 import time
-import secrets
 
 app = Flask(__name__)
-
-# === INICIO: ACCESO SEGURO AL ADMINISTRADOR ===
-from flask import session, redirect, url_for, render_template_string
-from functools import wraps
-
-app.secret_key = os.environ.get("SESSION_SECRET") or os.environ.get("SECRET_KEY")
-
-def admin_login_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not session.get("cruz_admin_autorizado"):
-            return redirect(url_for("cruz_admin_login"))
-        return func(*args, **kwargs)
-    return wrapper
-
-@app.route("/admin/login", methods=["GET", "POST"])
-def cruz_admin_login():
-    error = ""
-
-    if request.method == "POST":
-        clave = request.form.get("password", "")
-        clave_correcta = os.environ.get("ADMIN_PASSWORD", "")
-
-        if clave_correcta and secrets.compare_digest(clave, clave_correcta):
-            session.clear()
-            session["cruz_admin_autorizado"] = True
-            return redirect("/admin")
-
-        error = "Contraseña incorrecta"
-
-    return render_template_string("""
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <title>Administrador | Cruz Sublime</title>
-      <style>
-        body {
-          background: radial-gradient(circle at top, #27205b, #070916 75%);
-          color: white;
-          font-family: Arial, sans-serif;
-          min-height: 100vh;
-          margin: 0;
-          display: grid;
-          place-items: center;
-        }
-        .panel {
-          width: min(350px, 85vw);
-          padding: 35px;
-          border: 1px solid #caa65d;
-          border-radius: 18px;
-          background: #111326;
-          text-align: center;
-          box-shadow: 0 0 40px #5b3fb133;
-        }
-        h1 { color: #e9c678; }
-        input, button {
-          box-sizing: border-box;
-          width: 100%;
-          padding: 13px;
-          margin-top: 15px;
-          border-radius: 8px;
-        }
-        input {
-          background: #080b19;
-          color: white;
-          border: 1px solid #777;
-        }
-        button {
-          background: #d8b56b;
-          color: #17121c;
-          font-weight: bold;
-          border: none;
-          cursor: pointer;
-        }
-        .error { color: #ff9090; }
-      </style>
-    </head>
-    <body>
-      <div class="panel">
-        <h1>👑 Cruz Sublime</h1>
-        <p>Acceso al administrador</p>
-        {% if error %}
-          <p class="error">{{ error }}</p>
-        {% endif %}
-        <form method="POST">
-          <input type="password" name="password"
-                 placeholder="Contraseña de administrador"
-                 autocomplete="current-password" required>
-          <button type="submit">Entrar</button>
-        </form>
-      </div>
-    </body>
-    </html>
-    """, error=error)
-
-@app.route("/admin/logout", methods=["POST"])
-def cruz_admin_logout():
-    session.clear()
-    return redirect(url_for("cruz_admin_login"))
-
-# === FIN: ACCESO SEGURO AL ADMINISTRADOR ===
-
 
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=False)
 
@@ -143,7 +38,7 @@ def handle_options(path):
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
 DATABASE_URL = os.environ.get("DATABASE_URL")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 REPLICATE_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
 STRIPE_SECRET = os.environ.get("STRIPE_SECRET_KEY")
 STRIPE_PUBLIC = os.environ.get("STRIPE_PUBLIC_KEY")
@@ -279,51 +174,46 @@ def canva_use():
         conn.close()
 
 
-def fix_color(original_b64, upscaled_url):
+def fix_color(original_b64, upscaled_url, saturation=1.0):
+    """Match channel statistics; retain original alpha where available.
+
+    If color adjustment fails, return the Replicate image URL unchanged.
+    """
     try:
-        # Download upscaled image
-        r = requests.get(upscaled_url, timeout=30)
-        upscaled = Image.open(io.BytesIO(r.content)).convert("RGB")
-        
-        # Decode original
-        if original_b64.startswith("data:"):
-            original_b64 = original_b64.split(",", 1)[1]
-        original = Image.open(io.BytesIO(base64.b64decode(original_b64))).convert("RGB")
-        
-        # Resize original to match upscaled for color transfer
-        original_resized = original.resize(upscaled.size, Image.Resampling.LANCZOS)
-        
-        # Simple color transfer: match mean and std per channel
         import numpy as np
-        up_arr = np.array(upscaled).astype(np.float32)
-        orig_arr = np.array(original_resized).astype(np.float32)
-        
-        for c in range(3):
-            up_mean = up_arr[:,:,c].mean()
-            up_std = up_arr[:,:,c].std() + 1e-6
-            orig_mean = orig_arr[:,:,c].mean()
-            orig_std = orig_arr[:,:,c].std() + 1e-6
-            up_arr[:,:,c] = (up_arr[:,:,c] - up_mean) * (orig_std / up_std) + orig_mean
-        
-        # Boost vibrance
-        up_arr = np.clip(up_arr, 0, 255)
-        # Convert to HSV, boost saturation
-        import colorsys
-        h, s, v = np.vectorize(colorsys.rgb_to_hsv)(up_arr[:,:,0]/255, up_arr[:,:,1]/255, up_arr[:,:,2]/255)
-        s = np.clip(s * 1.25, 0, 1)
-        r, g, b = np.vectorize(colorsys.hsv_to_rgb)(h, s, v)
-        up_arr[:,:,0] = r * 255
-        up_arr[:,:,1] = g * 255
-        up_arr[:,:,2] = b * 255
-        up_arr = np.clip(up_arr, 0, 255).astype(np.uint8)
-        result = Image.fromarray(up_arr)
-        
-        # Save to base64
-        buf = io.BytesIO()
-        result.save(buf, format="PNG")
-        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
-    except Exception as e:
-        print("Color fix error:", e)
+        from PIL import ImageEnhance
+        from urllib.parse import urlparse
+        parsed = urlparse(upscaled_url)
+        if parsed.scheme != "https" or parsed.hostname not in ("replicate.delivery", "pbxt.replicate.delivery") and not (parsed.hostname or "").endswith(".replicate.delivery"):
+            raise ValueError("URL de imagen no permitida")
+        r = requests.get(upscaled_url, timeout=25, stream=True)
+        r.raise_for_status()
+        if int(r.headers.get("content-length", "0")) > 30_000_000:
+            raise ValueError("Resultado demasiado grande")
+        content = r.raw.read(30_000_001)
+        if len(content) > 30_000_000:
+            raise ValueError("Resultado demasiado grande")
+        upscaled = Image.open(io.BytesIO(content)).convert("RGB")
+        source = original_b64.split(",", 1)[-1]
+        original = Image.open(io.BytesIO(base64.b64decode(source, validate=True)))
+        alpha = original.getchannel("A").resize(upscaled.size, Image.Resampling.LANCZOS) if "A" in original.getbands() else None
+        original_rgb = original.convert("RGB").resize(upscaled.size, Image.Resampling.LANCZOS)
+        arr = np.asarray(upscaled, dtype=np.float32)
+        ref = np.asarray(original_rgb, dtype=np.float32)
+        for channel in range(3):
+            mean, std = arr[:, :, channel].mean(), arr[:, :, channel].std()
+            target_mean, target_std = ref[:, :, channel].mean(), ref[:, :, channel].std()
+            if std > 1e-4:
+                arr[:, :, channel] = (arr[:, :, channel] - mean) * (target_std / std) + target_mean
+        corrected = Image.fromarray(np.clip(arr, 0, 255).astype("uint8"), "RGB")
+        corrected = ImageEnhance.Color(corrected).enhance(float(saturation))
+        if alpha is not None:
+            corrected.putalpha(alpha)
+        buffer = io.BytesIO()
+        corrected.save(buffer, format="PNG")
+        return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+    except Exception as exc:
+        print("Color correction unavailable:", type(exc).__name__)
         return upscaled_url
 
 @app.route("/api/upscale", methods=["POST"])
@@ -475,70 +365,66 @@ def upscale_use():
 
 
 
-
 @app.route("/admin/clear-usages", methods=["POST"])
-@admin_login_required
 def admin_clear_usages():
+    password = request.form.get("p", "")
+    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
+        return "Acceso denegado", 403
     conn = get_conn()
     if not conn:
-        return "Base de datos no disponible", 503
+        return "DB no disponible", 500
     try:
-        with conn.cursor() as c:
-            c.execute("DELETE FROM usages")
+        c = conn.cursor()
+        c.execute("DELETE FROM usages")
         conn.commit()
     except Exception as e:
-        conn.rollback()
-        app.logger.exception("Error al vaciar usos")
-        return "No se pudieron borrar los usos", 500
+        print("Clear usages error:", e)
     finally:
         conn.close()
-    return redirect(url_for("admin"))
-
+    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Usos vaciados</h2><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
 
 @app.route("/admin/delete-usage", methods=["POST"])
-@admin_login_required
 def admin_delete_usage():
+    password = request.form.get("p", "")
+    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
+        return "Acceso denegado", 403
     usage_id = request.form.get("id", "").strip()
-    if not usage_id.isdigit():
-        return "ID de uso inválido", 400
+    if not usage_id:
+        return "Falta ID", 400
     conn = get_conn()
     if not conn:
-        return "Base de datos no disponible", 503
+        return "DB no disponible", 500
     try:
-        with conn.cursor() as c:
-            c.execute("DELETE FROM usages WHERE id = %s", (int(usage_id),))
+        c = conn.cursor()
+        c.execute("DELETE FROM usages WHERE id = %s", (usage_id,))
         conn.commit()
-    except Exception:
-        conn.rollback()
-        app.logger.exception("Error al eliminar uso")
-        return "No se pudo eliminar el uso", 500
+    except Exception as e:
+        print("Delete usage error:", e)
     finally:
         conn.close()
-    return redirect(url_for("admin"))
-
+    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Uso eliminado</h2><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
 
 @app.route("/admin/delete", methods=["POST"])
-@admin_login_required
 def admin_delete():
+    password = request.form.get("p", "")
+    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
+        return "Acceso denegado", 403
     code = request.form.get("code", "").strip().upper()
     if not code:
         return "Falta código", 400
     conn = get_conn()
     if not conn:
-        return "Base de datos no disponible", 503
+        return "DB no disponible", 500
     try:
-        with conn.cursor() as c:
-            c.execute("DELETE FROM usages WHERE code = %s", (code,))
-            c.execute("DELETE FROM vip_credit_jobs WHERE code = %s", (code,))
-            c.execute("DELETE FROM codes WHERE code = %s", (code,))
+        c = conn.cursor()
+        c.execute("DELETE FROM codes WHERE code = %s", (code,))
+        c.execute("DELETE FROM usages WHERE code = %s", (code,))
         conn.commit()
-    except Exception:
-        conn.rollback()
-        app.logger.exception("Error al eliminar código")
-        return "No se pudo eliminar el código", 500
+    except Exception as e:
+        print("Delete error:", e)
     finally:
         conn.close()
-    return redirect(url_for("admin"))
+    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{code}</p><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
 
 
 @app.route("/api/halftone", methods=["POST"])
@@ -581,186 +467,115 @@ def halftone():
     return jsonify({"error": "Timeout"}), 500
 
 @app.route("/admin")
-@admin_login_required
 def admin():
-    from datetime import date
-    from urllib.parse import quote
+    password = request.args.get("p", "")
+    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
+        return "Acceso denegado", 403
     conn = get_conn()
     codes, usages = [], []
     if conn:
         try:
-            with conn.cursor() as c:
-                # Un solo resumen por código; funciona incluso con miles de accesos.
-                c.execute("""
-                    SELECT c.code, c.plan, c.days, c.created_at, c.email,
-                           MIN(u.used_at) AS first_used,
-                           COUNT(u.id) AS access_count
-                    FROM codes c
-                    LEFT JOIN usages u ON u.code = c.code
-                    GROUP BY c.code, c.plan, c.days, c.created_at, c.email
-                    ORDER BY c.created_at DESC
-                """)
-                rows = c.fetchall()
-                now = datetime.now()
-                for code, plan, days, created_at, email, first_used, count in rows:
-                    created = datetime.strptime(str(created_at), "%Y-%m-%d %H:%M:%S")
-                    expires = created + timedelta(days=int(days))
-                    remaining = max(0, (expires.date() - now.date()).days)
-                    if expires <= now:
-                        status, css = "⛔ Vencido", "expired"
-                    elif expires - now <= timedelta(days=3):
-                        status, css = "🔴 Urgente", "urgent"
-                    elif expires - now <= timedelta(days=7):
-                        status, css = "🟡 Por vencer", "soon"
-                    else:
-                        status, css = "🟢 Vigente", "active"
-                    first_use = str(first_used) if first_used else None
-                    message = (
-                        "Hola, te saludamos de Cruz Sublime 👑. "
-                        "Tu membresía está próxima a vencer. "
-                        "¿Te gustaría renovarla para seguir usando nuestras herramientas?"
-                    )
-                    codes.append({
-                        "code": code, "plan": plan, "days": days,
-                        "created": str(created_at), "expires": expires.strftime("%Y-%m-%d %H:%M:%S"),
-                        "email": email or "—", "first_used": first_use,
-                        "used": bool(first_use), "count": count,
-                        "remaining": remaining, "status": status, "css": css,
-                        "whatsapp": "https://wa.me/?text=" + quote(message)
-                    })
-                c.execute('SELECT id, code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
-                usages = c.fetchall()
-        except Exception:
-            app.logger.exception("Error al consultar panel de membresías")
-            return "No se pudo cargar el panel. Revisa los logs de Render.", 500
+            c = conn.cursor()
+            c.execute("SELECT code, plan, days, created_at, email FROM codes ORDER BY created_at DESC")
+            codes_raw = c.fetchall()
+            print("Codes found:", len(codes_raw))
+            codes = []
+            for row in codes_raw:
+                code_val, plan, days, created_at, email = row
+                created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+                expires = (created + timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+                codes.append((code_val, plan, days, created_at, email, expires))
+            c.execute('SELECT code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
+            usages = c.fetchall()
+            print("Usages found:", len(usages))
+        except Exception as e:
+            print("Admin query error:", e)
+            import traceback
+            traceback.print_exc()
+        finally:
+            conn.close()
+    html = """
+    <html><head>
+    <style>
+      body{font-family:'Segoe UI',system-ui,sans-serif;background:#050505;color:#f2f2f2;padding:30px}
+      h2{background:linear-gradient(90deg,#3b82f6,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:28px;margin-bottom:20px}
+      h3{color:#3b82f6;margin-top:30px}
+      form{background:#141414;padding:16px;border-radius:12px;border:1px solid #1f1f1f;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+      input,select,button{background:#0d0d0d;color:#f2f2f2;border:1px solid #1f1f1f;padding:8px 12px;border-radius:8px;font-size:14px}
+      button{background:linear-gradient(90deg,#3b82f6,#ec4899);color:#fff;font-weight:700;border:none;cursor:pointer}
+      button:hover{opacity:.9}
+      table{width:100%;border-collapse:collapse;margin-top:12px;background:#0d0d0d;border-radius:12px;overflow:hidden}
+      th{background:#141414;color:#ec4899;padding:10px;text-align:left;font-size:13px}
+      td{padding:10px;border-top:1px solid #1f1f1f;font-size:13px}
+      tr:hover td{background:#141414}
+      a{color:#3b82f6;text-decoration:none}
+    </style>
+    </head><body>
+    <h2>Panel Cruz Sublime</h2>
+    <form action="/admin/generate" method="post">
+      <input type="hidden" name="p" value="{{ password }}">
+      Plan: <select name="plan"><option value="basico">Básico</option><option value="medio">Medio</option><option value="anual">Anual</option></select>
+      Días: <input type="number" name="days" value="30" style="width:70px">
+      Email: <input type="email" name="email" placeholder="correo@ejemplo.com">
+      <button type="submit">Generar código</button>
+    </form>
+    <h3>Códigos</h3>
+    <table>
+    <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Expira</th><th>Email</th><th>Acción</th></tr>
+    {% for c in codes %}
+    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[5] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
+    {% else %}
+    <tr><td colspan="5">No hay códigos</td></tr>
+    {% endfor %}
+    </table>
+    <h3>Usos recientes <form action="/admin/clear-usages" method="post" style="display:inline;margin-left:12px"><input type="hidden" name="p" value="{{ password }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Vaciar todos</button></form></h3>
+    <table>
+    <tr><th>Código</th><th>Usuario</th><th>Plan</th><th>Fecha</th><th>Acción</th></tr>
+    {% for u in usages %}
+    <tr><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td><td>{{ u[4] }}</td><td><form action="/admin/delete-usage" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="id" value="{{ u[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
+    {% else %}
+    <tr><td colspan="4">Sin usos</td></tr>
+    {% endfor %}
+    </table>
+    </body></html>
+    """
+    return render_template_string(html, codes=codes, usages=usages, password=password)
+
+@app.route("/admin/generate", methods=["POST"])
+def admin_generate():
+    password = request.form.get("p", "")
+    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
+        return "Acceso denegado", 403
+    plan = request.form.get("plan", "basico")
+    days = int(request.form.get("days", 30))
+    email = request.form.get("email", "").strip()
+    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    code = f"{code[:4]}-{code[4:]}"
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    conn = get_conn()
+    error_msg = ""
+    if conn:
+        try:
+            c = conn.cursor()
+            c.execute("INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)",
+                      (code, plan, days, now, email or None))
+            conn.commit()
+        except Exception as e:
+            error_msg = str(e)
+            print("Generate error:", e)
         finally:
             conn.close()
     else:
-        return "Base de datos no disponible", 503
-
-    html = """
-    <!doctype html><html lang="es"><head><meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Administrador | Cruz Sublime</title>
-    <style>
-      *{box-sizing:border-box}
-      body{font-family:'Segoe UI',system-ui,sans-serif;background:#050505;color:#f2f2f2;padding:25px;margin:0}
-      h2{background:linear-gradient(90deg,#3b82f6,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:28px}
-      h3{color:#3b82f6;margin-top:30px}
-      form{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
-      .generator{background:#141414;padding:16px;border-radius:12px;border:1px solid #292929}
-      input,select,button{background:#0d0d0d;color:#f2f2f2;border:1px solid #303030;padding:9px 12px;border-radius:8px;font-size:14px}
-      button{background:linear-gradient(90deg,#3b82f6,#ec4899);color:#fff;font-weight:700;border:none;cursor:pointer}
-      button:hover{opacity:.9}
-      .table-wrap{overflow-x:auto}
-      table{width:100%;border-collapse:collapse;margin-top:12px;background:#0d0d0d;min-width:1050px}
-      th{background:#141414;color:#ec4899;padding:10px;text-align:left;font-size:13px}
-      td{padding:10px;border-top:1px solid #292929;font-size:13px}
-      tr:hover td{background:#141414}
-      a{color:#76b4ff;text-decoration:none}
-      .active{color:#4ade80}.soon{color:#fde047}.urgent{color:#fb7185}.expired{color:#a1a1aa}
-      .used{color:#4ade80;font-weight:700}.unused{color:#aaa}
-      .danger{background:#c72c45}.muted{color:#aaa;font-size:13px}
-      .small{font-size:12px;padding:7px 9px}
-      .summary{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0}
-      .summary span{background:#161616;border:1px solid #333;border-radius:9px;padding:10px}
-    </style></head><body>
-    <h2>👑 Panel Cruz Sublime</h2>
-    <form action="/admin/logout" method="post"><button type="submit">Cerrar sesión</button></form>
-    <h3>Generar membresía (después de confirmar el pago)</h3>
-    <form class="generator" action="/admin/generate" method="post">
-      <label>Plan:
-        <select name="plan">
-          <option value="basico">Básico</option>
-          <option value="medio">Medio</option>
-          <option value="anual">Anual</option>
-          <option value="premium_vip">Premium VIP</option>
-        </select>
-      </label>
-      <label>Días: <input type="number" name="days" value="30" min="1" max="3650" required style="width:85px"></label>
-      <label>Correo: <input type="email" name="email" placeholder="correo@ejemplo.com" required></label>
-      <button type="submit">Generar y activar código</button>
-    </form>
-    <p class="muted">La vigencia comienza al generar el código. El primer ingreso del cliente se registra por separado y no cambia el vencimiento.</p>
-    <div class="summary">
-      <span>Total de códigos: <b>{{ codes|length }}</b></span>
-      <span>Ya utilizados: <b>{{ codes|selectattr('used')|list|length }}</b></span>
-      <span>Sin utilizar: <b>{{ codes|rejectattr('used')|list|length }}</b></span>
-    </div>
-    <h3>Membresías y vencimientos</h3>
-    <div class="table-wrap"><table>
-      <tr><th>Código</th><th>Plan</th><th>Correo</th><th>Inicio administrativo</th>
-          <th>Primer ingreso</th><th>Uso</th><th>Vence</th><th>Días restantes</th>
-          <th>Estado</th><th>Renovación</th><th>Acción</th></tr>
-      {% for c in codes %}
-      <tr>
-        <td><b>{{ c.code }}</b></td><td>{{ c.plan }}</td><td>{{ c.email }}</td>
-        <td>{{ c.created }}</td>
-        <td>{{ c.first_used or '—' }}</td>
-        <td>{% if c.used %}<span class="used">✅ Usado</span>{% else %}<span class="unused">⚪ Sin usar</span>{% endif %}</td>
-        <td>{{ c.expires }}</td><td>{{ c.remaining }}</td>
-        <td class="{{ c.css }}">{{ c.status }}</td>
-        <td><a href="{{ c.whatsapp }}" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a></td>
-        <td><form action="/admin/delete" method="post" onsubmit="return confirm('¿Eliminar este código y revocar su acceso definitivamente?')">
-          <input type="hidden" name="code" value="{{ c.code }}">
-          <button type="submit" class="danger small">Eliminar</button>
-        </form></td>
-      </tr>
-      {% else %}<tr><td colspan="11">Todavía no hay códigos.</td></tr>{% endfor %}
-    </table></div>
-    <p class="muted">WhatsApp abre un mensaje preparado; tú eliges al destinatario y lo envías manualmente.</p>
-    <h3>Últimos 50 accesos</h3>
-    <form action="/admin/clear-usages" method="post" onsubmit="return confirm('¿Borrar TODOS los registros de uso? Esto eliminará también el historial de primera conexión.')">
-      <button class="danger small" type="submit">Vaciar historial de usos</button>
-    </form>
-    <div class="table-wrap"><table>
-      <tr><th>Código</th><th>Correo</th><th>Plan</th><th>Fecha</th><th>Acción</th></tr>
-      {% for u in usages %}
-      <tr><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td><td>{{ u[4] }}</td>
-      <td><form action="/admin/delete-usage" method="post" onsubmit="return confirm('¿Eliminar este registro de uso?')">
-        <input type="hidden" name="id" value="{{ u[0] }}">
-        <button type="submit" class="danger small">Eliminar</button>
-      </form></td></tr>
-      {% else %}<tr><td colspan="5">Sin accesos registrados.</td></tr>{% endfor %}
-    </table></div>
+        error_msg = "No hay conexión a la base de datos"
+    return f"""
+    <html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center">
+    <h2>Código generado</h2>
+    <p style="font-size:28px;font-weight:bold;color:#ec4899">{code}</p>
+    <p>Plan: {plan} · Días: {days}</p>
+    {"<p style='color:#e63946'>Error: " + error_msg + "</p>" if error_msg else "<p style='color:#10b981'>Guardado correctamente</p>"}
+    <a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a>
     </body></html>
     """
-    return render_template_string(html, codes=codes, usages=usages)
-
-@app.route("/admin/generate", methods=["POST"])
-@admin_login_required
-def admin_generate():
-    plan = request.form.get("plan", "basico").strip()
-    if plan not in ("basico", "medio", "anual", "premium_vip"):
-        return "Plan inválido", 400
-    try:
-        days = int(request.form.get("days", "30"))
-    except (TypeError, ValueError):
-        return "Días inválidos", 400
-    if not 1 <= days <= 3650:
-        return "Los días deben estar entre 1 y 3650", 400
-    email = request.form.get("email", "").strip().lower()
-    if not email or "@" not in email or len(email) > 254:
-        return "Ingresa un correo válido para asociar la membresía", 400
-    code = "-".join((secrets.token_hex(4).upper()[:4], secrets.token_hex(4).upper()[:4]))
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    conn = get_conn()
-    if not conn:
-        return "Base de datos no disponible", 503
-    try:
-        with conn.cursor() as c:
-            c.execute(
-                "INSERT INTO codes (code, plan, days, created_at, email) VALUES (%s, %s, %s, %s, %s)",
-                (code, plan, days, now, email or None)
-            )
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        app.logger.exception("Error al generar código")
-        return "No se pudo guardar el código", 500
-    finally:
-        conn.close()
-    return redirect(url_for("admin"))
 
 
 # ===== PRUEBA: separación GPU / Replicate y créditos VIP =====
@@ -837,10 +652,10 @@ def _init_vip():
         with conn.cursor() as c:
             c.execute("""CREATE TABLE IF NOT EXISTS vip_credit_jobs (
                 job_id TEXT PRIMARY KEY, code TEXT NOT NULL, period TEXT NOT NULL,
-                status TEXT NOT NULL, result TEXT, created_at TIMESTAMP DEFAULT NOW()
+                status TEXT NOT NULL, result TEXT, created_at TIMESTAMP DEFAULT NOW(),
+                prediction_id TEXT
             )""")
-            # Legacy jobs remain one credit; new Topaz jobs can reserve two.
-            c.execute("ALTER TABLE vip_credit_jobs ADD COLUMN IF NOT EXISTS credit_cost INTEGER NOT NULL DEFAULT 1")
+            c.execute("ALTER TABLE vip_credit_jobs ADD COLUMN IF NOT EXISTS prediction_id TEXT")
         conn.commit()
     finally: conn.close()
 _init_vip()
@@ -854,14 +669,9 @@ def _vip_status(member):
     if not conn: return None
     try:
         with conn.cursor() as c:
-            c.execute("""SELECT status, COALESCE(SUM(credit_cost), 0)
-                         FROM vip_credit_jobs WHERE code=%s AND period=%s
-                         GROUP BY status""", (member["code"], _vip_period(member)))
-            counts = dict(c.fetchall())
-        used = int(counts.get("completed", 0))
-        pending = int(counts.get("reserved", 0)) + int(counts.get("uncertain", 0))
-        return {"max": 50, "used": used, "pending": pending,
-                "left": max(0, 50-used-pending)}
+            c.execute("SELECT COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
+            used = c.fetchone()[0]
+        return {"max":50,"used":used,"left":max(0,50-used)}
     finally: conn.close()
 
 @app.route("/api/vip/credits", methods=["GET"])
@@ -871,175 +681,173 @@ def vip_credits():
     if member["plan"] != VIP_PLAN: return jsonify(error="Solo Premium VIP"), 403
     return jsonify(_vip_status(member))
 
-def _reserve(member, job_id, credit_cost=1):
+def _reserve(member, job_id):
     conn = get_conn()
     if not conn: return None, "Base de datos no disponible"
     try:
         with conn.cursor() as c:
             c.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (member["code"],))
-            c.execute("SELECT status,result,credit_cost FROM vip_credit_jobs WHERE job_id=%s AND code=%s",
-                      (job_id, member["code"]))
+            c.execute("SELECT status,result FROM vip_credit_jobs WHERE job_id=%s AND code=%s", (job_id, member["code"]))
             prior = c.fetchone()
             if prior:
                 conn.commit()
                 return ("already_" + prior[0], prior[1]), None
-            c.execute("""SELECT COALESCE(SUM(credit_cost), 0) FROM vip_credit_jobs
-                         WHERE code=%s AND period=%s
-                         AND status IN ('reserved','completed','uncertain')""",
-                      (member["code"], _vip_period(member)))
-            if int(c.fetchone()[0]) + credit_cost > 50:
+            c.execute("SELECT COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
+            if c.fetchone()[0] >= 50:
                 conn.commit()
-                return None, "Créditos insuficientes"
-            c.execute("""INSERT INTO vip_credit_jobs(job_id,code,period,status,credit_cost)
-                         VALUES (%s,%s,%s,'reserved',%s)""",
-                      (job_id,member["code"],_vip_period(member),credit_cost))
+                return None, "Créditos agotados"
+            c.execute("INSERT INTO vip_credit_jobs(job_id,code,period,status) VALUES (%s,%s,%s,'reserved')", (job_id,member["code"],_vip_period(member)))
         conn.commit()
         return ("reserved", None), None
     except Exception:
         conn.rollback()
-        app.logger.exception("Error al reservar créditos VIP")
         return None, "Error al reservar crédito"
     finally: conn.close()
 
-def _job_update(job_id, status, result=None):
+def _job_update(job_id, status, result=None, prediction_id=None):
     conn = get_conn()
     if not conn: return
     try:
         with conn.cursor() as c:
-            c.execute("UPDATE vip_credit_jobs SET status=%s,result=%s WHERE job_id=%s", (status, result, job_id))
+            c.execute("UPDATE vip_credit_jobs SET status=%s,result=COALESCE(%s,result),prediction_id=COALESCE(%s,prediction_id) WHERE job_id=%s", (status, result, prediction_id, job_id))
         conn.commit()
     finally: conn.close()
 
-def _replicate_output(prediction):
-    output = prediction.get("output")
-    if isinstance(output, list): output = output[0] if output else None
-    if not isinstance(output, str) or not output.startswith("https://"):
-        raise RuntimeError("Replicate no devolvió una imagen válida")
-    return output
-
-def _replicate_prediction(prediction_id):
-    # The URL is constructed from an ID issued by Replicate, never from user input.
-    headers = {"Authorization": "Bearer " + REPLICATE_TOKEN}
-    r = requests.get("https://api.replicate.com/v1/predictions/" + prediction_id,
-                     headers=headers, timeout=18)
-    r.raise_for_status()
-    return r.json()
-
-@app.route("/api/vip/job/<job_id>", methods=["GET"])
-def vip_job_status(job_id):
-    member = _member()
-    if not member: return jsonify(error="Inicia sesión con tu código VIP"), 401
-    if member["plan"] != VIP_PLAN: return jsonify(error="Solo Premium VIP"), 403
-    try: uuid.UUID(job_id)
-    except ValueError: return jsonify(error="Trabajo inválido"), 400
-    conn = get_conn()
-    if not conn: return jsonify(error="Base de datos no disponible"), 503
-    try:
-        with conn.cursor() as c:
-            c.execute("SELECT status,result FROM vip_credit_jobs WHERE job_id=%s AND code=%s AND period=%s", (job_id, member["code"], _vip_period(member)))
-            row = c.fetchone()
-    finally: conn.close()
-    if not row: return jsonify(error="Trabajo no encontrado"), 404
-    status, result = row
-    if status == "completed": return jsonify(status="completed", image=result, credits=_vip_status(member))
-    if status == "failed": return jsonify(status="failed", error="Replicate no pudo completar el trabajo; sin crédito consumido", credits=_vip_status(member))
-    if not result or not result.startswith("replicate:"):
-        return jsonify(status="pending", message="Comprobando el resultado con Replicate"), 202
-    if not REPLICATE_TOKEN: return jsonify(error="Replicate no configurado"), 503
-    try:
-        prediction = _replicate_prediction(result.split(":", 1)[1])
-        state = prediction.get("status")
-        if state == "succeeded":
-            image = _replicate_output(prediction)
-            _job_update(job_id, "completed", image)
-            return jsonify(status="completed", image=image, credits=_vip_status(member))
-        if state in ("failed", "canceled"):
-            _job_update(job_id, "failed")
-            return jsonify(status="failed", error="Replicate no completó el trabajo; sin crédito consumido", credits=_vip_status(member))
-        return jsonify(status="pending", message="Replicate sigue procesando"), 202
-    except (requests.RequestException, RuntimeError):
-        return jsonify(status="pending", message="No se pudo confirmar todavía; vuelve a consultar"), 202
-
 def _process_trial(kind):
     member = _member()
-    if not member: return jsonify(error="Inicia sesión con tu código VIP"), 401
-    if member["plan"] != VIP_PLAN: return jsonify(error="Solo Premium VIP"), 403
+    if not member: return jsonify(error="Inicia sesión con tu código"), 401
     data = request.get_json(silent=True) or {}
     img = data.get("image")
-    if not isinstance(img, str) or not img.startswith("data:image/") or len(img) > 11_000_000:
-        return jsonify(error="Imagen inválida o demasiado grande (máximo 8 MB)"), 400
+    if not isinstance(img,str) or not img or len(img) > 16_000_000:
+        return jsonify(error="Imagen faltante o demasiado grande"), 400
+    if member["plan"] != VIP_PLAN:
+        if not GPU_WORKER_URL or not GPU_WORKER_KEY:
+            return jsonify(error="GPU pendiente de configurar; no se consumió Replicate"), 503
+        try:
+            r = requests.post(GPU_WORKER_URL + "/" + kind, json={"image":img},
+                headers={"Authorization":"Bearer " + GPU_WORKER_KEY},timeout=150)
+            r.raise_for_status()
+            output = r.json()
+            if not output.get("image"): raise ValueError("GPU sin imagen de salida")
+            return jsonify(image=output["image"],processor="gpu")
+        except Exception:
+            return jsonify(error="El servicio GPU no respondió correctamente"), 502
     job_id = str(data.get("job_id", ""))
     try: uuid.UUID(job_id)
-    except (ValueError, AttributeError): return jsonify(error="Se requiere job_id UUID"), 400
-    if not REPLICATE_TOKEN:
-        return jsonify(error="Falta configurar REPLICATE_API_TOKEN en Render"), 503
-    # Old clients that send no mode continue to use Clarity (one credit).
-    mode = str(data.get("mode", "detalle")).strip().lower()
-    modes = {"detalle": 1, "retrato": 2}
-    if mode not in modes:
-        return jsonify(error="Modo VIP inválido: usa detalle o retrato"), 400
-    reservation, error = _reserve(member, job_id, modes[mode])
-    if error: return jsonify(error=error), 402 if error == "Créditos insuficientes" else 503
+    except (ValueError,AttributeError): return jsonify(error="Se requiere job_id UUID para evitar doble cobro"), 400
+    reservation, error = _reserve(member, job_id)
+    if error: return jsonify(error=error), 402 if error == "Créditos agotados" else 503
     state, prior_result = reservation
-    if state == "already_completed": return jsonify(image=prior_result, credits=_vip_status(member))
-    if state.startswith("already_"):
-        return jsonify(status="pending", job_id=job_id, message="Consulta el estado de este trabajo"), 202
-    prediction_id = None
+    if state in ("completed", "already_completed"): return jsonify(image=prior_result, credits=_vip_status(member), processor="replicate")
+    if state in ("uncertain", "failed", "already_reserved", "already_uncertain", "already_failed"):
+        return jsonify(error="Consulta soporte para reconciliar el trabajo anterior"), 409
+    # A concurrent retry of an existing reserved job must not start a second prediction.
+    # For production, use a durable worker queue; synchronous demo marks ambiguous failures uncertain.
     try:
-        headers = {"Authorization": "Bearer " + REPLICATE_TOKEN, "Content-Type": "application/json"}
-        if mode == "retrato":
-            # Official Topaz endpoint: High Fidelity V2, no face regeneration.
-            endpoint = "https://api.replicate.com/v1/models/topazlabs/image-upscale/predictions"
-            payload = {"input": {
-                "image": img,
-                "enhance_model": "High Fidelity V2",
-                "upscale_factor": "2x",
-                "output_format": "png",
-                "subject_detection": "Foreground",
-                "face_enhancement": False
-            }}
-        else:
-            # Keep the proven Clarity settings unchanged.
-            endpoint = "https://api.replicate.com/v1/predictions"
-            payload = {"version": "dfad41707589d68ecdccd1dfa600d55a208f9310748e44bfe35b4a6291453d5e",
-                "input": {
-                    "image": img,
-                    "scale_factor": 3,
-                    "creativity": 0.1,
-                    "resemblance": 1.2,
-                    "dynamic": 3,
-                    "prompt": "Faithful photographic restoration of the exact original image. Preserve the same person, facial features, expression, closed or open mouth, eye color, clothing, objects, background and composition. Improve sharpness and reduce noise only. Photorealistic, natural texture.",
-                    "negative_prompt": "changed face, different eyes, changed eye color, open mouth, added teeth, altered expression, new objects, animals, cartoon, illustration, artificial skin, distortion, hallucinated details",
-                    "output_format": "png"
-                }}
-        r = requests.post(endpoint, headers=headers, json=payload, timeout=25)
-        r.raise_for_status()
-        prediction = r.json()
-        prediction_id = prediction.get("id")
-        if not prediction_id: raise RuntimeError("Replicate no devolvió un ID")
-        _job_update(job_id, "reserved", "replicate:" + prediction_id)
-        if prediction.get("status") == "succeeded":
-            image = _replicate_output(prediction)
-            _job_update(job_id, "completed", image)
-            return jsonify(image=image, credits=_vip_status(member))
-        if prediction.get("status") in ("failed", "canceled"):
+        if not REPLICATE_TOKEN:
             _job_update(job_id, "failed")
-            return jsonify(error="Replicate no completó el trabajo; sin crédito consumido"), 502
-        return jsonify(status="pending", job_id=job_id), 202
-    except requests.HTTPError as e:
-        print("ERROR REPLICATE VIP:", e.response.status_code if e.response is not None else "sin respuesta", (e.response.text[:1000] if e.response is not None else str(e)), flush=True)
-        # A definite HTTP rejection did not start a prediction.
-        _job_update(job_id, "failed")
-        return jsonify(error="Replicate rechazó el procesamiento; sin crédito consumido"), 502
+            return jsonify(error="Replicate no configurado; crédito liberado"), 503
+        image_uri = img if img.startswith("data:") else "data:image/png;base64," + img
+        headers = {"Authorization":"Bearer " + REPLICATE_TOKEN, "Content-Type":"application/json"}
+        version = os.environ.get("REPLICATE_UPSCALE_VERSION") if kind == "upscale" else os.environ.get("REPLICATE_HALFTONE_VERSION", "aa0216c7968dd050f73f3f3d5eee023c07bc5d265cb06b44c6dd94fb31ce973b")
+        if not version:
+            _job_update(job_id, "failed")
+            return jsonify(error="Falta REPLICATE_UPSCALE_VERSION; crédito liberado"), 503
+        inputs = {"image": image_uri}
+        if kind == "upscale": inputs["scale_factor"] = 3
+        if kind == "halftone": inputs["halftone_only"] = True
+        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json={"version":version,"input":inputs},timeout=30)
+        if r.status_code not in (200, 201):
+            _job_update(job_id, "failed")
+            return jsonify(error="Replicate rechazó el trabajo; crédito liberado"), 502
+        prediction = r.json()
+        url = prediction.get("urls",{}).get("get")
+        if not url or not prediction.get("id"):
+            _job_update(job_id, "uncertain")
+            return jsonify(error="No se pudo verificar el identificador del trabajo"), 502
+        _job_update(job_id, "reserved", prediction_id=prediction["id"])
+        # Short polling here; clients can continue polling /api/vip/jobs/<job_id>.
+        # Avoid a 3-minute HTTP request on Render's synchronous web workers.
+        for _ in range(18):
+            poll = requests.get(url,headers=headers,timeout=12)
+            poll.raise_for_status()
+            p = poll.json()
+            if p.get("status") == "succeeded":
+                output = p.get("output")
+                if isinstance(output,list): output = output[0] if output else None
+                if not isinstance(output,str): raise RuntimeError("Salida no compatible")
+                if kind == "upscale" and data.get("correct_color", False):
+                    try:
+                        saturation = float(data.get("saturation", 1.0))
+                        saturation = max(0.8, min(1.25, saturation))
+                    except (TypeError, ValueError):
+                        saturation = 1.0
+                    output = fix_color(image_uri, output, saturation=saturation)
+                _job_update(job_id,"completed",output)
+                return jsonify(image=output,credits=_vip_status(member),processor="replicate")
+            if p.get("status") in ("failed","canceled"):
+                _job_update(job_id,"failed")
+                return jsonify(error="Replicate no completó el trabajo; crédito liberado"),502
+            time.sleep(2)
+        _job_update(job_id,"uncertain")
+        return jsonify(error="Trabajo pendiente; crédito reservado hasta confirmar resultado"),202
     except Exception:
-        # A network timeout can leave an unconfirmed prediction running: do not double-charge.
-        _job_update(job_id, "uncertain", "replicate:" + prediction_id if prediction_id else None)
-        return jsonify(status="pending", job_id=job_id,
-            message="No se pudo confirmar aún; consulta el estado antes de reintentar"), 202
+        _job_update(job_id,"uncertain")
+        return jsonify(error="No se pudo confirmar el resultado; crédito reservado para conciliación"),502
 
-@app.route("/api/vip/upscale", methods=["POST"])
-def premium_vip_upscale():
-    return _process_trial("upscale")
+@app.route("/api/vip/jobs/<job_id>", methods=["GET"])
+def vip_job_status(job_id):
+    """Reconciles a pending Replicate job without charging a second credit."""
+    member = _member()
+    if not member or member["plan"] != VIP_PLAN:
+        return jsonify(error="Acceso no autorizado"), 401
+    try:
+        uuid.UUID(job_id)
+    except ValueError:
+        return jsonify(error="ID inválido"), 400
+    conn = get_conn()
+    if not conn:
+        return jsonify(error="Base de datos no disponible"), 503
+    try:
+        with conn.cursor() as c:
+            c.execute("SELECT status,result,prediction_id FROM vip_credit_jobs WHERE job_id=%s AND code=%s", (job_id, member["code"]))
+            job = c.fetchone()
+    finally:
+        conn.close()
+    if not job:
+        return jsonify(error="Trabajo no encontrado"), 404
+    status, result, prediction_id = job
+    if status == "completed":
+        return jsonify(status="completed", image=result, credits=_vip_status(member))
+    if status == "failed":
+        return jsonify(status="failed", credits=_vip_status(member))
+    if not prediction_id:
+        return jsonify(status="uncertain", message="Se requiere revisión manual para evitar cobro duplicado", credits=_vip_status(member)), 202
+    if not REPLICATE_TOKEN:
+        return jsonify(error="Replicate no configurado"), 503
+    try:
+        response = requests.get("https://api.replicate.com/v1/predictions/" + prediction_id,
+            headers={"Authorization": "Bearer " + REPLICATE_TOKEN}, timeout=12)
+        response.raise_for_status()
+        prediction = response.json()
+        state = prediction.get("status")
+        if state == "succeeded":
+            output = prediction.get("output")
+            if isinstance(output, list):
+                output = output[0] if output else None
+            if not isinstance(output, str):
+                return jsonify(status="uncertain", message="Formato de resultado no reconocido"), 202
+            _job_update(job_id, "completed", output)
+            return jsonify(status="completed", image=output, credits=_vip_status(member))
+        if state in ("failed", "canceled"):
+            _job_update(job_id, "failed")
+            return jsonify(status="failed", credits=_vip_status(member))
+        return jsonify(status="processing", credits=_vip_status(member)), 202
+    except requests.RequestException:
+        return jsonify(status="uncertain", message="Replicate no respondió; vuelve a consultar"), 202
+
+app.view_functions["upscale"] = lambda: _process_trial("upscale")
+app.view_functions["halftone"] = lambda: _process_trial("halftone")
 # Existing checkout supports fourth plan. Payment confirmation and credit renewals are manual in this test.
 _original_checkout = app.view_functions["checkout"]
 def _checkout_trial():
@@ -1047,6 +855,170 @@ def _checkout_trial():
         return jsonify(url="https://buy.stripe.com/00wfZj0JY3QL5rr57DaEE03")
     return _original_checkout()
 app.view_functions["checkout"] = _checkout_trial
+
+
+
+# ===== REMOVEDOR VIP: 50 créditos INDEPENDIENTES del Mejorador =====
+# Configurar REPLICATE_BG_VERSION con el identificador de versión de un modelo
+# de eliminación de fondo que acepte el campo input.image.
+# No se realizan predicciones si falta esa configuración.
+def _init_bg_vip():
+    conn = get_conn()
+    if not conn: return
+    try:
+        with conn.cursor() as c:
+            c.execute("""CREATE TABLE IF NOT EXISTS vip_bg_jobs (
+                job_id TEXT PRIMARY KEY, code TEXT NOT NULL, period TEXT NOT NULL,
+                status TEXT NOT NULL, result TEXT, prediction_id TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            )""")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally: conn.close()
+_init_bg_vip()
+
+def _bg_balance(member):
+    conn = get_conn()
+    if not conn: return None
+    try:
+        with conn.cursor() as c:
+            c.execute("""SELECT COUNT(*) FILTER (WHERE status='completed'),
+                       COUNT(*) FILTER (WHERE status IN ('reserved','uncertain'))
+                       FROM vip_bg_jobs WHERE code=%s AND period=%s""",
+                      (member['code'], _vip_period(member)))
+            used,pending = c.fetchone()
+        return {'max':50,'used':used,'pending':pending,'left':max(0,50-used-pending)}
+    finally: conn.close()
+
+@app.route('/api/vip/background/credits', methods=['GET'])
+def vip_bg_credits():
+    member=_member()
+    if not member or member['plan'] != VIP_PLAN: return jsonify(error='Acceso exclusivo Premium VIP'),401
+    balance=_bg_balance(member)
+    return jsonify(balance) if balance is not None else (jsonify(error='Base de datos no disponible'),503)
+
+def _bg_reserve(member, job_id):
+    conn=get_conn()
+    if not conn: return None,'Base de datos no disponible'
+    try:
+        with conn.cursor() as c:
+            c.execute('SELECT pg_advisory_xact_lock(hashtext(%s))',(member['code']+'-bg',))
+            c.execute('SELECT status,result FROM vip_bg_jobs WHERE job_id=%s AND code=%s',(job_id,member['code']))
+            prior=c.fetchone()
+            if prior:
+                conn.commit()
+                return ('already_'+prior[0],prior[1]),None
+            c.execute("""SELECT COUNT(*) FROM vip_bg_jobs WHERE code=%s AND period=%s
+                         AND status IN ('reserved','uncertain','completed')""",
+                      (member['code'],_vip_period(member)))
+            if c.fetchone()[0]>=50:
+                conn.commit()
+                return None,'Créditos del removedor agotados'
+            c.execute("""INSERT INTO vip_bg_jobs(job_id,code,period,status)
+                         VALUES (%s,%s,%s,'reserved')""",(job_id,member['code'],_vip_period(member)))
+        conn.commit()
+        return ('reserved',None),None
+    except Exception:
+        conn.rollback()
+        return None,'No se pudo reservar crédito'
+    finally: conn.close()
+
+def _bg_update(job_id,status,result=None,prediction_id=None):
+    conn=get_conn()
+    if not conn: return
+    try:
+        with conn.cursor() as c:
+            c.execute("""UPDATE vip_bg_jobs SET status=%s,result=COALESCE(%s,result),
+                         prediction_id=COALESCE(%s,prediction_id) WHERE job_id=%s""",
+                      (status,result,prediction_id,job_id))
+        conn.commit()
+    finally: conn.close()
+
+def _bg_output(prediction):
+    output=prediction.get('output')
+    if isinstance(output,list): output=output[0] if output else None
+    if isinstance(output,dict): output=output.get('image') or output.get('url')
+    return output if isinstance(output,str) and output.startswith('https://') else None
+
+@app.route('/api/vip/background/remove', methods=['POST'])
+def vip_bg_remove():
+    member=_member()
+    if not member or member['plan']!=VIP_PLAN: return jsonify(error='Inicia sesión Premium VIP'),401
+    version=os.environ.get('REPLICATE_BG_VERSION','').strip()
+    if not REPLICATE_TOKEN or not version:
+        return jsonify(error='El Removedor VIP aún no está configurado en el servidor'),503
+    data=request.get_json(silent=True) or {}
+    img=data.get('image')
+    if not isinstance(img,str) or len(img)>16_000_000 or not img.startswith(('data:image/png;base64,','data:image/jpeg;base64,','data:image/webp;base64,')):
+        return jsonify(error='Imagen inválida o demasiado grande (máximo 8 MB)'),400
+    try:
+        raw=base64.b64decode(img.split(',',1)[1],validate=True)
+        if len(raw)>8*1024*1024: raise ValueError()
+        with Image.open(io.BytesIO(raw)) as im:
+            im.verify()
+    except Exception:
+        return jsonify(error='Archivo de imagen inválido'),400
+    job_id=str(data.get('job_id',''))
+    try: uuid.UUID(job_id)
+    except (ValueError,AttributeError): return jsonify(error='Identificador de trabajo inválido'),400
+    reservation,error=_bg_reserve(member,job_id)
+    if error: return jsonify(error=error),402 if 'agotados' in error else 503
+    state,prior=reservation
+    if state=='already_completed': return jsonify(image=prior,credits=_bg_balance(member))
+    if state!='reserved': return jsonify(error='Trabajo existente: consulta su estado antes de repetir'),409
+    headers={'Authorization':'Bearer '+REPLICATE_TOKEN,'Content-Type':'application/json'}
+    try:
+        r=requests.post('https://api.replicate.com/v1/predictions',headers=headers,
+            json={'version':version,'input':{'image':img}},timeout=30)
+        if r.status_code not in (200,201):
+            _bg_update(job_id,'failed')
+            return jsonify(error='Replicate rechazó el trabajo; crédito liberado'),502
+        pred=r.json()
+        if not pred.get('id'):
+            _bg_update(job_id,'uncertain')
+            return jsonify(error='No se pudo confirmar el trabajo; consulta soporte'),502
+        _bg_update(job_id,'reserved',prediction_id=pred['id'])
+        return jsonify(status='processing',job_id=job_id,credits=_bg_balance(member)),202
+    except requests.RequestException:
+        _bg_update(job_id,'uncertain')
+        return jsonify(error='No se confirmó el envío. Crédito reservado para revisión; no vuelvas a procesar'),502
+
+@app.route('/api/vip/background/job/<job_id>',methods=['GET'])
+def vip_bg_job(job_id):
+    member=_member()
+    if not member or member['plan']!=VIP_PLAN: return jsonify(error='Acceso no autorizado'),401
+    try: uuid.UUID(job_id)
+    except ValueError: return jsonify(error='ID inválido'),400
+    conn=get_conn()
+    if not conn: return jsonify(error='Base de datos no disponible'),503
+    try:
+        with conn.cursor() as c:
+            c.execute('SELECT status,result,prediction_id FROM vip_bg_jobs WHERE job_id=%s AND code=%s',(job_id,member['code']))
+            row=c.fetchone()
+    finally: conn.close()
+    if not row: return jsonify(error='Trabajo no encontrado'),404
+    state,result,prediction_id=row
+    if state=='completed': return jsonify(status='completed',image=result,credits=_bg_balance(member))
+    if state=='failed': return jsonify(status='failed',credits=_bg_balance(member))
+    if not prediction_id: return jsonify(status='uncertain',error='Consulta soporte antes de repetir'),202
+    try:
+        r=requests.get('https://api.replicate.com/v1/predictions/'+prediction_id,
+                       headers={'Authorization':'Bearer '+REPLICATE_TOKEN},timeout=15)
+        r.raise_for_status()
+        pred=r.json()
+        if pred.get('status')=='succeeded':
+            output=_bg_output(pred)
+            if not output: return jsonify(status='uncertain',error='Salida incompatible con PNG transparente'),202
+            _bg_update(job_id,'completed',result=output)
+            return jsonify(status='completed',image=output,credits=_bg_balance(member))
+        if pred.get('status') in ('failed','canceled'):
+            _bg_update(job_id,'failed')
+            return jsonify(status='failed',error='El procesamiento falló; crédito liberado'),200
+        return jsonify(status='processing',credits=_bg_balance(member)),202
+    except requests.RequestException:
+        return jsonify(status='uncertain',error='No se pudo consultar Replicate. Reintenta consultar, no procesar.'),202
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
