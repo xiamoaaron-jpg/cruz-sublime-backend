@@ -859,8 +859,8 @@ app.view_functions["checkout"] = _checkout_trial
 
 
 # ===== REMOVEDOR VIP: 50 créditos INDEPENDIENTES del Mejorador =====
-# Configurar REPLICATE_BG_VERSION con el identificador de versión de un modelo
-# de eliminación de fondo que acepte el campo input.image.
+# Configurar REPLICATE_BG_VERSION=bria/remove-background para BRIA oficial,
+# o un identificador de versión de otro modelo que acepte input.image.
 # No se realizan predicciones si falta esa configuración.
 def _init_bg_vip():
     conn = get_conn()
@@ -970,8 +970,15 @@ def vip_bg_remove():
     if state!='reserved': return jsonify(error='Trabajo existente: consulta su estado antes de repetir'),409
     headers={'Authorization':'Bearer '+REPLICATE_TOKEN,'Content-Type':'application/json'}
     try:
-        r=requests.post('https://api.replicate.com/v1/predictions',headers=headers,
-            json={'version':version,'input':{'image':img}},timeout=30)
+        # Los modelos oficiales de Replicate usan una ruta propia, sin version hash.
+        if version == 'bria/remove-background':
+            prediction_url='https://api.replicate.com/v1/models/bria/remove-background/predictions'
+            payload={'input':{'image':img,'preserve_alpha':True}}
+        else:
+            # Compatibilidad con versiones hash de otros modelos.
+            prediction_url='https://api.replicate.com/v1/predictions'
+            payload={'version':version,'input':{'image':img}}
+        r=requests.post(prediction_url,headers=headers,json=payload,timeout=30)
         if r.status_code not in (200,201):
             _bg_update(job_id,'failed')
             return jsonify(error='Replicate rechazó el trabajo; crédito liberado'),502
