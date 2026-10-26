@@ -557,7 +557,7 @@ html body #gate .box {
     <button class="tab" data-tab="calc">Calculadora DTF <span class="cs-lock" aria-hidden="true">🔒</span></button>
     <button class="tab" data-tab="semi">Semitonos Master <span class="cs-lock" aria-hidden="true">🔒</span></button>
     <button class="tab" data-tab="img">Mejorador AI <span class="cs-lock" aria-hidden="true">🔒</span></button>
-    <button class="tab cs-premium-tab" data-tab="premium">👑 Mejorador Premium <span class="cs-lock" aria-hidden="true">🔒</span></button>
+    <button class="tab cs-premium-tab" data-tab="premium">👑 PREMIUM VIP 👑 <span class="cs-lock" aria-hidden="true">🔒</span></button>
     <button class="tab" data-tab="check">Verificador DTF <span class="cs-lock" aria-hidden="true">🔒</span></button>
     <button class="tab" data-tab="qr">Generador QR <span class="cs-lock" aria-hidden="true">🔒</span></button>
     <button class="tab" data-tab="bg">Remover Fondo <span class="cs-lock" aria-hidden="true">🔒</span></button>
@@ -725,8 +725,52 @@ html body #gate .box {
       </div>
     </div>
   </div>
+<style>
+/* Estudio Premium VIP: solo presentación, sin cambios en el mejorador ni créditos */
+#panel-premium .vip-lobby{position:relative;overflow:hidden;border:1px solid #e9bc65;border-radius:24px;padding:38px 26px;background:radial-gradient(ellipse at 50% -15%,#bd8b3838,transparent 55%),linear-gradient(140deg,#100d1c,#221627 55%,#0c1325);box-shadow:0 0 40px #d7a4462b;text-align:center}
+#panel-premium .vip-lobby:before{content:"";position:absolute;inset:8px;border:1px solid #cda55d35;border-radius:18px;pointer-events:none}
+#panel-premium .vip-crown{font-size:57px;filter:drop-shadow(0 0 18px #e6ba5b99);margin-bottom:12px}
+#panel-premium .vip-lobby h2{display:block;font-family:Georgia,serif;font-size:clamp(31px,4vw,54px);letter-spacing:3px;background:linear-gradient(100deg,#b77e25,#fff0bc,#d6a34a);background-clip:text;-webkit-background-clip:text;color:transparent;margin-bottom:10px}
+#panel-premium .vip-lobby>p{color:#e8d9b9;max-width:690px;margin:0 auto 28px;line-height:1.65}
+#panel-premium .vip-catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:20px;max-width:950px;margin:0 auto}
+#panel-premium .vip-tool-card{position:relative;background:linear-gradient(145deg,#302116,#11182a);border:1px solid #d9b76a;border-radius:20px;padding:28px 22px;text-align:left;box-shadow:0 12px 28px #0006}
+#panel-premium .vip-tool-card .vip-tool-icon{font-size:38px;display:block;margin-bottom:14px}
+#panel-premium .vip-tool-card h3{font-size:21px;color:#ffe6a6;margin-bottom:8px}
+#panel-premium .vip-tool-card p{font-size:13px;color:#cfc4b7;line-height:1.6;min-height:62px}
+#panel-premium .vip-tool-card button{margin-top:18px;width:100%;padding:13px;border:0;border-radius:12px;background:linear-gradient(110deg,#aa741f,#ffdf91,#b88630);color:#2c1a08;font-weight:900;cursor:pointer}
+#panel-premium .vip-tool-card.vip-future{opacity:.68;border-color:#7b6c55}
+#panel-premium .vip-tool-card.vip-future button{cursor:default;background:#3a3340;color:#e4d7bc}
+#panel-premium #vipStudioInner[hidden],#panel-premium #vipLobby[hidden]{display:none!important}
+#panel-premium .vip-back{margin:0 0 16px;background:#20192a;border:1px solid #b98c47;color:#ffdfa0;padding:11px 17px;border-radius:12px;font-weight:700;cursor:pointer}
+#panel-premium .vip-studio-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+#panel-premium .vip-studio-head small{color:#e5c888}
+.tabs .cs-premium-tab{border:1px solid #f4c66b!important;color:#ffdf91!important;background:linear-gradient(130deg,#31200f,#15101e)!important;box-shadow:0 0 18px #e1aa433c!important}
+.tabs .cs-premium-tab.active{background:linear-gradient(110deg,#8f611b,#eac678,#8f611b)!important;color:#201203!important}
+@media(max-width:650px){#panel-premium .vip-lobby{padding:25px 16px}#panel-premium .vip-catalog{grid-template-columns:1fr}}
+</style>
   <!-- MEJORADOR PREMIUM VIP: laboratorio aislado de V18 -->
   <div class="panel" id="panel-premium">
+    <section class="vip-lobby" id="vipLobby" aria-label="Estudio exclusivo Premium VIP">
+      <div class="vip-crown" aria-hidden="true">👑</div>
+      <h2>PREMIUM VIP</h2>
+      <p>Bienvenido a tu estudio exclusivo de inteligencia artificial. Una experiencia diseñada para llevar tus imágenes al siguiente nivel.</p>
+      <div class="vip-catalog">
+        <article class="vip-tool-card">
+          <span class="vip-tool-icon" aria-hidden="true">💎</span>
+          <h3>Mejorador Premium</h3>
+          <p>Tu mejorador de inteligencia artificial con modos de 1 y 2 créditos, vista comparativa y descarga.</p>
+          <button type="button" id="vipOpenStudio">✨ Abrir Mejorador Premium</button>
+        </article>
+        <article class="vip-tool-card vip-future">
+          <span class="vip-tool-icon" aria-hidden="true">✨</span>
+          <h3>Próximas herramientas VIP</h3>
+          <p>Este espacio está reservado para nuevas funciones exclusivas que incorporaremos más adelante.</p>
+          <button type="button" disabled>🔒 Próximamente</button>
+        </article>
+      </div>
+    </section>
+    <div id="vipStudioInner" hidden>
+      <div class="vip-studio-head"><button class="vip-back" id="vipBackToLobby" type="button">← Volver al estudio VIP</button><small>👑 Herramienta exclusiva Premium VIP</small></div>
     <div class="card cs-premium-card">
       <h2>👑 Mejorador IA Premium VIP</h2>
       <p style="color:#b9c5df;margin-bottom:15px">Mejora de imagen con Replicate · 50 créditos por membresía.</p>
@@ -774,6 +818,7 @@ html body #gate .box {
           <div class="cs-vip-loupe" id="vipLoupe" aria-hidden="true"></div>
         </section>
       </div>
+    </div>
     </div>
   </div>
   <div class="panel" id="panel-img">
@@ -2976,6 +3021,18 @@ body > *:not(#cs-galaxy-portal) {
  document.addEventListener('DOMContentLoaded',balance);
  document.addEventListener('click',e=>{if(e.target.closest('[data-tab="premium"]'))balance();});
  window.addEventListener('focus',balance);
+})();
+</script>
+<script>
+/* Navegación interna del estudio VIP: no toca autenticación, créditos ni procesamiento */
+(function(){
+  const lobby=document.getElementById('vipLobby');
+  const inner=document.getElementById('vipStudioInner');
+  const open=document.getElementById('vipOpenStudio');
+  const back=document.getElementById('vipBackToLobby');
+  if(!lobby||!inner||!open||!back)return;
+  open.addEventListener('click',function(){lobby.hidden=true;inner.hidden=false;});
+  back.addEventListener('click',function(){inner.hidden=true;lobby.hidden=false;});
 })();
 </script>
 </body>
