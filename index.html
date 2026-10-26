@@ -523,6 +523,15 @@ html body #gate .box {
   margin: auto;
 }
 </style>
+<style>
+#panel-premium #vipBgStudio[hidden]{display:none!important}
+#panel-premium .vip-balance-line{margin-top:8px;color:#ffe1a2;font-size:12px;font-weight:700}
+#panel-premium .vip-bg-editor{max-width:670px;margin:22px auto 0;text-align:left;padding:24px;border:1px solid #b58a4d;border-radius:17px;background:#100f1c}
+#panel-premium .vip-bg-editor label{display:block;color:#ffe4a5;font-weight:700;margin-bottom:10px}
+#panel-premium .vip-bg-editor input{display:block;width:100%;margin-bottom:20px;color:#fff}
+#panel-premium .vip-bg-editor p{color:#f4d9a5;font-size:13px;line-height:1.65}
+#panel-premium .vip-bg-editor button{padding:14px 20px;border-radius:12px;border:1px solid #ad8b54;background:#3b3440;color:#ded0b6;margin-top:16px;cursor:not-allowed}
+</style>
 </head>
 <body>
 <div id="gate" style="display:none">
@@ -761,12 +770,30 @@ html body #gate .box {
           <p>Tu mejorador de inteligencia artificial con modos de 1 y 2 créditos, vista comparativa y descarga.</p>
           <button type="button" id="vipOpenStudio">✨ Abrir Mejorador Premium</button>
         </article>
+        <article class="vip-tool-card">
+          <span class="vip-tool-icon" aria-hidden="true">👑</span>
+          <h3>Removedor de Fondo VIP</h3>
+          <p>50 eliminaciones de fondo mensuales adicionales, con saldo separado del Mejorador Premium. IA avanzada y PNG transparente.</p>
+          <div class="vip-balance-line" id="vipBgBalance">Saldo del removedor: pendiente de activar</div>
+          <button type="button" id="vipOpenBackground">✨ Abrir Removedor VIP</button>
+        </article>
         <article class="vip-tool-card vip-future">
           <span class="vip-tool-icon" aria-hidden="true">✨</span>
           <h3>Próximas herramientas VIP</h3>
           <p>Este espacio está reservado para nuevas funciones exclusivas que incorporaremos más adelante.</p>
           <button type="button" disabled>🔒 Próximamente</button>
         </article>
+      </div>
+    </section>
+    <section id="vipBgStudio" class="vip-lobby" hidden aria-label="Removedor de Fondo VIP">
+      <div style="text-align:left;margin-bottom:22px"><button class="vip-back" type="button" id="vipBgBack">← Volver al estudio VIP</button></div>
+      <div class="vip-crown">👑</div><h2>REMOVEDOR VIP</h2>
+      <p>Eliminación de fondo con inteligencia artificial avanzada · 50 créditos mensuales exclusivos de esta herramienta.</p>
+      <div class="vip-bg-editor">
+        <label for="vipBgFile">Selecciona una fotografía (PNG, JPG o WEBP)</label>
+        <input id="vipBgFile" type="file" accept="image/png,image/jpeg,image/webp" />
+        <p id="vipBgNotice" role="status">Para habilitar el procesamiento VIP de pago falta conectar el servidor con Replicate y activar el saldo independiente. No se descontarán créditos mientras esté pendiente.</p>
+        <button id="vipBgProcess" type="button" disabled>🔒 Procesamiento VIP pendiente de conexión</button>
       </div>
     </section>
     <div id="vipStudioInner" hidden>
@@ -1329,12 +1356,12 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
           <span class="badge">👑 PREMIUM ORO · IA</span>
           <h3>👑 Premium VIP</h3>
           <div class="price">$280 <span>MXN / 30 días</span></div>
-          <div class="cs-vip-reason" style="margin:12px 0;padding:12px;border:1px solid #d5a53d;border-radius:12px;background:#b18b2520;text-align:left"><strong style="color:#ffe19a">👑 ¿Por qué te conviene Premium VIP?</strong><p style="font-size:13px;line-height:1.5;margin:6px 0 0">Todo en un solo paquete: herramientas creativas, 50 créditos de inteligencia artificial, 1 mes de Canva Pro Premium y 7 días de CapCut Pro de regalo. Ideal para llevar tus diseños al siguiente nivel.</p></div><ul>
+          <div class="cs-vip-reason" style="margin:12px 0;padding:12px;border:1px solid #d5a53d;border-radius:12px;background:#b18b2520;text-align:left"><strong style="color:#ffe19a">👑 ¿Por qué te conviene Premium VIP?</strong><p style="font-size:13px;line-height:1.5;margin:6px 0 0">Todo en un solo paquete: 50 créditos para el Mejorador Premium y 50 eliminaciones de fondo VIP adicionales, con saldos independientes. Incluye 1 mes de Canva Pro Premium y 7 días de CapCut Pro de regalo. Ideal para llevar tus diseños al siguiente nivel.</p></div><ul>
             <li>Acceso a todas las herramientas de Cruz Sublime</li>
             <li>Todos los beneficios de las membresías existentes</li>
-            <li>50 créditos para herramientas de inteligencia artificial</li>
-            <li>1 crédito por operación de IA completada correctamente</li>
-            <li>50 créditos nuevos al renovar; no acumulables</li>
+            <li>💎 Mejorador Premium: 50 créditos por mes (modos de 1 y 2 créditos)</li><li>✨ Removedor de Fondo VIP: 50 eliminaciones por mes, saldo independiente</li>
+            <li>Removedor VIP: 1 crédito de su propio saldo por eliminación exitosa</li>
+            <li>Ambos saldos se renuevan cada 30 días; no acumulables</li>
             <li>Acceso durante 30 días</li>
           </ul>
           <a class="btn big" href="https://buy.stripe.com/00wfZj0JY3QL5rr57DaEE03"
@@ -3030,9 +3057,14 @@ body > *:not(#cs-galaxy-portal) {
   const inner=document.getElementById('vipStudioInner');
   const open=document.getElementById('vipOpenStudio');
   const back=document.getElementById('vipBackToLobby');
-  if(!lobby||!inner||!open||!back)return;
-  open.addEventListener('click',function(){lobby.hidden=true;inner.hidden=false;});
-  back.addEventListener('click',function(){inner.hidden=true;lobby.hidden=false;});
+  const bg=document.getElementById('vipBgStudio');
+  const bgOpen=document.getElementById('vipOpenBackground');
+  const bgBack=document.getElementById('vipBgBack');
+  if(!lobby||!inner||!open||!back||!bg||!bgOpen||!bgBack)return;
+  open.addEventListener('click',function(){lobby.hidden=true;bg.hidden=true;inner.hidden=false;});
+  back.addEventListener('click',function(){inner.hidden=true;bg.hidden=true;lobby.hidden=false;});
+  bgOpen.addEventListener('click',function(){lobby.hidden=true;inner.hidden=true;bg.hidden=false;});
+  bgBack.addEventListener('click',function(){bg.hidden=true;inner.hidden=true;lobby.hidden=false;});
 })();
 </script>
 </body>
