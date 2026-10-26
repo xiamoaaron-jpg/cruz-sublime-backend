@@ -1131,16 +1131,9 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
       <div class="status" id="bgStatus">Ninguna imagen cargada.</div>
     </div>
     <div class="card">
-      <h2><span class="num">2</span> Ajustes</h2>
-      <div class="field">
-        <label>Tolerancia de fondo <span class="val" id="vBgTol">40</span></label>
-        <input type="range" id="bgTol" min="10" max="100" step="5" value="40">
-      </div>
-      <div class="field">
-        <label>Color de fondo a remover</label>
-        <input type="color" id="bgColor" value="#ffffff">
-      </div>
-      <button class="btn btn-big" id="btnBg" disabled>Remover fondo</button>
+      <h2><span class="num">2</span> Eliminación automática con IA</h2>
+      <p style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px">La IA identifica el sujeto y elimina el fondo sin cambiar sus colores. El procesamiento se realiza en tu navegador; la primera vez descargará el modelo y puede tardar.</p>
+      <button class="btn btn-big" id="btnBg" disabled>✨ Eliminar fondo con IA</button>
       <button class="btn ghost" id="btnBgDl" disabled style="margin-top:8px">Descargar PNG</button>
     </div>
     <div class="preview">
@@ -1217,7 +1210,7 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
           </ul>
           <button class="btn big" id="btnBasico">Pagar con tarjeta</button>
           <button class="btn big" id="btnBasicoMP" style="background:#00a8e8;margin-top:8px">Pagar con Mercado Pago</button>
-<div class="cs-payment-help"><strong>¿Ya realizaste tu pago?</strong><p>Envíanos la captura del comprobante por WhatsApp, junto con tu nombre y correo, para verificarlo y activar tu acceso.</p><a class="cs-wa-button" href="https://wa.me/525669717042?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20del%20plan%20B%C3%A1sico%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer"><svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> Enviar comprobante por WhatsApp</a></div>
+<div class="cs-payment-help"><strong>¿Ya realizaste tu pago?</strong><p>Envíanos la captura del comprobante por WhatsApp, junto con tu nombre y correo, para verificarlo y activar tu acceso.</p><a class="cs-wa-button" href="https://wa.me/527201520366?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20del%20plan%20B%C3%A1sico%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer"><svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> Enviar comprobante por WhatsApp</a></div>
         </div>
         <div class="plan featured">
           <span class="badge">Más popular</span>
@@ -1232,7 +1225,7 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
           </ul>
           <button class="btn big" id="btnMedio">Pagar con tarjeta</button>
           <button class="btn big" id="btnMedioMP" style="background:#00a8e8;margin-top:8px">Pagar con Mercado Pago</button>
-<div class="cs-payment-help"><strong>¿Ya realizaste tu pago?</strong><p>Envíanos la captura del comprobante por WhatsApp, junto con tu nombre y correo, para verificarlo y activar tu acceso.</p><a class="cs-wa-button" href="https://wa.me/525669717042?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20del%20plan%20Medio%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer"><svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> Enviar comprobante por WhatsApp</a></div>
+<div class="cs-payment-help"><strong>¿Ya realizaste tu pago?</strong><p>Envíanos la captura del comprobante por WhatsApp, junto con tu nombre y correo, para verificarlo y activar tu acceso.</p><a class="cs-wa-button" href="https://wa.me/527201520366?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20del%20plan%20Medio%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer"><svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> Enviar comprobante por WhatsApp</a></div>
           <div class="canva-counter" id="canvaCounter">Cuentas Canva disponibles hoy: <b id="canvaLeft">15</b> / 15</div>
         </div>
         <!-- NUEVA MEMBRESÍA PREMIUM VIP: versión de prueba -->
@@ -1258,7 +1251,7 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
              style="display:block;text-decoration:none;text-align:center;background:#00a8e8;margin-top:8px">
             💙 Pagar con Mercado Pago
           </a>
-<div class="cs-payment-help"><strong>¿Ya realizaste tu pago?</strong><p>Envíanos la captura del comprobante por WhatsApp, junto con tu nombre y correo, para verificarlo y activar tu acceso.</p><a class="cs-wa-button" href="https://wa.me/525669717042?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20del%20plan%20Premium%20VIP%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer"><svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> Enviar comprobante por WhatsApp</a></div>
+<div class="cs-payment-help"><strong>¿Ya realizaste tu pago?</strong><p>Envíanos la captura del comprobante por WhatsApp, junto con tu nombre y correo, para verificarlo y activar tu acceso.</p><a class="cs-wa-button" href="https://wa.me/527201520366?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20del%20plan%20Premium%20VIP%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer"><svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> Enviar comprobante por WhatsApp</a></div>
           <p style="color:var(--muted);font-size:12px;margin-top:14px;line-height:1.5">
             Después de pagar, envía tu comprobante para validar la membresía.
             La activación se hace después de verificar el pago. El procesamiento GPU requiere un servidor GPU configurado.
@@ -1277,7 +1270,7 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
           </ul>
           <button class="btn big" id="btnAnual">Pagar con tarjeta</button>
           <button class="btn big" id="btnAnualMP" style="background:#00a8e8;margin-top:8px">Pagar con Mercado Pago</button>
-<div class="cs-payment-help"><strong>¿Ya realizaste tu pago?</strong><p>Envíanos la captura del comprobante por WhatsApp, junto con tu nombre y correo, para verificarlo y activar tu acceso.</p><a class="cs-wa-button" href="https://wa.me/525669717042?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20del%20plan%20Anual%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer"><svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> Enviar comprobante por WhatsApp</a></div>
+<div class="cs-payment-help"><strong>¿Ya realizaste tu pago?</strong><p>Envíanos la captura del comprobante por WhatsApp, junto con tu nombre y correo, para verificarlo y activar tu acceso.</p><a class="cs-wa-button" href="https://wa.me/527201520366?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20del%20plan%20Anual%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer"><svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> Enviar comprobante por WhatsApp</a></div>
         </div>
 
 
@@ -2045,65 +2038,83 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 
 
-  // ===== REMOVER FONDO =====
+  // ===== REMOVER FONDO: prototipo IA en navegador =====
+  // IMPORTANTE: @imgly/background-removal se distribuye bajo AGPL-3.0;
+  // revisar obligaciones de licencia antes de publicar comercialmente.
   var bgFileInput = document.getElementById("bgFile");
   var bgDrop = document.getElementById("bgDrop");
-  var bgOriginal = null, bgResult = null;
-  document.getElementById("bgTol").oninput = function(e){ document.getElementById("vBgTol").textContent = e.target.value; };
-  function bgLoad(f){
-    if(!f || !f.type || f.type.indexOf("image/") !== 0){ document.getElementById("bgStatus").textContent = "Elige una imagen."; return; }
-    var r = new FileReader();
-    r.onload = function(e){
-      bgOriginal = e.target.result;
-      document.getElementById("bgBefore").src = bgOriginal;
-      document.getElementById("bgBeforeInfo").innerHTML = "<b>" + f.name + "</b>";
-      document.getElementById("bgAfter").src = "";
-      document.getElementById("bgAfterInfo").textContent = "—";
-      bgResult = null;
-      document.getElementById("btnBg").disabled = false;
-      document.getElementById("btnBgDl").disabled = true;
-      document.getElementById("bgStatus").innerHTML = "Imagen cargada: <b>" + f.name + "</b>.";
-    };
-    r.readAsDataURL(f);
+  var bgOriginalFile = null, bgResultURL = null, bgModelPromise = null;
+  var bgGeneration = 0;
+  var bgStatus = document.getElementById("bgStatus");
+  var bgButton = document.getElementById("btnBg");
+  var bgDownload = document.getElementById("btnBgDl");
+  function bgClearResult(){
+    if(bgResultURL) URL.revokeObjectURL(bgResultURL);
+    bgResultURL = null;
+    document.getElementById("bgAfter").removeAttribute("src");
+    document.getElementById("bgAfterInfo").textContent = "—";
+    bgDownload.disabled = true;
+  }
+  function bgLoad(file){
+    if(!file || !/^image\/(png|jpeg|webp)$/.test(file.type)){
+      bgStatus.textContent = "Selecciona un archivo PNG, JPG o WEBP."; return;
+    }
+    if(file.size > 20*1024*1024){
+      bgStatus.textContent = "La imagen debe pesar menos de 20 MB."; return;
+    }
+    bgGeneration++;
+    bgOriginalFile = file;
+    bgClearResult();
+    var reader = new FileReader();
+    reader.onload = function(){ document.getElementById("bgBefore").src = reader.result; };
+    reader.readAsDataURL(file);
+    document.getElementById("bgBeforeInfo").textContent = file.name;
+    bgButton.disabled = false;
+    bgStatus.textContent = "Imagen lista: " + file.name;
   }
   bgDrop.addEventListener("click", function(){ bgFileInput.click(); });
-  bgDrop.addEventListener("dragover", function(e){ e.preventDefault(); bgDrop.classList.add("drag"); });
-  bgDrop.addEventListener("dragleave", function(){ bgDrop.classList.remove("drag"); });
-  bgDrop.addEventListener("drop", function(e){ e.preventDefault(); bgDrop.classList.remove("drag"); if(e.dataTransfer.files[0]) bgLoad(e.dataTransfer.files[0]); });
-  bgFileInput.addEventListener("change", function(e){ if(e.target.files[0]) bgLoad(e.target.files[0]); });
-  var el_btnBg = document.getElementById("btnBg"); if(el_btnBg) el_btnBg.addEventListener("click", function(){
-    if(!bgOriginal) return;
-    var img = new Image();
-    img.onload = function(){
-      var tol = parseInt(document.getElementById("bgTol").value,10);
-      var hex = document.getElementById("bgColor").value;
-      var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      var tr = parseInt(m[1],16), tg = parseInt(m[2],16), tb = parseInt(m[3],16);
-      var c = document.createElement("canvas");
-      c.width = img.width; c.height = img.height;
-      var ctx = c.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      var data = ctx.getImageData(0, 0, c.width, c.height);
-      var d = data.data;
-      for(var i=0;i<d.length;i+=4){
-        var dist = Math.sqrt((d[i]-tr)**2 + (d[i+1]-tg)**2 + (d[i+2]-tb)**2);
-        if(dist <= tol) d[i+3] = 0;
-      }
-      ctx.putImageData(data, 0, 0);
-      bgResult = c.toDataURL("image/png");
-      document.getElementById("bgAfter").src = bgResult;
-      document.getElementById("bgAfterInfo").innerHTML = "<b>" + c.width + " x " + c.height + " px</b> · PNG transparente";
-      document.getElementById("btnBgDl").disabled = false;
-    };
-    img.src = bgOriginal;
+  bgDrop.addEventListener("dragover", function(e){e.preventDefault();bgDrop.classList.add("drag");});
+  bgDrop.addEventListener("dragleave", function(){bgDrop.classList.remove("drag");});
+  bgDrop.addEventListener("drop", function(e){e.preventDefault();bgDrop.classList.remove("drag");if(e.dataTransfer.files[0])bgLoad(e.dataTransfer.files[0]);});
+  bgFileInput.addEventListener("change", function(e){if(e.target.files[0])bgLoad(e.target.files[0]);});
+  bgButton.addEventListener("click", async function(){
+    if(!bgOriginalFile || bgButton.disabled) return;
+    var generation = bgGeneration;
+    bgButton.disabled = true;
+    bgDownload.disabled = true;
+    bgStatus.textContent = "Preparando IA… La primera carga puede tardar varios minutos.";
+    try{
+      if(!bgModelPromise) bgModelPromise = import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm").catch(function(err){bgModelPromise=null;throw err;});
+      var module = await bgModelPromise;
+      if(generation !== bgGeneration) return;
+      bgStatus.textContent = "Eliminando fondo con IA…";
+      var resultBlob = await module.removeBackground(bgOriginalFile, {
+        progress: function(key,current,total){
+          if(generation !== bgGeneration) return;
+          if(total && current <= total) bgStatus.textContent = "Cargando modelo IA: " + Math.round(current/total*100) + "%";
+        }
+      });
+      if(generation !== bgGeneration) return;
+      bgClearResult();
+      bgResultURL = URL.createObjectURL(resultBlob);
+      document.getElementById("bgAfter").src = bgResultURL;
+      document.getElementById("bgAfterInfo").textContent = "PNG con transparencia · listo para descargar";
+      bgDownload.disabled = false;
+      bgStatus.textContent = "¡Fondo eliminado! Revisa los bordes antes de descargar.";
+    }catch(err){
+      console.error("Removedor IA:",err);
+      if(generation === bgGeneration) bgStatus.textContent = "No se pudo ejecutar la IA en este navegador. Comprueba tu conexión y prueba Chrome o Edge actualizado.";
+    }finally{
+      if(generation === bgGeneration) bgButton.disabled = false;
+    }
   });
-  var el_btnBgDl = document.getElementById("btnBgDl"); if(el_btnBgDl) el_btnBgDl.addEventListener("click", function(){
-    if(!bgResult) return;
+  bgDownload.addEventListener("click", function(){
+    if(!bgResultURL) return;
     var a = document.createElement("a");
-    a.href = bgResult; a.download = "cruz_sublime_sin_fondo.png";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    a.href = bgResultURL;
+    a.download = "cruz_sublime_sin_fondo.png";
+    document.body.appendChild(a);a.click();a.remove();
   });
-
 
   // Contadores animados
   var designs = 1847, orders = 126;
