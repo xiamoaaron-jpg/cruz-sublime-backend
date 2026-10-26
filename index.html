@@ -3391,7 +3391,7 @@ function download(){let c=exportCanvas();c.toBlob(b=>{if(!b){$('mugStatus').text
 function print(){let c=exportCanvas(),[w,h]=cm(),url=c.toDataURL('image/png'),win=window.open('','_blank');if(!win){$('mugStatus').textContent='Permite ventanas emergentes para imprimir o guardar como PDF.';return}win.document.write(`<html><head><title>Cruz Sublime · Taza</title><style>@page{size:${w}cm ${h}cm;margin:0}body{margin:0}img{display:block;width:${w}cm;height:${h}cm}</style></head><body><img src="${url}" onload="setTimeout(()=>window.print(),400)"></body></html>`);win.document.close()}
 $('mugScene').addEventListener('change',()=>{mugSceneImage=new Image();mugSceneImage.onload=draw;mugSceneImage.src=mugScenes[$('mugScene').value];draw()});
 $('mugZoom').addEventListener('input',()=>{p.style.transform='scale('+($('mugZoom').value/100)+')';p.style.transformOrigin='center center'});
-$('mugMockupSave').addEventListener('click',()=>{const a=document.createElement('a');a.download='Cruz_Sublime_Mug_Mockup.png';a.href=p.toDataURL('image/png');a.click()});
+$('mugMockupSave').addEventListener('click',e=>{if(window.csMug3DUpdate)return;const a=document.createElement('a');a.download='Cruz_Sublime_Mug_Mockup.png';a.href=p.toDataURL('image/png');a.click()});
 mugSceneImage.onload=draw;
 $('mugFile').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){$('mugStatus').textContent='Selecciona una imagen válida.';return}let url=URL.createObjectURL(f),im=new Image();im.onload=()=>{pic=im;URL.revokeObjectURL(url);quality();draw()};im.onerror=()=>{$('mugStatus').textContent='No se pudo abrir la imagen.';URL.revokeObjectURL(url)};im.src=url});$('mugSize').addEventListener('change',()=>{let sh=mugShape();$('mugMaterial').value=sh==='glass'?'glass':sh==='metal'?'metal':sh==='enamel'?'enamel':sh==='polymer'?'polymer':'ceramic';$('mugHandle').value=sh==='colored'?'#e63946':'#ffffff';if($('mugSize').value!=='custom'){let [w,h]=$('mugSize').value.split(',');$('mugW').value=w;$('mugH').value=h}quality();draw()});['mugW','mugH','mugScale','mugX','mugY','mugText','mugTextColor','mugFont','mugHandle','mugBg','mugMaterial','mugHeat'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='mugW'||id==='mugH')$('mugSize').value='custom';quality();draw()}));['mugBlank','mugInk','mugOther','mugSale'].forEach(id=>$(id).addEventListener('input',costs));$('mugAngle').addEventListener('input',e=>rotate(+e.target.value));$('mugLeft').onclick=()=>rotate(angle-30);$('mugRight').onclick=()=>rotate(angle+30);$('mugAuto').onclick=()=>{if(auto){clearInterval(auto);auto=null;$('mugAuto').textContent='▶ Rotación automática'}else{auto=setInterval(()=>{if(!$('panel-mug').classList.contains('active'))return;rotate(angle+3)},70);$('mugAuto').textContent='⏸ Detener rotación'}};$('mugPreview').addEventListener('pointerdown',e=>{down={x:e.clientX,a:angle};p.setPointerCapture(e.pointerId)});$('mugPreview').addEventListener('pointermove',e=>{if(down)rotate(down.a+(e.clientX-down.x)*.8)});['pointerup','pointercancel'].forEach(t=>p.addEventListener(t,()=>down=null));$('mugDownload').onclick=download;$('mugPrint').onclick=print;$('mugReset').onclick=()=>{pic=null;$('mugFile').value='';$('mugText').value='';$('mugScale').value=100;$('mugX').value=0;$('mugY').value=0;quality();draw()};costs();draw();
 // Visor 3D independiente: si WebGL o Three.js no están disponibles, queda el visor 2D.
@@ -3409,11 +3409,22 @@ $('mugFile').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;
  renderer.domElement.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2;';
  stage.appendChild(renderer.domElement);
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(32,720/490,.1,100);
- camera.position.set(0,1.1,8.5);camera.lookAt(0,0,0);
- scene.add(new T.HemisphereLight(0xe9f2ff,0x33415e,2.25));
+ camera.position.set(0,1.45,8.5);camera.lookAt(0,-.15,0);
+ scene.add(new T.HemisphereLight(0xffffff,0x67768a,2.0));
  const key=new T.DirectionalLight(0xffffff,3.2);key.position.set(-4,7,6);scene.add(key);
- const fill=new T.DirectionalLight(0xb9cfff,1.2);fill.position.set(4,3,-3);scene.add(fill);
+ const fill=new T.DirectionalLight(0xe3eaff,1.5);fill.position.set(4,3,-3);scene.add(fill);
+ const edge=new T.DirectionalLight(0xffffff,1.1);edge.position.set(0,4,-4);scene.add(edge);
  const root=new T.Group();scene.add(root);
+ // Superficie real con sombra de contacto bajo la base de la taza.
+ const table=new T.Mesh(new T.PlaneGeometry(200,200),new T.MeshStandardMaterial({color:0xffffff,roughness:.82,transparent:true,opacity:.02}));
+ table.rotation.x=-Math.PI/2;table.position.y=-1.3;scene.add(table);
+ const shadowCanvas=document.createElement('canvas');shadowCanvas.width=256;shadowCanvas.height=256;
+ const shadowCtx=shadowCanvas.getContext('2d'),grad=shadowCtx.createRadialGradient(128,128,12,128,128,125);
+ grad.addColorStop(0,'rgba(18,18,23,.56)');grad.addColorStop(.48,'rgba(20,20,25,.30)');grad.addColorStop(1,'rgba(20,20,25,0)');
+ shadowCtx.fillStyle=grad;shadowCtx.fillRect(0,0,256,256);
+ const shadowTex=new T.CanvasTexture(shadowCanvas);
+ const contactShadow=new T.Mesh(new T.PlaneGeometry(4.5,3.4),new T.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false,opacity:.78}));
+ contactShadow.rotation.x=-Math.PI/2;contactShadow.position.set(0,-1.275,0);scene.add(contactShadow);
  const tex=new T.CanvasTexture(artwork(1000,450));tex.colorSpace=T.SRGBColorSpace;
  tex.wrapS=T.RepeatWrapping;tex.flipY=false;tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
  let lastShape='',lastMaterial='',lastHandle='',lastBg='',mug=null;
@@ -3422,9 +3433,9 @@ $('mugFile').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;
  function clearRoot(){while(root.children.length){let child=root.children[0];root.remove(child);child.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&!Array.isArray(o.material)&&o.material!==tex)o.material.dispose()})}}
  function build(){
   clearRoot();let sh=mugShape(),mat=$('mugMaterial').value;
-  const tall=sh==='classic15'||sh==='latte17'?3.05:sh==='espresso'?1.55:sh==='latte12'?2.65:2.45;
+  const tall=sh==='classic15'||sh==='latte17'?2.88:sh==='espresso'?1.62:sh==='latte12'?2.55:2.55;
   const top=sh.startsWith('latte')?1.29:sh==='espresso'?.75:1.12;
-  const bottom=sh.startsWith('latte')?.87:sh==='espresso'?.72:1.07;
+  const bottom=sh.startsWith('latte')?.87:sh==='espresso'?.72:1.09;
   const metallic=mat==='metal'||sh==='metal';
   let shell=surface(0xffffff,metallic?.26:.2,metallic?.75:0);
   if(sh==='magic'&&+$('mugHeat').value<15)shell.color.set('#222733');
@@ -3433,7 +3444,7 @@ $('mugFile').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;
   ]);
   // Textura del diseño y material de cerámica real: doble capa sin perder el relieve.
   let decal=new T.Mesh(new T.CylinderGeometry(top+.007,bottom+.007,tall-.06,128,1,true),
-    new T.MeshPhysicalMaterial({map:tex,roughness:metallic?.35:.29,metalness:metallic?.55:0,clearcoat:.65,clearcoatRoughness:.13,side:T.FrontSide,transparent:false}));
+    new T.MeshPhysicalMaterial({map:tex,roughness:metallic?.28:.19,metalness:metallic?.55:0,clearcoat:1,clearcoatRoughness:.08,side:T.FrontSide,transparent:false}));
   root.add(side,decal);
   const rimMat=surface(metallic?0xcbd2db:0xfafaff,.17,metallic?.7:0);
   let lip=mesh(new T.TorusGeometry(top-.035,.068,14,128),rimMat);
@@ -3442,12 +3453,17 @@ $('mugFile').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;
   interior.position.y=tall/2-.11;
   const base=mesh(new T.CylinderGeometry(bottom-.02,bottom-.04,.075,128),rimMat);
   base.position.y=-tall/2+.025;
-  const hc=$('mugHandle').value,hm=surface(sh==='colored'?hc:hc,.17);
+  const hc=$('mugHandle').value,hm=surface(hc,.14);
   const pathPoints=[];
   if(sh==='heart'){
    for(let i=0;i<=80;i++){let a=i/80*Math.PI*2;let x=top+.50+(.58*Math.sin(a)**3);let y=.03+.58*(.82*Math.cos(a)-.33*Math.cos(2*a)-.13*Math.cos(3*a)-.07*Math.cos(4*a));pathPoints.push(new T.Vector3(x,y,0))}
   }else{
-   for(let i=0;i<=60;i++){let a=-Math.PI*.54+(i/60)*Math.PI*1.08;pathPoints.push(new T.Vector3(top+.08+.68*Math.cos(a),.82*Math.sin(a),0))}
+   // Asa cerrada que se une al cuerpo arriba y abajo, sin flotar separada.
+   for(let i=0;i<=80;i++){
+    const t=i/80, a=-Math.PI/2+Math.PI*t;
+    const x=top-.045+.77*Math.cos(a),y=.79*Math.sin(a);
+    pathPoints.push(new T.Vector3(x,y,0));
+   }
   }
   const curve=new T.CatmullRomCurve3(pathPoints,sh==='heart');
   mesh(new T.TubeGeometry(curve,100,.12,12,false),hm);
@@ -3472,8 +3488,9 @@ $('mugFile').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;
   if(lastBg!==$('mugScene').value)backdrop();
   const image=artwork(1000,450),g=tex.image.getContext('2d');g.clearRect(0,0,1000,450);g.drawImage(image,0,0);tex.needsUpdate=true;
   root.rotation.y=-angle*Math.PI/180;
+  contactShadow.material.opacity=.75;
   const zoom=(+$('mugZoom').value||100)/100;
-  camera.position.z=8.5/zoom;camera.lookAt(0,0,0);
+  camera.position.z=8.5/zoom;camera.lookAt(0,-.15,0);
   renderer.render(scene,camera);
  };
  const originalSave=$('mugMockupSave').onclick;
