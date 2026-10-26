@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, session, redirect, url_for
 from flask_cors import CORS
 import stripe
 import os
@@ -10,6 +10,9 @@ from PIL import Image
 import io
 import base64
 import time
+import hmac
+import hashlib
+import secrets
 
 app = Flask(__name__)
 
@@ -367,9 +370,8 @@ def upscale_use():
 
 @app.route("/admin/clear-usages", methods=["POST"])
 def admin_clear_usages():
-    password = request.form.get("p", "")
-    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
+    denied = _admin_post_guard()
+    if denied: return denied
     conn = get_conn()
     if not conn:
         return "DB no disponible", 500
@@ -381,13 +383,12 @@ def admin_clear_usages():
         print("Clear usages error:", e)
     finally:
         conn.close()
-    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Usos vaciados</h2><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
+    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Usos vaciados</h2><a href="/admin" style="color:#3b82f6">Volver al panel</a></body></html>'
 
 @app.route("/admin/delete-usage", methods=["POST"])
 def admin_delete_usage():
-    password = request.form.get("p", "")
-    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
+    denied = _admin_post_guard()
+    if denied: return denied
     usage_id = request.form.get("id", "").strip()
     if not usage_id:
         return "Falta ID", 400
@@ -402,13 +403,12 @@ def admin_delete_usage():
         print("Delete usage error:", e)
     finally:
         conn.close()
-    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Uso eliminado</h2><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
+    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Uso eliminado</h2><a href="/admin" style="color:#3b82f6">Volver al panel</a></body></html>'
 
 @app.route("/admin/delete", methods=["POST"])
 def admin_delete():
-    password = request.form.get("p", "")
-    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
+    denied = _admin_post_guard()
+    if denied: return denied
     code = request.form.get("code", "").strip().upper()
     if not code:
         return "Falta código", 400
@@ -424,7 +424,7 @@ def admin_delete():
         print("Delete error:", e)
     finally:
         conn.close()
-    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{code}</p><a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a></body></html>'
+    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{code}</p><a href="/admin" style="color:#3b82f6">Volver al panel</a></body></html>'
 
 
 @app.route("/api/halftone", methods=["POST"])
@@ -468,9 +468,8 @@ def halftone():
 
 @app.route("/admin")
 def admin():
-    password = request.args.get("p", "")
-    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
+    denied = _admin_guard()
+    if denied: return denied
     conn = get_conn()
     codes, usages = [], []
     if conn:
@@ -485,7 +484,7 @@ def admin():
                 created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
                 expires = (created + timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
                 codes.append((code_val, plan, days, created_at, email, expires))
-            c.execute('SELECT code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
+            c.execute('SELECT id, code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
             usages = c.fetchall()
             print("Usages found:", len(usages))
         except Exception as e:
@@ -512,9 +511,10 @@ def admin():
     </style>
     </head><body>
     <h2>Panel Cruz Sublime</h2>
+    <form method="post" action="/admin/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">Cerrar sesión</button></form>
     <form action="/admin/generate" method="post">
-      <input type="hidden" name="p" value="{{ password }}">
-      Plan: <select name="plan"><option value="basico">Básico</option><option value="medio">Medio</option><option value="anual">Anual</option></select>
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      Plan: <select name="plan"><option value="basico">Básico</option><option value="medio">Medio</option><option value="anual">Anual</option><option value="premium_vip">Premium VIP</option></select>
       Días: <input type="number" name="days" value="30" style="width:70px">
       Email: <input type="email" name="email" placeholder="correo@ejemplo.com">
       <button type="submit">Generar código</button>
@@ -523,31 +523,36 @@ def admin():
     <table>
     <tr><th>Código</th><th>Plan</th><th>Días</th><th>Creado</th><th>Expira</th><th>Email</th><th>Acción</th></tr>
     {% for c in codes %}
-    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[5] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
+    <tr><td>{{ c[0] }}</td><td>{{ c[1] }}</td><td>{{ c[2] }}</td><td>{{ c[3] }}</td><td>{{ c[5] }}</td><td>{{ c[4] or '—' }}</td><td><form action="/admin/delete" method="post" style="margin:0"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="code" value="{{ c[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
     {% else %}
     <tr><td colspan="5">No hay códigos</td></tr>
     {% endfor %}
     </table>
-    <h3>Usos recientes <form action="/admin/clear-usages" method="post" style="display:inline;margin-left:12px"><input type="hidden" name="p" value="{{ password }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Vaciar todos</button></form></h3>
+    <h3>Usos recientes <form action="/admin/clear-usages" method="post" style="display:inline;margin-left:12px"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Vaciar todos</button></form></h3>
     <table>
     <tr><th>Código</th><th>Usuario</th><th>Plan</th><th>Fecha</th><th>Acción</th></tr>
     {% for u in usages %}
-    <tr><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td><td>{{ u[4] }}</td><td><form action="/admin/delete-usage" method="post" style="margin:0"><input type="hidden" name="p" value="{{ password }}"><input type="hidden" name="id" value="{{ u[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
+    <tr><td>{{ u[1] }}</td><td>{{ u[2] }}</td><td>{{ u[3] }}</td><td>{{ u[4] }}</td><td><form action="/admin/delete-usage" method="post" style="margin:0"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="id" value="{{ u[0] }}"><button type="submit" style="background:#e63946;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px">Eliminar</button></form></td></tr>
     {% else %}
     <tr><td colspan="4">Sin usos</td></tr>
     {% endfor %}
     </table>
     </body></html>
     """
-    return render_template_string(html, codes=codes, usages=usages, password=password)
+    return render_template_string(html, codes=codes, usages=usages, csrf=session["admin_csrf"])
 
 @app.route("/admin/generate", methods=["POST"])
 def admin_generate():
-    password = request.form.get("p", "")
-    if not ADMIN_PASSWORD or password != ADMIN_PASSWORD:
-        return "Acceso denegado", 403
+    denied = _admin_post_guard()
+    if denied: return denied
     plan = request.form.get("plan", "basico")
-    days = int(request.form.get("days", 30))
+    if plan not in ("basico", "medio", "anual", "premium_vip"):
+        return "Plan inválido", 400
+    try:
+        days = int(request.form.get("days", 30))
+        if not 1 <= days <= 365: raise ValueError()
+    except (ValueError, TypeError):
+        return "Los días deben estar entre 1 y 365", 400
     email = request.form.get("email", "").strip()
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
     code = f"{code[:4]}-{code[4:]}"
@@ -573,7 +578,7 @@ def admin_generate():
     <p style="font-size:28px;font-weight:bold;color:#ec4899">{code}</p>
     <p>Plan: {plan} · Días: {days}</p>
     {"<p style='color:#e63946'>Error: " + error_msg + "</p>" if error_msg else "<p style='color:#10b981'>Guardado correctamente</p>"}
-    <a href="/admin?p={password}" style="color:#3b82f6">Volver al panel</a>
+    <a href="/admin" style="color:#3b82f6">Volver al panel</a>
     </body></html>
     """
 
@@ -587,6 +592,70 @@ VIP_PLAN = "premium_vip"
 GPU_WORKER_URL = os.environ.get("GPU_WORKER_URL", "").rstrip("/")
 GPU_WORKER_KEY = os.environ.get("GPU_WORKER_KEY", "")
 SESSION_SECRET = os.environ.get("SESSION_SECRET", "")
+
+app.secret_key = SESSION_SECRET
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=True,
+                  SESSION_COOKIE_SAMESITE="Lax", PERMANENT_SESSION_LIFETIME=timedelta(hours=8))
+
+def _admin_authenticated():
+    if not ADMIN_PASSWORD or not SESSION_SECRET or len(SESSION_SECRET) < 32:
+        return False
+    expected = hmac.new(SESSION_SECRET.encode(), ADMIN_PASSWORD.encode(), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(str(session.get("admin_auth", "")), expected)
+
+def _admin_guard():
+    return None if _admin_authenticated() else redirect(url_for("admin_login"))
+
+def _admin_post_guard():
+    if not _admin_authenticated():
+        return redirect(url_for("admin_login"))
+    token = request.form.get("csrf", "")
+    expected = session.get("admin_csrf", "")
+    if not token or not expected or not hmac.compare_digest(token, expected):
+        return "Solicitud no autorizada. Recarga el panel.", 403
+    return None
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if not ADMIN_PASSWORD or not SESSION_SECRET or len(SESSION_SECRET) < 32:
+        return "Panel no configurado: revisa ADMIN_PASSWORD y SESSION_SECRET.", 503
+    message = ""
+    if request.method == "POST":
+        if hmac.compare_digest(request.form.get("password", ""), ADMIN_PASSWORD):
+            session.clear()
+            session.permanent = True
+            session["admin_auth"] = hmac.new(SESSION_SECRET.encode(), ADMIN_PASSWORD.encode(), hashlib.sha256).hexdigest()
+            session["admin_csrf"] = secrets.token_urlsafe(32)
+            return redirect(url_for("admin"), code=303)
+        message = "Contraseña incorrecta"
+    elif _admin_authenticated():
+        return redirect(url_for("admin"))
+    return render_template_string("""
+    <!doctype html><html lang="es"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Administrador | Cruz Sublime</title>
+    <style>
+    body{background:#070707;color:#f5f5f5;font-family:system-ui,Arial;min-height:100vh;display:grid;place-items:center;margin:0}
+    main{width:min(400px,90vw);background:#151515;border:1px solid #59451f;border-radius:18px;padding:30px;box-sizing:border-box}
+    h1{color:#e5bc68;font-size:26px}label{display:block;margin:22px 0 8px}
+    input{width:100%;box-sizing:border-box;padding:13px;background:#090909;color:white;border:1px solid #777;border-radius:9px}
+    button{margin-top:20px;padding:13px;width:100%;background:#c79b4c;border:0;border-radius:9px;font-weight:bold;cursor:pointer}
+    .error{color:#ff9292}
+    </style></head><body><main><h1>👑 Cruz Sublime</h1>
+    <p>Acceso al generador de códigos</p><p class="error">{{ message }}</p>
+    <form method="post" action="{{ url_for('admin_login') }}">
+    <label for="password">Contraseña de administrador</label>
+    <input id="password" name="password" type="password" required autocomplete="current-password" autofocus>
+    <button type="submit">Entrar al panel</button></form></main></body></html>
+    """, message=message)
+
+@app.route("/admin/logout", methods=["POST"])
+def admin_logout():
+    denied = _admin_post_guard()
+    if denied: return denied
+    session.clear()
+    return redirect(url_for("admin_login"), code=303)
+
 
 def _signer():
     if not SESSION_SECRET or len(SESSION_SECRET) < 32:
