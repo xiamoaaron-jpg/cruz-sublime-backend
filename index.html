@@ -207,6 +207,52 @@ body>*{position:relative;z-index:1}
 .cs-vip-loupe{display:none;position:fixed;width:175px;height:175px;border:3px solid #00d4ff;border-radius:50%;box-shadow:0 6px 35px #000b;pointer-events:none;z-index:9999;background-color:#111;background-repeat:no-repeat}
 @media(max-width:950px){.cs-vip-studio{grid-template-columns:1fr}.cs-vip-viewport{height:310px}}
 @media(max-width:590px){.cs-vip-images{grid-template-columns:1fr}.cs-vip-viewport{height:310px}}
+
+/* CRUZ SUBLIME · REMOVEDOR AI STUDIO · estilos aislados */
+#panel-bg{--cs-bg-cyan:#55e5ff;--cs-bg-rose:#ff6ab8;--cs-bg-gold:#e8c47a;color:#f5f6ff}
+#panel-bg .cs-bg-header{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:18px 6px 26px}
+#panel-bg .cs-bg-kicker{color:var(--cs-bg-gold);font-size:11px;letter-spacing:3px;font-weight:800;margin-bottom:10px}
+#panel-bg .cs-bg-header h2{font-family:Georgia,serif;font-size:clamp(28px,3vw,43px);letter-spacing:-1px;margin-bottom:8px}
+#panel-bg .cs-bg-header h2 span{font:800 12px system-ui;letter-spacing:2px;color:#16101b;background:linear-gradient(100deg,#f4d58c,#fff1c3);border-radius:7px;padding:6px 9px;vertical-align:middle}
+#panel-bg .cs-bg-header p{color:#aebbd4;font-size:13px;line-height:1.6;max-width:650px}
+#panel-bg .cs-bg-pill{border:1px solid #61e7bd66;color:#a4f5d7;background:#15342e66;padding:10px 15px;border-radius:40px;font-size:12px;font-weight:700}
+#panel-bg .cs-bg-studio{display:grid;grid-template-columns:minmax(265px,315px) minmax(0,1fr);gap:18px;align-items:start}
+#panel-bg .cs-bg-sidebar{background:linear-gradient(145deg,#11152b,#0a0e20);border:1px solid #344365;border-radius:20px;padding:18px;box-shadow:0 16px 55px #0006}
+#panel-bg .cs-bg-section{padding:16px 0;border-bottom:1px solid #ffffff16}
+#panel-bg .cs-bg-section:first-child{padding-top:2px}#panel-bg .cs-bg-section:last-child{border:0;padding-bottom:2px}
+#panel-bg .cs-bg-step{color:var(--cs-bg-gold);font-size:12px;font-weight:800;letter-spacing:1.5px;margin-bottom:13px}#panel-bg .cs-bg-step span{color:#dbe5f6;margin-left:8px;font-size:11px}
+#panel-bg .cs-bg-drop{padding:24px 10px;border-color:#63d9f766;background:linear-gradient(135deg,#121c34,#11132b);border-radius:15px}
+#panel-bg .cs-bg-drop .ico{font-size:36px;color:#7de9ff;margin-bottom:8px}#panel-bg .cs-bg-drop strong{display:block;font-size:13px;margin-bottom:5px}
+#panel-bg .cs-bg-drop p{font-size:12px}#panel-bg .cs-bg-drop small{display:block;margin-top:12px;color:#869bb7;font-size:10px}
+#panel-bg .cs-bg-status{font-size:12px;color:#b9c8de;line-height:1.55;margin-top:12px;overflow-wrap:anywhere}
+#panel-bg .cs-bg-note{font-size:11.5px;color:#94a6c2;line-height:1.65;margin:10px 0}
+#panel-bg .cs-bg-main-btn{width:100%;font-size:13px;line-height:1.4;padding:14px 12px;margin-top:7px;background:linear-gradient(110deg,#1caed3,#b34acb,#ef61a4);box-shadow:0 7px 22px #c550b633}
+#panel-bg .cs-bg-subtle-btn{border:1px solid #63739266;background:#ffffff0a;color:#d9e7fb;border-radius:9px;padding:8px 11px;cursor:pointer;font-size:11px;font-weight:700}
+#panel-bg .cs-bg-subtle-btn:hover{border-color:#79e7ff}
+#panel-bg .cs-bg-range-label{display:flex;justify-content:space-between;color:#cddbf0;font-size:12px;font-weight:700}
+#panel-bg .cs-bg-range-label output{color:#7be9ff}#panel-bg #bgEdge{width:100%;accent-color:#6de5ff;margin:16px 0 4px}
+#panel-bg .cs-bg-workarea{min-width:0;border:1px solid #344365;background:linear-gradient(145deg,#10162b,#080d1c);border-radius:20px;padding:17px;box-shadow:0 16px 55px #0006}
+#panel-bg .cs-bg-workbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:4px 3px 16px}
+#panel-bg .cs-bg-workbar strong{display:block;font-size:15px}#panel-bg .cs-bg-workbar small{display:block;color:#94a6c2;font-size:11px;margin-top:6px}
+#panel-bg .cs-bg-view-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#panel-bg .cs-bg-view-card{min-width:0;background:#090e1e;border:1px solid #354361;border-radius:15px;overflow:hidden}
+#panel-bg .cs-bg-view-top{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:14px 12px;font-size:10px;letter-spacing:1.2px;font-weight:800}
+#panel-bg .cs-bg-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px}#panel-bg .cs-bg-dot-blue{background:#5bdaf9;box-shadow:0 0 12px #5bdaf9}#panel-bg .cs-bg-dot-pink{background:#ff6eae;box-shadow:0 0 12px #ff6eae}
+#panel-bg .cs-bg-view-tag{color:#91a6c0;font-size:10px;letter-spacing:0;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#panel-bg .cs-bg-viewport{height:clamp(390px,54vw,690px);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0d1425;cursor:default;touch-action:none;user-select:none}
+#panel-bg .cs-bg-checker{background-color:#e2e7ee;background-image:linear-gradient(45deg,#c9d1dc 25%,transparent 25%),linear-gradient(-45deg,#c9d1dc 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#c9d1dc 75%),linear-gradient(-45deg,transparent 75%,#c9d1dc 75%);background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0}
+#panel-bg .cs-bg-viewport img{display:none;max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;pointer-events:none;will-change:transform}
+#panel-bg .cs-bg-viewport.cs-bg-canpan{cursor:grab}#panel-bg .cs-bg-viewport.cs-bg-dragging{cursor:grabbing}
+#panel-bg .cs-bg-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;font-size:52px;color:#8296b4;pointer-events:none}
+#panel-bg .cs-bg-placeholder small{font-size:12px;color:#9babc2}
+#panel-bg .cs-bg-zoom-controls{display:flex;justify-content:center;align-items:center;gap:7px;padding:12px;background:#11182c;border-top:1px solid #ffffff12}
+#panel-bg .cs-bg-zoom-controls button{background:#1a2540;border:1px solid #435171;color:#f5f9ff;border-radius:9px;min-width:32px;height:31px;cursor:pointer;font-size:17px}
+#panel-bg .cs-bg-zoom-controls button:hover{border-color:#70ddf5;background:#253757}
+#panel-bg .cs-bg-zoom-controls span{font-size:12px;font-weight:700;color:#cbdcf4;min-width:52px;text-align:center}
+#panel-bg .cs-bg-workfoot{text-align:center;color:#849ab8;font-size:11px;padding:18px 0 2px;letter-spacing:.3px}#panel-bg .cs-bg-workfoot span{color:#e8c47a;margin:0 6px}
+@media(max-width:1080px){#panel-bg .cs-bg-studio{grid-template-columns:1fr}#panel-bg .cs-bg-sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 22px}#panel-bg .cs-bg-section{border:0;padding:6px 0}#panel-bg .cs-bg-viewport{height:500px}}
+@media(max-width:680px){#panel-bg .cs-bg-sidebar{display:block}#panel-bg .cs-bg-view-grid{grid-template-columns:1fr}#panel-bg .cs-bg-viewport{height:360px}}
+
 </style>
 
 
@@ -1118,30 +1164,24 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
   </div>
 
 
-  <!-- REMOVER FONDO -->
+  <!-- REMOVER FONDO · ESTUDIO PRO -->
   <div class="panel" id="panel-bg">
-    <div class="card">
-      <h2><span class="num">1</span> Sube tu imagen</h2>
-      <div class="drop" id="bgDrop">
-        <div class="ico">🖼️</div>
-        <p>Arrastra tu imagen aquí o <b>haz clic para seleccionar</b></p>
-        <p style="font-size:12px;margin-top:6px">PNG, JPG o WEBP</p>
+    <div class="cs-bg-header"><div><div class="cs-bg-kicker">✦ CRUZ SUBLIME · AI STUDIO</div><h2>Removedor de Fondo <span>PRO</span></h2><p>Recortes con inteligencia artificial. Inspecciona cada detalle, perfecciona los bordes y exporta en PNG.</p></div><div class="cs-bg-pill">◉ Procesamiento local · PC</div></div>
+    <div class="cs-bg-studio">
+      <aside class="cs-bg-sidebar">
+        <div class="cs-bg-section"><div class="cs-bg-step">01 <span>IMPORTAR IMAGEN</span></div><div class="drop cs-bg-drop" id="bgDrop"><div class="ico">✧</div><strong>Arrastra tu imagen aquí</strong><p>o haz clic para seleccionar</p><small>JPG · PNG · WEBP · hasta 20 MB</small></div><input type="file" id="bgFile" accept="image/png,image/jpeg,image/webp" style="display:none"><div class="cs-bg-status" id="bgStatus" role="status" aria-live="polite">Ninguna imagen cargada.</div></div>
+        <div class="cs-bg-section"><div class="cs-bg-step">02 <span>ELIMINACIÓN IA</span></div><p class="cs-bg-note">MODNet trabaja en tu computadora. Primero intenta usar la GPU y después la CPU.</p><button class="btn cs-bg-main-btn" id="btnBg" disabled>✦ Eliminar fondo con IA</button></div>
+        <div class="cs-bg-section"><div class="cs-bg-step">03 <span>REFINAR CONTORNO</span></div><label class="cs-bg-range-label" for="bgEdge">Limpieza de halo <output id="bgEdgeValue">15%</output></label><input type="range" id="bgEdge" min="0" max="60" step="1" value="15"/><p class="cs-bg-note">Ajusta el contorno después del recorte. En 0% conservas la máscara original; un valor alto puede borrar cabello fino.</p><button type="button" class="cs-bg-subtle-btn" id="bgEdgeReset">Restablecer contorno</button></div>
+        <div class="cs-bg-section"><div class="cs-bg-step">04 <span>EXPORTAR</span></div><button class="btn cs-bg-main-btn" id="btnBgDl" disabled>↓ Descargar PNG transparente</button><p class="cs-bg-note">Sin créditos adicionales · Incluido en todas las membresías.</p></div>
+      </aside>
+      <div class="cs-bg-workarea"><div class="cs-bg-workbar"><div><strong>Vista comparativa</strong><small>Usa la rueda del mouse para acercar; arrastra para desplazarte</small></div><button type="button" class="cs-bg-subtle-btn" id="bgResetAll">⤢ Ajustar ambas vistas</button></div>
+        <div class="cs-bg-view-grid">
+          <section class="cs-bg-view-card"><div class="cs-bg-view-top"><div><span class="cs-bg-dot cs-bg-dot-blue"></span> ORIGINAL</div><span class="cs-bg-view-tag" id="bgBeforeInfo">Sin imagen</span></div><div class="cs-bg-viewport" id="bgViewBefore"><img id="bgBefore" alt="Imagen original" draggable="false"><div class="cs-bg-placeholder" id="bgEmptyBefore">✧<small>Tu imagen aparecerá aquí</small></div></div><div class="cs-bg-zoom-controls"><button type="button" data-zoom="out" data-target="before" aria-label="Alejar original">−</button><span id="bgZoomBefore">100%</span><button type="button" data-zoom="in" data-target="before" aria-label="Acercar original">+</button><button type="button" data-zoom="reset" data-target="before" aria-label="Restablecer original">⤢</button></div></section>
+          <section class="cs-bg-view-card"><div class="cs-bg-view-top"><div><span class="cs-bg-dot cs-bg-dot-pink"></span> SIN FONDO</div><span class="cs-bg-view-tag" id="bgAfterInfo">Esperando IA</span></div><div class="cs-bg-viewport cs-bg-checker" id="bgViewAfter"><img id="bgAfter" alt="Imagen sin fondo" draggable="false"><div class="cs-bg-placeholder" id="bgEmptyAfter">✦<small>El resultado aparecerá aquí</small></div></div><div class="cs-bg-zoom-controls"><button type="button" data-zoom="out" data-target="after" aria-label="Alejar resultado">−</button><span id="bgZoomAfter">100%</span><button type="button" data-zoom="in" data-target="after" aria-label="Acercar resultado">+</button><button type="button" data-zoom="reset" data-target="after" aria-label="Restablecer resultado">⤢</button></div></section>
+        </div><div class="cs-bg-workfoot">✦ Detalle profesional <span>·</span> Zoom independiente <span>·</span> PNG transparente</div>
       </div>
-      <input type="file" id="bgFile" accept="image/*" style="display:none">
-      <div class="status" id="bgStatus">Ninguna imagen cargada.</div>
-    </div>
-    <div class="card">
-      <h2><span class="num">2</span> Eliminación automática con IA</h2>
-      <p style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px">Solo para computadoras. La IA MODNet intenta usar la tarjeta gráfica (WebGPU) y, si no está disponible, usa el procesador. La primera carga puede tardar.</p>
-      <button class="btn btn-big" id="btnBg" disabled>✨ Eliminar fondo con IA</button>
-      <button class="btn ghost" id="btnBgDl" disabled style="margin-top:8px">Descargar PNG</button>
-    </div>
-    <div class="preview">
-      <div class="pv"><h4>Original</h4><img id="bgBefore" alt="Antes"><div class="status" id="bgBeforeInfo">—</div></div>
-      <div class="pv checker"><h4>Sin fondo</h4><img id="bgAfter" alt="Después"><div class="status" id="bgAfterInfo">—</div></div>
     </div>
   </div>
-
 
   <!-- COTIZADOR -->
   <div class="panel" id="panel-quote">
@@ -2048,6 +2088,7 @@ document.addEventListener("DOMContentLoaded", function(){
   const bgBefore = document.getElementById('bgBefore');
   const bgAfter = document.getElementById('bgAfter');
   let bgOriginalFile = null, bgResultURL = null, bgOriginalURL = null, bgGeneration = 0;
+  let bgLastSegmentation = null, bgRefineSerial = 0;
   let bgLibraryPromise = null, bgPipeline = null, bgPipelineDevice = null;
   const bgMobile = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
     (navigator.userAgentData && navigator.userAgentData.mobile === true);
@@ -2058,6 +2099,10 @@ document.addEventListener("DOMContentLoaded", function(){
     bgAfter.removeAttribute('src');
     document.getElementById('bgAfterInfo').textContent = '—';
     bgDownload.disabled = true;
+    bgAfter.style.display = 'none';
+    document.getElementById('bgEmptyAfter').style.display = 'flex';
+    bgLastSegmentation = null;
+    if (window.csBgResetZoom) window.csBgResetZoom('after');
   };
   if (bgMobile()) {
     bgSetStatus('Esta herramienta está disponible únicamente en computadora.');
@@ -2074,6 +2119,9 @@ document.addEventListener("DOMContentLoaded", function(){
     if (bgOriginalURL) URL.revokeObjectURL(bgOriginalURL);
     bgOriginalURL = URL.createObjectURL(file);
     bgBefore.src = bgOriginalURL;
+    bgBefore.style.display = 'block';
+    document.getElementById('bgEmptyBefore').style.display = 'none';
+    if (window.csBgResetZoom) window.csBgResetZoom('before');
     document.getElementById('bgBeforeInfo').textContent = file.name;
     bgButton.disabled = false;
     bgSetStatus('Imagen lista: ' + file.name);
@@ -2118,7 +2166,7 @@ document.addEventListener("DOMContentLoaded", function(){
       URL.revokeObjectURL(imageURL);
     }
   }
-  async function bgComposePNG(file, segmentation) {
+  async function bgComposePNG(file, segmentation, edgePercent = 15) {
     const mask = Array.isArray(segmentation) ? segmentation[0]?.mask : segmentation?.mask;
     if (!mask || !mask.data || !mask.width || !mask.height) {
       throw new Error('MODNet no devolvió una máscara válida.');
@@ -2137,7 +2185,11 @@ document.addEventListener("DOMContentLoaded", function(){
       const channels = mask.channels || Math.max(1, Math.round(mask.data.length / (mask.width * mask.height)));
       for (let i = 0; i < mask.width * mask.height; i++) {
         const value = mask.data[i * channels];
-        const alpha = Math.max(0, Math.min(255, value <= 1 ? Math.round(value * 255) : value));
+        const raw = Math.max(0, Math.min(1, value <= 1 ? value : value / 255));
+        // Ajuste suave de la máscara: estrecha ligeramente los píxeles semitransparentes
+        // sin agregar contorno artificial. 0% deja la máscara intacta.
+        const edge = edgePercent / 100;
+        const alpha = Math.round(255 * Math.max(0, Math.min(1, (raw - edge * 0.35) / (1 - edge * 0.35))));
         const j = i * 4;
         mPixels.data[j] = alpha;
         mPixels.data[j+1] = alpha;
@@ -2187,13 +2239,16 @@ document.addEventListener("DOMContentLoaded", function(){
       }
       if (generation !== bgGeneration) return;
       bgSetStatus('Preparando PNG transparente…');
-      const result = await bgComposePNG(file, output);
+      const result = await bgComposePNG(file, output, Number(document.getElementById('bgEdge').value));
       if (generation !== bgGeneration) return;
       bgClearResult();
+      bgLastSegmentation = output;
       bgResultURL = URL.createObjectURL(result);
       bgAfter.onload = () => bgSetStatus('¡Fondo eliminado! Descarga tu PNG transparente.');
       bgAfter.onerror = () => bgSetStatus('La IA generó el archivo, pero falló la vista previa.');
       bgAfter.src = bgResultURL;
+      bgAfter.style.display = 'block';
+      document.getElementById('bgEmptyAfter').style.display = 'none';
       document.getElementById('bgAfterInfo').textContent = 'PNG transparente · listo para descargar';
       bgDownload.disabled = false;
     } catch (err) {
@@ -2210,6 +2265,56 @@ document.addEventListener("DOMContentLoaded", function(){
     a.download = 'cruz_sublime_sin_fondo.png';
     document.body.appendChild(a); a.click(); a.remove();
   });
+
+  // Zoom y desplazamiento independientes; la imagen descargada nunca incluye el zoom.
+  const bgViews = {};
+  for (const [name, id, imgId, labelId] of [
+    ['before','bgViewBefore','bgBefore','bgZoomBefore'],
+    ['after','bgViewAfter','bgAfter','bgZoomAfter']
+  ]) {
+    const view = document.getElementById(id), img = document.getElementById(imgId), label = document.getElementById(labelId);
+    const state = { zoom:1, x:0, y:0, drag:false, startX:0, startY:0 };
+    const draw = () => {
+      img.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.zoom})`;
+      label.textContent = Math.round(state.zoom * 100) + '%';
+      view.classList.toggle('cs-bg-canpan', state.zoom > 1);
+    };
+    const zoom = (factor) => { state.zoom = Math.min(8, Math.max(1, state.zoom * factor)); if(state.zoom === 1){state.x=0;state.y=0;} draw(); };
+    const reset = () => {state.zoom=1;state.x=0;state.y=0;draw();};
+    view.addEventListener('wheel', e => {if(!img.getAttribute('src')) return; e.preventDefault();zoom(e.deltaY < 0 ? 1.16 : 1/1.16);}, {passive:false});
+    view.addEventListener('pointerdown', e => {if(state.zoom <= 1 || !img.getAttribute('src'))return;state.drag=true;state.startX=e.clientX-state.x;state.startY=e.clientY-state.y;view.setPointerCapture(e.pointerId);view.classList.add('cs-bg-dragging');});
+    view.addEventListener('pointermove', e => {if(!state.drag)return;state.x=e.clientX-state.startX;state.y=e.clientY-state.startY;draw();});
+    const stop = () => {state.drag=false;view.classList.remove('cs-bg-dragging');};
+    view.addEventListener('pointerup',stop);view.addEventListener('pointercancel',stop);view.addEventListener('lostpointercapture',stop);
+    bgViews[name] = {zoom,reset};
+  }
+  window.csBgResetZoom = name => bgViews[name]?.reset();
+  document.querySelectorAll('#panel-bg [data-zoom]').forEach(btn => btn.addEventListener('click', () => {
+    const view = bgViews[btn.dataset.target];
+    if (btn.dataset.zoom === 'reset') view.reset();
+    else view.zoom(btn.dataset.zoom === 'in' ? 1.25 : 0.8);
+  }));
+  document.getElementById('bgResetAll').addEventListener('click', () => {bgViews.before.reset();bgViews.after.reset();});
+  const bgEdge = document.getElementById('bgEdge');
+  let bgRefineTimer;
+  bgEdge.addEventListener('input', () => {
+    document.getElementById('bgEdgeValue').textContent = bgEdge.value + '%';
+    clearTimeout(bgRefineTimer);
+    if (!bgLastSegmentation || !bgOriginalFile) return;
+    const generation = bgGeneration, segmentation = bgLastSegmentation, file = bgOriginalFile, serial = ++bgRefineSerial;
+    bgRefineTimer = setTimeout(async () => {
+      try {
+        bgSetStatus('Refinando contorno…');
+        const blob = await bgComposePNG(file, segmentation, Number(bgEdge.value));
+        if (generation !== bgGeneration || serial !== bgRefineSerial) return;
+        const next = URL.createObjectURL(blob), old = bgResultURL;
+        bgResultURL = next; bgAfter.src = next;
+        if (old) URL.revokeObjectURL(old);
+        bgSetStatus('Contorno actualizado. PNG listo para descargar.');
+      } catch(err) { bgSetStatus('No se pudo refinar el contorno: ' + err.message); }
+    }, 180);
+  });
+  document.getElementById('bgEdgeReset').addEventListener('click', () => {bgEdge.value='15';bgEdge.dispatchEvent(new Event('input'));});
 
   // Contadores animados
   var designs = 1847, orders = 126;
