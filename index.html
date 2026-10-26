@@ -789,16 +789,27 @@ html body #gate .box {
       <div style="text-align:left;margin-bottom:22px"><button class="vip-back" type="button" id="vipBgBack">← Volver al estudio VIP</button></div>
       <div class="vip-crown">👑</div><h2>REMOVEDOR VIP</h2>
       <p>Eliminación de fondo con inteligencia artificial avanzada · 50 créditos mensuales exclusivos de esta herramienta.</p>
-      <div class="vip-bg-editor">
-        <label for="vipBgFile">Selecciona una fotografía (PNG, JPG o WEBP)</label>
-        <input id="vipBgFile" type="file" accept="image/png,image/jpeg,image/webp" />
-        <p id="vipBgNotice" role="status">Selecciona una imagen y consulta tu saldo. Se reserva un crédito durante el procesamiento; solo se consume si termina correctamente.</p>
-        <button id="vipBgProcess" type="button" disabled>✨ Eliminar fondo VIP · 1 crédito</button>
-        <div id="vipBgResults" class="cs-vip-bg-previews">
-          <div class="cs-vip-bg-preview"><h3>📷 Imagen original</h3><div class="cs-vip-bg-image"><span id="vipBgBeforeHint">Selecciona una fotografía para verla aquí</span><img id="vipBgBefore" alt="Fotografía original seleccionada" hidden></div></div>
-          <div class="cs-vip-bg-preview"><h3>✨ Resultado sin fondo</h3><div class="cs-vip-bg-image cs-vip-bg-checker"><span id="vipBgAfterHint">El resultado aparecerá aquí al terminar</span><img id="vipBgAfter" alt="Resultado con fondo transparente" hidden></div></div>
+      <div class="vip-bg-workspace">
+        <aside class="vip-bg-editor" aria-label="Herramientas del Removedor VIP">
+          <h3>⚙️ Herramientas VIP</h3>
+          <div class="vip-bg-credit-box" aria-live="polite">
+            <span>👑 CRÉDITOS DEL REMOVEDOR</span>
+            <strong id="vipBgCounter">Consultando…</strong>
+            <small id="vipBgCounterDetail">Saldo independiente del Mejorador Premium</small>
+          </div>
+          <label for="vipBgFile">Selecciona una fotografía (PNG, JPG o WEBP)</label>
+          <input id="vipBgFile" type="file" accept="image/png,image/jpeg,image/webp" />
+          <p id="vipBgNotice" role="status">Selecciona una imagen y consulta tu saldo. Se reserva un crédito durante el procesamiento; solo se consume si termina correctamente.</p>
+          <button id="vipBgProcess" type="button" disabled>✨ Eliminar fondo VIP · 1 crédito</button>
+          <button id="vipBgDownload" type="button" style="display:none;cursor:pointer">⬇️ Descargar PNG transparente</button>
+        </aside>
+        <div class="vip-bg-preview-area" aria-label="Vista original y resultado">
+          <div class="vip-bg-preview-heading"><strong>🖼️ Estudio de imágenes VIP</strong><small>Original y resultado a tamaño grande</small></div>
+          <div id="vipBgResults" class="cs-vip-bg-previews">
+            <div class="cs-vip-bg-preview"><h3>📷 Imagen original</h3><div class="cs-vip-bg-image"><span id="vipBgBeforeHint">Selecciona una fotografía para verla aquí</span><img id="vipBgBefore" alt="Fotografía original seleccionada" hidden></div></div>
+            <div class="cs-vip-bg-preview"><h3>✨ Resultado sin fondo</h3><div class="cs-vip-bg-image cs-vip-bg-checker"><span id="vipBgAfterHint">El resultado aparecerá aquí al terminar</span><img id="vipBgAfter" alt="Resultado con fondo transparente" hidden></div></div>
+          </div>
         </div>
-        <button id="vipBgDownload" type="button" style="display:none;cursor:pointer">⬇️ Descargar PNG transparente</button>
       </div>
     </section>
     <div id="vipStudioInner" hidden>
@@ -3086,6 +3097,25 @@ body > *:not(#cs-galaxy-portal) {
 #vipBgStudio .cs-vip-bg-checker span{color:#343434;background:#ffffffd9;border-radius:8px}
 #vipBgStudio #vipBgNotice{overflow-wrap:anywhere;line-height:1.6}
 @media(max-width:720px){#vipBgStudio .cs-vip-bg-previews{grid-template-columns:1fr}#vipBgStudio .cs-vip-bg-image{height:300px}}
+
+/* Estudio VIP: controles izquierda, imágenes grandes derecha. No afecta al removedor gratuito. */
+#panel-premium #vipBgStudio .vip-bg-workspace{display:grid;grid-template-columns:minmax(260px,315px) minmax(0,1fr);gap:18px;align-items:start;margin-top:24px;text-align:left}
+#panel-premium #vipBgStudio .vip-bg-editor{max-width:none;width:auto;margin:0;padding:22px;min-width:0;position:relative}
+#panel-premium #vipBgStudio .vip-bg-editor h3{color:#f8d998;margin:0 0 18px;font-size:17px}
+#panel-premium #vipBgStudio .vip-bg-editor input{min-width:0;max-width:100%;font-size:12px}
+#panel-premium #vipBgStudio .vip-bg-editor button{width:100%;font-size:12px;line-height:1.45;cursor:pointer}
+#panel-premium #vipBgStudio .vip-bg-editor button:disabled{opacity:.65;cursor:not-allowed}
+#panel-premium #vipBgStudio .vip-bg-credit-box{border:1px solid #ad8846;background:linear-gradient(145deg,#251b25,#110e19);border-radius:14px;padding:16px 12px;margin:0 0 22px;text-align:center;display:flex;flex-direction:column;gap:8px}
+#panel-premium #vipBgStudio .vip-bg-credit-box span{font-size:11px;font-weight:800;letter-spacing:1px;color:#f9d996}
+#panel-premium #vipBgStudio .vip-bg-credit-box strong{font-size:30px;color:#fff1c5;line-height:1.2}
+#panel-premium #vipBgStudio .vip-bg-credit-box small{color:#c9bca9;font-size:11px;line-height:1.5}
+#panel-premium #vipBgStudio .vip-bg-preview-area{min-width:0;background:#100f1c;border:1px solid #b58a4d;border-radius:17px;padding:18px}
+#panel-premium #vipBgStudio .vip-bg-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#ffe2a0;flex-wrap:wrap;font-size:15px}
+#panel-premium #vipBgStudio .vip-bg-preview-heading small{color:#c9bca9;font-size:11px}
+#panel-premium #vipBgStudio .cs-vip-bg-previews{margin:16px 0 0;gap:12px}
+#panel-premium #vipBgStudio .cs-vip-bg-image{height:clamp(420px,53vw,670px)}
+@media(max-width:1000px){#panel-premium #vipBgStudio .vip-bg-workspace{grid-template-columns:1fr}#panel-premium #vipBgStudio .vip-bg-editor{width:100%}#panel-premium #vipBgStudio .cs-vip-bg-image{height:400px}}
+@media(max-width:620px){#panel-premium #vipBgStudio .cs-vip-bg-previews{grid-template-columns:1fr}#panel-premium #vipBgStudio .cs-vip-bg-image{height:350px}}
 </style>
 <script>
 /* Removedor VIP: cliente aislado, créditos y trabajos en el servidor. */
@@ -3109,15 +3139,15 @@ body > *:not(#cs-galaxy-portal) {
    return null;
  }
  async function balance(){
-   const label=$('vipBgBalance');
+   const label=$('vipBgBalance'),counter=$('vipBgCounter'),detail=$('vipBgCounterDetail');
    try{
      const t=await token();
-     if(!t){label.textContent='🔒 No se pudo validar la sesión VIP';notice.textContent='No se obtuvo la autorización VIP. Vuelve a ingresar con tu correo y código; si continúa, revisa la respuesta de /api/verify en Render.';button.disabled=true;return;}
+     if(!t){label.textContent='🔒 No se pudo validar la sesión VIP';counter.textContent='Sin sesión';detail.textContent='Inicia sesión Premium VIP para consultar créditos';notice.textContent='No se obtuvo la autorización VIP. Vuelve a ingresar con tu correo y código; si continúa, revisa la respuesta de /api/verify en Render.';button.disabled=true;return;}
      const r=await fetch(api+'/api/vip/background/credits',{headers:{Authorization:'Bearer '+t}});
      const d=await r.json();if(!r.ok)throw Error(d.error||'No se pudo consultar saldo');
-     label.textContent='👑 Eliminaciones disponibles: '+d.left+' de '+d.max+(d.pending?' · '+d.pending+' en proceso':'');
+     label.textContent='👑 Eliminaciones disponibles: '+d.left+' de '+d.max+(d.pending?' · '+d.pending+' en proceso':'');counter.textContent=d.left+' / '+d.max;detail.textContent=(d.pending?d.pending+' en proceso · ':'')+'Saldo exclusivo del Removedor VIP';
      button.disabled=busy||!file.files[0]||d.left<=0;
-   }catch(e){label.textContent='Saldo no disponible: '+e.message;notice.textContent='No se pudo verificar el saldo VIP: '+e.message+'. No se procesará ni descontará ninguna foto.';button.disabled=true;}
+   }catch(e){label.textContent='Saldo no disponible: '+e.message;counter.textContent='No disponible';detail.textContent='Error al consultar créditos';notice.textContent='No se pudo verificar el saldo VIP: '+e.message+'. No se procesará ni descontará ninguna foto.';button.disabled=true;}
  }
  window.csVipBgBalance=balance;
  document.getElementById('vipOpenBackground').addEventListener('click',balance);
