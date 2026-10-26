@@ -1132,7 +1132,7 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
     </div>
     <div class="card">
       <h2><span class="num">2</span> Eliminación automática con IA</h2>
-      <p style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px">La IA identifica el sujeto y elimina el fondo sin cambiar sus colores. El procesamiento se realiza en tu navegador; la primera vez descargará el modelo y puede tardar.</p>
+      <p style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px">Solo para computadoras. La IA intenta usar la tarjeta gráfica (WebGPU) y, si no está disponible, usa el procesador. La primera carga puede tardar.</p>
       <button class="btn btn-big" id="btnBg" disabled>✨ Eliminar fondo con IA</button>
       <button class="btn ghost" id="btnBgDl" disabled style="margin-top:8px">Descargar PNG</button>
     </div>
@@ -2038,82 +2038,111 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 
 
-  // ===== REMOVER FONDO: prototipo IA en navegador =====
-  // IMPORTANTE: @imgly/background-removal se distribuye bajo AGPL-3.0;
-  // revisar obligaciones de licencia antes de publicar comercialmente.
-  var bgFileInput = document.getElementById("bgFile");
-  var bgDrop = document.getElementById("bgDrop");
-  var bgOriginalFile = null, bgResultURL = null, bgModelPromise = null;
-  var bgGeneration = 0;
-  var bgStatus = document.getElementById("bgStatus");
-  var bgButton = document.getElementById("btnBg");
-  var bgDownload = document.getElementById("btnBgDl");
-  function bgClearResult(){
-    if(bgResultURL) URL.revokeObjectURL(bgResultURL);
+  // ===== REMOVEDOR DE FONDO: edición escritorio, GPU con alternativa CPU =====
+  // Biblioteca IMG.LY: AGPL-3.0. Revisar cumplimiento antes de uso comercial.
+  const bgFileInput = document.getElementById('bgFile');
+  const bgDrop = document.getElementById('bgDrop');
+  const bgStatus = document.getElementById('bgStatus');
+  const bgButton = document.getElementById('btnBg');
+  const bgDownload = document.getElementById('btnBgDl');
+  const bgBefore = document.getElementById('bgBefore');
+  const bgAfter = document.getElementById('bgAfter');
+  let bgOriginalFile = null, bgResultURL = null, bgGeneration = 0;
+  let bgLibraryPromise = null;
+  const bgMobile = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+    (navigator.userAgentData && navigator.userAgentData.mobile === true);
+  const bgSetStatus = (message) => { bgStatus.textContent = message; };
+  const bgClearResult = () => {
+    if (bgResultURL) URL.revokeObjectURL(bgResultURL);
     bgResultURL = null;
-    document.getElementById("bgAfter").removeAttribute("src");
-    document.getElementById("bgAfterInfo").textContent = "—";
+    bgAfter.removeAttribute('src');
+    document.getElementById('bgAfterInfo').textContent = '—';
     bgDownload.disabled = true;
+  };
+  if (bgMobile()) {
+    bgSetStatus('Esta herramienta está disponible únicamente en computadora.');
+    bgButton.disabled = true;
+    bgDrop.style.opacity = '.6';
   }
-  function bgLoad(file){
-    if(!file || !/^image\/(png|jpeg|webp)$/.test(file.type)){
-      bgStatus.textContent = "Selecciona un archivo PNG, JPG o WEBP."; return;
-    }
-    if(file.size > 20*1024*1024){
-      bgStatus.textContent = "La imagen debe pesar menos de 20 MB."; return;
-    }
+  function bgLoad(file) {
+    if (bgMobile()) { bgSetStatus('El removedor de fondo solo está disponible en computadora.'); return; }
+    if (!file || !/^image\/(png|jpeg|webp)$/.test(file.type)) { bgSetStatus('Selecciona una imagen PNG, JPG o WEBP.'); return; }
+    if (file.size > 20 * 1024 * 1024) { bgSetStatus('La imagen debe pesar menos de 20 MB.'); return; }
     bgGeneration++;
     bgOriginalFile = file;
     bgClearResult();
-    var reader = new FileReader();
-    reader.onload = function(){ document.getElementById("bgBefore").src = reader.result; };
+    const reader = new FileReader();
+    reader.onload = () => { bgBefore.src = reader.result; };
     reader.readAsDataURL(file);
-    document.getElementById("bgBeforeInfo").textContent = file.name;
+    document.getElementById('bgBeforeInfo').textContent = file.name;
     bgButton.disabled = false;
-    bgStatus.textContent = "Imagen lista: " + file.name;
+    bgSetStatus('Imagen lista: ' + file.name);
   }
-  bgDrop.addEventListener("click", function(){ bgFileInput.click(); });
-  bgDrop.addEventListener("dragover", function(e){e.preventDefault();bgDrop.classList.add("drag");});
-  bgDrop.addEventListener("dragleave", function(){bgDrop.classList.remove("drag");});
-  bgDrop.addEventListener("drop", function(e){e.preventDefault();bgDrop.classList.remove("drag");if(e.dataTransfer.files[0])bgLoad(e.dataTransfer.files[0]);});
-  bgFileInput.addEventListener("change", function(e){if(e.target.files[0])bgLoad(e.target.files[0]);});
-  bgButton.addEventListener("click", async function(){
-    if(!bgOriginalFile || bgButton.disabled) return;
-    var generation = bgGeneration;
+  bgDrop.addEventListener('click', () => { if (!bgMobile()) bgFileInput.click(); });
+  bgDrop.addEventListener('dragover', e => { e.preventDefault(); bgDrop.classList.add('drag'); });
+  bgDrop.addEventListener('dragleave', () => bgDrop.classList.remove('drag'));
+  bgDrop.addEventListener('drop', e => { e.preventDefault(); bgDrop.classList.remove('drag'); if (e.dataTransfer.files[0]) bgLoad(e.dataTransfer.files[0]); });
+  bgFileInput.addEventListener('change', e => { if (e.target.files[0]) bgLoad(e.target.files[0]); });
+  async function bgLibrary() {
+    if (!bgLibraryPromise) {
+      // El paquete se carga en un módulo separado para no interferir con el resto del sitio.
+      bgLibraryPromise = import('https://esm.sh/@imgly/background-removal@1.7.0?bundle')
+        .catch(e => { bgLibraryPromise = null; throw new Error('No se pudo cargar la biblioteca IA: ' + e.message); });
+    }
+    return bgLibraryPromise;
+  }
+  bgButton.addEventListener('click', async () => {
+    if (!bgOriginalFile || bgButton.disabled || bgMobile()) return;
+    const generation = bgGeneration;
     bgButton.disabled = true;
     bgDownload.disabled = true;
-    bgStatus.textContent = "Preparando IA… La primera carga puede tardar varios minutos.";
-    try{
-      if(!bgModelPromise) bgModelPromise = import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm").catch(function(err){bgModelPromise=null;throw err;});
-      var module = await bgModelPromise;
-      if(generation !== bgGeneration) return;
-      bgStatus.textContent = "Eliminando fondo con IA…";
-      var resultBlob = await module.removeBackground(bgOriginalFile, {
-        progress: function(key,current,total){
-          if(generation !== bgGeneration) return;
-          if(total && current <= total) bgStatus.textContent = "Cargando modelo IA: " + Math.round(current/total*100) + "%";
+    try {
+      if (!window.isSecureContext) throw new Error('Abre Cruz Sublime desde HTTPS (Render), no desde un archivo local.');
+      bgSetStatus('Cargando motor de inteligencia artificial…');
+      const lib = await bgLibrary();
+      const remove = lib.removeBackground || (lib.default && lib.default.removeBackground) || lib.default;
+      if (typeof remove !== 'function') throw new Error('La biblioteca no exportó la función de eliminación.');
+      if (generation !== bgGeneration) return;
+      const supportsGPU = !!navigator.gpu;
+      const config = {
+        device: supportsGPU ? 'gpu' : 'cpu',
+        progress: (key, current, total) => {
+          if (generation !== bgGeneration) return;
+          bgSetStatus(total ? 'Descargando modelo IA: ' + Math.round(current / total * 100) + '%' : 'Procesando con IA…');
         }
-      });
-      if(generation !== bgGeneration) return;
+      };
+      bgSetStatus(supportsGPU ? 'Procesando con tarjeta gráfica (WebGPU)…' : 'WebGPU no disponible. Procesando con CPU…');
+      let result;
+      try {
+        result = await remove(bgOriginalFile, config);
+      } catch (gpuError) {
+        if (!supportsGPU) throw gpuError;
+        console.warn('WebGPU falló, reintentando en CPU:', gpuError);
+        bgSetStatus('La GPU no pudo procesar la foto. Reintentando con CPU…');
+        result = await remove(bgOriginalFile, { ...config, device: 'cpu' });
+      }
+      if (generation !== bgGeneration) return;
+      if (!(result instanceof Blob)) throw new Error('La IA no devolvió una imagen válida.');
       bgClearResult();
-      bgResultURL = URL.createObjectURL(resultBlob);
-      document.getElementById("bgAfter").src = bgResultURL;
-      document.getElementById("bgAfterInfo").textContent = "PNG con transparencia · listo para descargar";
+      bgResultURL = URL.createObjectURL(result);
+      bgAfter.onload = () => bgSetStatus('¡Fondo eliminado! Ya puedes descargar el PNG transparente.');
+      bgAfter.onerror = () => bgSetStatus('Se procesó la foto, pero no se pudo mostrar el resultado.');
+      bgAfter.src = bgResultURL;
+      document.getElementById('bgAfterInfo').textContent = 'PNG transparente · listo para descargar';
       bgDownload.disabled = false;
-      bgStatus.textContent = "¡Fondo eliminado! Revisa los bordes antes de descargar.";
-    }catch(err){
-      console.error("Removedor IA:",err);
-      if(generation === bgGeneration) bgStatus.textContent = "No se pudo ejecutar la IA en este navegador. Comprueba tu conexión y prueba Chrome o Edge actualizado.";
-    }finally{
-      if(generation === bgGeneration) bgButton.disabled = false;
+    } catch (err) {
+      console.error('Cruz Sublime — removedor IA:', err);
+      if (generation === bgGeneration) bgSetStatus('Error de IA: ' + (err?.message || String(err)) + '. Revisa la consola (F12).');
+    } finally {
+      if (generation === bgGeneration) bgButton.disabled = false;
     }
   });
-  bgDownload.addEventListener("click", function(){
-    if(!bgResultURL) return;
-    var a = document.createElement("a");
+  bgDownload.addEventListener('click', () => {
+    if (!bgResultURL) return;
+    const a = document.createElement('a');
     a.href = bgResultURL;
-    a.download = "cruz_sublime_sin_fondo.png";
-    document.body.appendChild(a);a.click();a.remove();
+    a.download = 'cruz_sublime_sin_fondo.png';
+    document.body.appendChild(a); a.click(); a.remove();
   });
 
   // Contadores animados
