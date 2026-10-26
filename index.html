@@ -2211,8 +2211,13 @@ document.addEventListener("DOMContentLoaded", function(){
         const raw = Math.max(0, Math.min(1, value <= 1 ? value : value / 255));
         // Ajuste suave de la máscara: estrecha ligeramente los píxeles semitransparentes
         // sin agregar contorno artificial. 0% deja la máscara intacta.
-        const edge = edgePercent / 100;
-        const alpha = Math.round(255 * Math.max(0, Math.min(1, (raw - edge * 0.35) / (1 - edge * 0.35))));
+        const edge = Math.max(0, Math.min(0.6, edgePercent / 100));
+        // Protege la opacidad de las zonas sólidas y elimina suavemente
+        // residuos muy tenues del fondo, sin modificar los píxeles RGB.
+        // A diferencia del ajuste anterior, 60% no elimina 21% de la máscara.
+        const cutoff = edge * 0.12;
+        const normalized = edge === 0 ? raw : Math.max(0, Math.min(1, (raw - cutoff) / (1 - cutoff)));
+        const alpha = Math.round(255 * normalized);
         const j = i * 4;
         mPixels.data[j] = alpha;
         mPixels.data[j+1] = alpha;
