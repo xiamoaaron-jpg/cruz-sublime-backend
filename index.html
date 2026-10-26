@@ -1132,7 +1132,7 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
     </div>
     <div class="card">
       <h2><span class="num">2</span> Eliminación automática con IA</h2>
-      <p style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px">Solo para computadoras. La IA intenta usar la tarjeta gráfica (WebGPU) y, si no está disponible, usa el procesador. La primera carga puede tardar.</p>
+      <p style="color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:14px">Solo para computadoras. La IA MODNet intenta usar la tarjeta gráfica (WebGPU) y, si no está disponible, usa el procesador. La primera carga puede tardar.</p>
       <button class="btn btn-big" id="btnBg" disabled>✨ Eliminar fondo con IA</button>
       <button class="btn ghost" id="btnBgDl" disabled style="margin-top:8px">Descargar PNG</button>
     </div>
@@ -2038,8 +2038,8 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 
 
-  // ===== REMOVEDOR DE FONDO: edición escritorio, GPU con alternativa CPU =====
-  // Biblioteca IMG.LY: AGPL-3.0. Revisar cumplimiento antes de uso comercial.
+  // ===== REMOVEDOR DE FONDO: Transformers.js + MODNet (Apache-2.0) =====
+  // Procesamiento local: no utiliza Replicate ni consume créditos.
   const bgFileInput = document.getElementById('bgFile');
   const bgDrop = document.getElementById('bgDrop');
   const bgStatus = document.getElementById('bgStatus');
@@ -2047,8 +2047,8 @@ document.addEventListener("DOMContentLoaded", function(){
   const bgDownload = document.getElementById('btnBgDl');
   const bgBefore = document.getElementById('bgBefore');
   const bgAfter = document.getElementById('bgAfter');
-  let bgOriginalFile = null, bgResultURL = null, bgGeneration = 0;
-  let bgLibraryPromise = null;
+  let bgOriginalFile = null, bgResultURL = null, bgOriginalURL = null, bgGeneration = 0;
+  let bgLibraryPromise = null, bgPipeline = null, bgPipelineDevice = null;
   const bgMobile = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
     (navigator.userAgentData && navigator.userAgentData.mobile === true);
   const bgSetStatus = (message) => { bgStatus.textContent = message; };
@@ -2071,9 +2071,9 @@ document.addEventListener("DOMContentLoaded", function(){
     bgGeneration++;
     bgOriginalFile = file;
     bgClearResult();
-    const reader = new FileReader();
-    reader.onload = () => { bgBefore.src = reader.result; };
-    reader.readAsDataURL(file);
+    if (bgOriginalURL) URL.revokeObjectURL(bgOriginalURL);
+    bgOriginalURL = URL.createObjectURL(file);
+    bgBefore.src = bgOriginalURL;
     document.getElementById('bgBeforeInfo').textContent = file.name;
     bgButton.disabled = false;
     bgSetStatus('Imagen lista: ' + file.name);
@@ -2083,56 +2083,122 @@ document.addEventListener("DOMContentLoaded", function(){
   bgDrop.addEventListener('dragleave', () => bgDrop.classList.remove('drag'));
   bgDrop.addEventListener('drop', e => { e.preventDefault(); bgDrop.classList.remove('drag'); if (e.dataTransfer.files[0]) bgLoad(e.dataTransfer.files[0]); });
   bgFileInput.addEventListener('change', e => { if (e.target.files[0]) bgLoad(e.target.files[0]); });
+
   async function bgLibrary() {
     if (!bgLibraryPromise) {
-      // El paquete se carga en un módulo separado para no interferir con el resto del sitio.
-      bgLibraryPromise = import('https://esm.sh/@imgly/background-removal@1.7.0?bundle')
-        .catch(e => { bgLibraryPromise = null; throw new Error('No se pudo cargar la biblioteca IA: ' + e.message); });
+      bgLibraryPromise = import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1')
+        .catch(err => { bgLibraryPromise = null; throw new Error('No se pudo cargar Transformers.js: ' + err.message); });
     }
     return bgLibraryPromise;
+  }
+  async function bgGetPipeline(device) {
+    if (bgPipeline && bgPipelineDevice === device) return bgPipeline;
+    const { pipeline } = await bgLibrary();
+    bgSetStatus('Descargando modelo MODNet para ' + (device === 'webgpu' ? 'GPU' : 'CPU') + '… La primera vez puede tardar.');
+    const model = await pipeline('image-segmentation', 'Xenova/modnet', {
+      device,
+      progress_callback: p => {
+        if (p.status === 'progress' && Number.isFinite(p.progress)) {
+          bgSetStatus('Descargando modelo IA: ' + Math.round(p.progress) + '%');
+        } else if (p.status === 'initiate') {
+          bgSetStatus('Preparando archivo del modelo: ' + (p.file || 'IA') + '…');
+        }
+      }
+    });
+    bgPipeline = model;
+    bgPipelineDevice = device;
+    return model;
+  }
+  async function bgSegment(file, device) {
+    const model = await bgGetPipeline(device);
+    const imageURL = URL.createObjectURL(file);
+    try {
+      return await model(imageURL);
+    } finally {
+      URL.revokeObjectURL(imageURL);
+    }
+  }
+  async function bgComposePNG(file, segmentation) {
+    const mask = Array.isArray(segmentation) ? segmentation[0]?.mask : segmentation?.mask;
+    if (!mask || !mask.data || !mask.width || !mask.height) {
+      throw new Error('MODNet no devolvió una máscara válida.');
+    }
+    const bitmap = await createImageBitmap(file);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width; canvas.height = bitmap.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(bitmap, 0, 0);
+      const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const mCanvas = document.createElement('canvas');
+      mCanvas.width = mask.width; mCanvas.height = mask.height;
+      const mctx = mCanvas.getContext('2d');
+      const mPixels = mctx.createImageData(mask.width, mask.height);
+      const channels = mask.channels || Math.max(1, Math.round(mask.data.length / (mask.width * mask.height)));
+      for (let i = 0; i < mask.width * mask.height; i++) {
+        const value = mask.data[i * channels];
+        const alpha = Math.max(0, Math.min(255, value <= 1 ? Math.round(value * 255) : value));
+        const j = i * 4;
+        mPixels.data[j] = alpha;
+        mPixels.data[j+1] = alpha;
+        mPixels.data[j+2] = alpha;
+        mPixels.data[j+3] = 255;
+      }
+      mctx.putImageData(mPixels, 0, 0);
+      const fullMask = document.createElement('canvas');
+      fullMask.width = canvas.width; fullMask.height = canvas.height;
+      const fmctx = fullMask.getContext('2d', { willReadFrequently: true });
+      fmctx.imageSmoothingEnabled = true;
+      fmctx.imageSmoothingQuality = 'high';
+      fmctx.drawImage(mCanvas, 0, 0, canvas.width, canvas.height);
+      const alphaData = fmctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      for (let i = 0; i < canvas.width * canvas.height; i++) {
+        image.data[i*4+3] = Math.round(image.data[i*4+3] * alphaData[i*4] / 255);
+      }
+      ctx.putImageData(image, 0, 0);
+      return await new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('No se pudo generar PNG.')), 'image/png'));
+    } finally { bitmap.close(); }
   }
   bgButton.addEventListener('click', async () => {
     if (!bgOriginalFile || bgButton.disabled || bgMobile()) return;
     const generation = bgGeneration;
+    const file = bgOriginalFile;
     bgButton.disabled = true;
     bgDownload.disabled = true;
     try {
-      if (!window.isSecureContext) throw new Error('Abre Cruz Sublime desde HTTPS (Render), no desde un archivo local.');
-      bgSetStatus('Cargando motor de inteligencia artificial…');
-      const lib = await bgLibrary();
-      const remove = lib.removeBackground || (lib.default && lib.default.removeBackground) || lib.default;
-      if (typeof remove !== 'function') throw new Error('La biblioteca no exportó la función de eliminación.');
-      if (generation !== bgGeneration) return;
-      const supportsGPU = !!navigator.gpu;
-      const config = {
-        device: supportsGPU ? 'gpu' : 'cpu',
-        progress: (key, current, total) => {
-          if (generation !== bgGeneration) return;
-          bgSetStatus(total ? 'Descargando modelo IA: ' + Math.round(current / total * 100) + '%' : 'Procesando con IA…');
+      if (!window.isSecureContext) throw new Error('Abre Cruz Sublime desde HTTPS, no desde un archivo local.');
+      bgSetStatus('Cargando inteligencia artificial MODNet…');
+      await bgLibrary();
+      const hasGPU = !!navigator.gpu;
+      let output;
+      if (hasGPU) {
+        try {
+          bgSetStatus('Procesando con tarjeta gráfica (WebGPU)…');
+          output = await bgSegment(file, 'webgpu');
+        } catch (gpuError) {
+          console.warn('MODNet GPU no disponible; reintentando en CPU:', gpuError);
+          bgPipeline = null; bgPipelineDevice = null;
+          bgSetStatus('GPU no disponible. Reintentando con procesador (CPU)…');
+          output = await bgSegment(file, 'wasm');
         }
-      };
-      bgSetStatus(supportsGPU ? 'Procesando con tarjeta gráfica (WebGPU)…' : 'WebGPU no disponible. Procesando con CPU…');
-      let result;
-      try {
-        result = await remove(bgOriginalFile, config);
-      } catch (gpuError) {
-        if (!supportsGPU) throw gpuError;
-        console.warn('WebGPU falló, reintentando en CPU:', gpuError);
-        bgSetStatus('La GPU no pudo procesar la foto. Reintentando con CPU…');
-        result = await remove(bgOriginalFile, { ...config, device: 'cpu' });
+      } else {
+        bgSetStatus('Procesando con CPU…');
+        output = await bgSegment(file, 'wasm');
       }
       if (generation !== bgGeneration) return;
-      if (!(result instanceof Blob)) throw new Error('La IA no devolvió una imagen válida.');
+      bgSetStatus('Preparando PNG transparente…');
+      const result = await bgComposePNG(file, output);
+      if (generation !== bgGeneration) return;
       bgClearResult();
       bgResultURL = URL.createObjectURL(result);
-      bgAfter.onload = () => bgSetStatus('¡Fondo eliminado! Ya puedes descargar el PNG transparente.');
-      bgAfter.onerror = () => bgSetStatus('Se procesó la foto, pero no se pudo mostrar el resultado.');
+      bgAfter.onload = () => bgSetStatus('¡Fondo eliminado! Descarga tu PNG transparente.');
+      bgAfter.onerror = () => bgSetStatus('La IA generó el archivo, pero falló la vista previa.');
       bgAfter.src = bgResultURL;
       document.getElementById('bgAfterInfo').textContent = 'PNG transparente · listo para descargar';
       bgDownload.disabled = false;
     } catch (err) {
-      console.error('Cruz Sublime — removedor IA:', err);
-      if (generation === bgGeneration) bgSetStatus('Error de IA: ' + (err?.message || String(err)) + '. Revisa la consola (F12).');
+      console.error('Cruz Sublime — MODNet:', err);
+      if (generation === bgGeneration) bgSetStatus('Error de IA: ' + (err?.message || String(err)) + '. Consulta F12 si persiste.');
     } finally {
       if (generation === bgGeneration) bgButton.disabled = false;
     }
