@@ -253,6 +253,16 @@ body>*{position:relative;z-index:1}
 @media(max-width:1080px){#panel-bg .cs-bg-studio{grid-template-columns:1fr}#panel-bg .cs-bg-sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 22px}#panel-bg .cs-bg-section{border:0;padding:6px 0}#panel-bg .cs-bg-viewport{height:500px}}
 @media(max-width:680px){#panel-bg .cs-bg-sidebar{display:block}#panel-bg .cs-bg-view-grid{grid-template-columns:1fr}#panel-bg .cs-bg-viewport{height:360px}}
 
+
+/* Herramientas de retoque manual: solo removedor */
+#panel-bg .cs-bg-edit-modes{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
+#panel-bg .cs-bg-edit-modes button{flex:1 1 auto;font-size:11px;padding:9px 10px}
+#panel-bg .cs-bg-edit-modes button[aria-pressed="true"]{border-color:#71e7ff;background:rgba(50,198,235,.2);color:white}
+#panel-bg #bgBrushSize{width:100%;accent-color:#72e4fa;margin:12px 0}
+#panel-bg .cs-bg-edit-canvas{display:none;position:absolute;max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;pointer-events:none;will-change:transform}
+#panel-bg .cs-bg-brush-cursor{display:none;position:absolute;z-index:4;pointer-events:none;border:1.5px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #111,0 0 12px #1119;background:#ffffff12;transform:translate(-50%,-50%)}
+#panel-bg #bgViewAfter.cs-bg-editing{cursor:crosshair}
+#panel-bg #bgViewAfter.cs-bg-editing.cs-bg-dragging{cursor:crosshair}
 </style>
 
 
@@ -1172,12 +1182,13 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
         <div class="cs-bg-section"><div class="cs-bg-step">01 <span>IMPORTAR IMAGEN</span></div><div class="drop cs-bg-drop" id="bgDrop"><div class="ico">✧</div><strong>Arrastra tu imagen aquí</strong><p>o haz clic para seleccionar</p><small>JPG · PNG · WEBP · hasta 20 MB</small></div><input type="file" id="bgFile" accept="image/png,image/jpeg,image/webp" style="display:none"><div class="cs-bg-status" id="bgStatus" role="status" aria-live="polite">Ninguna imagen cargada.</div></div>
         <div class="cs-bg-section"><div class="cs-bg-step">02 <span>ELIMINACIÓN IA</span></div><p class="cs-bg-note">MODNet trabaja en tu computadora. Primero intenta usar la GPU y después la CPU.</p><button class="btn cs-bg-main-btn" id="btnBg" disabled>✦ Eliminar fondo con IA</button></div>
         <div class="cs-bg-section"><div class="cs-bg-step">03 <span>REFINAR CONTORNO</span></div><label class="cs-bg-range-label" for="bgEdge">Limpieza de halo <output id="bgEdgeValue">15%</output></label><input type="range" id="bgEdge" min="0" max="60" step="1" value="15"/><p class="cs-bg-note">Ajusta el contorno después del recorte. En 0% conservas la máscara original; un valor alto puede borrar cabello fino.</p><button type="button" class="cs-bg-subtle-btn" id="bgEdgeReset">Restablecer contorno</button></div>
-        <div class="cs-bg-section"><div class="cs-bg-step">04 <span>EXPORTAR</span></div><button class="btn cs-bg-main-btn" id="btnBgDl" disabled>↓ Descargar PNG transparente</button><p class="cs-bg-note">Sin créditos adicionales · Incluido en todas las membresías.</p></div>
+        <div class="cs-bg-section"><div class="cs-bg-step">04 <span>RETOQUE MANUAL</span></div><p class="cs-bg-note">Corrige residuos directamente sobre la imagen SIN FONDO. Usa el zoom para trabajar con precisión.</p><div class="cs-bg-edit-modes"><button type="button" class="cs-bg-subtle-btn" id="bgEraseMode" aria-pressed="false">◯ Goma</button><button type="button" class="cs-bg-subtle-btn" id="bgRestoreMode" aria-pressed="false">↶ Restaurar</button><button type="button" class="cs-bg-subtle-btn" id="bgPanMode" aria-pressed="true">✥ Mover</button></div><label class="cs-bg-range-label" for="bgBrushSize">Tamaño de pincel <output id="bgBrushSizeValue">30 px</output></label><input type="range" id="bgBrushSize" min="3" max="160" step="1" value="30"/><div class="cs-bg-edit-modes"><button type="button" class="cs-bg-subtle-btn" id="bgUndo" disabled>↶ Deshacer</button><button type="button" class="cs-bg-subtle-btn" id="bgRedo" disabled>↷ Rehacer</button><button type="button" class="cs-bg-subtle-btn" id="bgClearEdits" disabled>Restablecer retoques</button></div><p class="cs-bg-note">La goma borra; Restaurar recupera píxeles del recorte de IA. El botón Mover permite arrastrar la imagen ampliada.</p></div>
+        <div class="cs-bg-section"><div class="cs-bg-step">05 <span>EXPORTAR</span></div><button class="btn cs-bg-main-btn" id="btnBgDl" disabled>↓ Descargar PNG transparente</button><p class="cs-bg-note">Sin créditos adicionales · Incluido en todas las membresías.</p></div>
       </aside>
       <div class="cs-bg-workarea"><div class="cs-bg-workbar"><div><strong>Vista comparativa</strong><small>Usa la rueda del mouse para acercar; arrastra para desplazarte</small></div><button type="button" class="cs-bg-subtle-btn" id="bgResetAll">⤢ Ajustar ambas vistas</button></div>
         <div class="cs-bg-view-grid">
           <section class="cs-bg-view-card"><div class="cs-bg-view-top"><div><span class="cs-bg-dot cs-bg-dot-blue"></span> ORIGINAL</div><span class="cs-bg-view-tag" id="bgBeforeInfo">Sin imagen</span></div><div class="cs-bg-viewport" id="bgViewBefore"><img id="bgBefore" alt="Imagen original" draggable="false"><div class="cs-bg-placeholder" id="bgEmptyBefore">✧<small>Tu imagen aparecerá aquí</small></div></div><div class="cs-bg-zoom-controls"><button type="button" data-zoom="out" data-target="before" aria-label="Alejar original">−</button><span id="bgZoomBefore">100%</span><button type="button" data-zoom="in" data-target="before" aria-label="Acercar original">+</button><button type="button" data-zoom="reset" data-target="before" aria-label="Restablecer original">⤢</button></div></section>
-          <section class="cs-bg-view-card"><div class="cs-bg-view-top"><div><span class="cs-bg-dot cs-bg-dot-pink"></span> SIN FONDO</div><span class="cs-bg-view-tag" id="bgAfterInfo">Esperando IA</span></div><div class="cs-bg-viewport cs-bg-checker" id="bgViewAfter"><img id="bgAfter" alt="Imagen sin fondo" draggable="false"><div class="cs-bg-placeholder" id="bgEmptyAfter">✦<small>El resultado aparecerá aquí</small></div></div><div class="cs-bg-zoom-controls"><button type="button" data-zoom="out" data-target="after" aria-label="Alejar resultado">−</button><span id="bgZoomAfter">100%</span><button type="button" data-zoom="in" data-target="after" aria-label="Acercar resultado">+</button><button type="button" data-zoom="reset" data-target="after" aria-label="Restablecer resultado">⤢</button></div></section>
+          <section class="cs-bg-view-card"><div class="cs-bg-view-top"><div><span class="cs-bg-dot cs-bg-dot-pink"></span> SIN FONDO</div><span class="cs-bg-view-tag" id="bgAfterInfo">Esperando IA</span></div><div class="cs-bg-viewport cs-bg-checker" id="bgViewAfter"><img id="bgAfter" alt="Imagen sin fondo" draggable="false"><canvas id="bgEditCanvas" class="cs-bg-edit-canvas" aria-label="Lienzo de retoque manual"></canvas><div id="bgBrushCursor" class="cs-bg-brush-cursor" aria-hidden="true"></div><div class="cs-bg-placeholder" id="bgEmptyAfter">✦<small>El resultado aparecerá aquí</small></div></div><div class="cs-bg-zoom-controls"><button type="button" data-zoom="out" data-target="after" aria-label="Alejar resultado">−</button><span id="bgZoomAfter">100%</span><button type="button" data-zoom="in" data-target="after" aria-label="Acercar resultado">+</button><button type="button" data-zoom="reset" data-target="after" aria-label="Restablecer resultado">⤢</button></div></section>
         </div><div class="cs-bg-workfoot">✦ Detalle profesional <span>·</span> Zoom independiente <span>·</span> PNG transparente</div>
       </div>
     </div>
@@ -2089,6 +2100,14 @@ document.addEventListener("DOMContentLoaded", function(){
   const bgAfter = document.getElementById('bgAfter');
   let bgOriginalFile = null, bgResultURL = null, bgOriginalURL = null, bgGeneration = 0;
   let bgLastSegmentation = null, bgRefineSerial = 0;
+  let bgEditBase = null, bgEditMode = 'pan', bgEditHistory = [], bgEditPosition = 0, bgEditActive = null;
+  let bgEditSerial = 0, bgEditRenderPending = false;
+  const bgEditCanvas = document.getElementById('bgEditCanvas');
+  const bgEditCtx = bgEditCanvas.getContext('2d', {willReadFrequently:true});
+  const bgEditView = document.getElementById('bgViewAfter');
+  const bgBrushCursor = document.getElementById('bgBrushCursor');
+  const bgBrushSize = document.getElementById('bgBrushSize');
+
   let bgLibraryPromise = null, bgPipeline = null, bgPipelineDevice = null;
   const bgMobile = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
     (navigator.userAgentData && navigator.userAgentData.mobile === true);
@@ -2102,6 +2121,10 @@ document.addEventListener("DOMContentLoaded", function(){
     bgAfter.style.display = 'none';
     document.getElementById('bgEmptyAfter').style.display = 'flex';
     bgLastSegmentation = null;
+    if (bgEditBase) bgEditBase.close(); bgEditBase = null; bgAfter.style.visibility = 'visible'; bgEditHistory = []; bgEditPosition = 0; bgEditActive = null;
+    bgEditCanvas.style.display = 'none'; bgBrushCursor.style.display = 'none';
+    if (window.bgUpdateEditButtons) window.bgUpdateEditButtons();
+
     if (window.csBgResetZoom) window.csBgResetZoom('after');
   };
   if (bgMobile()) {
@@ -2247,6 +2270,7 @@ document.addEventListener("DOMContentLoaded", function(){
       bgAfter.onload = () => bgSetStatus('¡Fondo eliminado! Descarga tu PNG transparente.');
       bgAfter.onerror = () => bgSetStatus('La IA generó el archivo, pero falló la vista previa.');
       bgAfter.src = bgResultURL;
+      await bgSetEditBase(result, true);
       bgAfter.style.display = 'block';
       document.getElementById('bgEmptyAfter').style.display = 'none';
       document.getElementById('bgAfterInfo').textContent = 'PNG transparente · listo para descargar';
@@ -2261,7 +2285,7 @@ document.addEventListener("DOMContentLoaded", function(){
   bgDownload.addEventListener('click', () => {
     if (!bgResultURL) return;
     const a = document.createElement('a');
-    a.href = bgResultURL;
+    a.href = bgEditBase ? bgEditCanvas.toDataURL('image/png') : bgResultURL;
     a.download = 'cruz_sublime_sin_fondo.png';
     document.body.appendChild(a); a.click(); a.remove();
   });
@@ -2276,13 +2300,18 @@ document.addEventListener("DOMContentLoaded", function(){
     const state = { zoom:1, x:0, y:0, drag:false, startX:0, startY:0 };
     const draw = () => {
       img.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.zoom})`;
+      if (name === 'after') {
+        bgEditCanvas.style.transform = img.style.transform;
+        if (window.bgSyncEditCanvas) window.bgSyncEditCanvas();
+      }
+
       label.textContent = Math.round(state.zoom * 100) + '%';
       view.classList.toggle('cs-bg-canpan', state.zoom > 1);
     };
     const zoom = (factor) => { state.zoom = Math.min(8, Math.max(1, state.zoom * factor)); if(state.zoom === 1){state.x=0;state.y=0;} draw(); };
     const reset = () => {state.zoom=1;state.x=0;state.y=0;draw();};
     view.addEventListener('wheel', e => {if(!img.getAttribute('src')) return; e.preventDefault();zoom(e.deltaY < 0 ? 1.16 : 1/1.16);}, {passive:false});
-    view.addEventListener('pointerdown', e => {if(state.zoom <= 1 || !img.getAttribute('src'))return;state.drag=true;state.startX=e.clientX-state.x;state.startY=e.clientY-state.y;view.setPointerCapture(e.pointerId);view.classList.add('cs-bg-dragging');});
+    view.addEventListener('pointerdown', e => {if(name === 'after' && bgEditMode !== 'pan')return; if(state.zoom <= 1 || !img.getAttribute('src'))return;state.drag=true;state.startX=e.clientX-state.x;state.startY=e.clientY-state.y;view.setPointerCapture(e.pointerId);view.classList.add('cs-bg-dragging');});
     view.addEventListener('pointermove', e => {if(!state.drag)return;state.x=e.clientX-state.startX;state.y=e.clientY-state.startY;draw();});
     const stop = () => {state.drag=false;view.classList.remove('cs-bg-dragging');};
     view.addEventListener('pointerup',stop);view.addEventListener('pointercancel',stop);view.addEventListener('lostpointercapture',stop);
@@ -2309,12 +2338,120 @@ document.addEventListener("DOMContentLoaded", function(){
         if (generation !== bgGeneration || serial !== bgRefineSerial) return;
         const next = URL.createObjectURL(blob), old = bgResultURL;
         bgResultURL = next; bgAfter.src = next;
+        await bgSetEditBase(blob, false);
         if (old) URL.revokeObjectURL(old);
         bgSetStatus('Contorno actualizado. PNG listo para descargar.');
       } catch(err) { bgSetStatus('No se pudo refinar el contorno: ' + err.message); }
     }, 180);
   });
   document.getElementById('bgEdgeReset').addEventListener('click', () => {bgEdge.value='15';bgEdge.dispatchEvent(new Event('input'));});
+
+  // Retoque no destructivo: los trazos se reconstruyen sobre el PNG refinado.
+  function bgUpdateEditButtons() {
+    document.getElementById('bgUndo').disabled = bgEditPosition === 0;
+    document.getElementById('bgRedo').disabled = bgEditPosition >= bgEditHistory.length;
+    document.getElementById('bgClearEdits').disabled = bgEditPosition === 0;
+    for (const [mode,id] of [['erase','bgEraseMode'],['restore','bgRestoreMode'],['pan','bgPanMode']])
+      document.getElementById(id).setAttribute('aria-pressed', String(bgEditMode === mode));
+    bgEditView.classList.toggle('cs-bg-editing', bgEditMode !== 'pan');
+  }
+  window.bgUpdateEditButtons = bgUpdateEditButtons;
+  function bgSyncEditCanvas() {
+    if (!bgEditBase) return;
+    bgEditCanvas.style.width = bgAfter.offsetWidth + 'px';
+    bgEditCanvas.style.height = bgAfter.offsetHeight + 'px';
+    bgEditCanvas.style.left = bgAfter.offsetLeft + 'px';
+    bgEditCanvas.style.top = bgAfter.offsetTop + 'px';
+  }
+  window.bgSyncEditCanvas = bgSyncEditCanvas;
+  async function bgSetEditBase(blob, clearHistory) {
+    const serial = ++bgEditSerial;
+    const bitmap = await createImageBitmap(blob);
+    if (serial !== bgEditSerial) { bitmap.close(); return; }
+    if (bgEditBase) bgEditBase.close();
+    bgEditBase = bitmap;
+    bgEditCanvas.width = bitmap.width; bgEditCanvas.height = bitmap.height;
+    if (clearHistory) { bgEditHistory=[]; bgEditPosition=0; }
+    bgEditCanvas.style.display = 'block';
+    bgAfter.style.visibility = 'hidden';
+    bgSyncEditCanvas();
+    bgReplayEdits();
+  }
+  function bgReplayEdits() {
+    if (!bgEditBase) return;
+    bgEditCtx.clearRect(0,0,bgEditCanvas.width,bgEditCanvas.height);
+    bgEditCtx.globalCompositeOperation='source-over';
+    bgEditCtx.drawImage(bgEditBase,0,0);
+    for (const stroke of bgEditHistory.slice(0,bgEditPosition)) bgPaintStroke(stroke);
+    if (bgEditActive) bgPaintStroke(bgEditActive);
+    bgUpdateEditButtons();
+  }
+  function bgPaintStroke(stroke) {
+    const points=stroke.points;
+    if (!points.length) return;
+    bgEditCtx.save();
+    bgEditCtx.lineCap='round';bgEditCtx.lineJoin='round';bgEditCtx.lineWidth=stroke.size;
+    bgEditCtx.beginPath();bgEditCtx.moveTo(points[0].x,points[0].y);
+    if(points.length===1){bgEditCtx.lineTo(points[0].x+.01,points[0].y+.01);}
+    else for(let i=1;i<points.length;i++)bgEditCtx.lineTo(points[i].x,points[i].y);
+    if(stroke.mode==='erase'){
+      bgEditCtx.globalCompositeOperation='destination-out';
+      bgEditCtx.strokeStyle='#000';bgEditCtx.stroke();
+    } else {
+      // Restaurar únicamente el recorte de IA en la zona del pincel.
+      bgEditCtx.clip();
+      bgEditCtx.globalCompositeOperation='source-over';
+      bgEditCtx.drawImage(bgEditBase,0,0);
+    }
+    bgEditCtx.restore();
+  }
+  function bgEditPoint(e) {
+    const r=bgEditCanvas.getBoundingClientRect();
+    if(!r.width||!r.height)return null;
+    return {x:(e.clientX-r.left)*bgEditCanvas.width/r.width,y:(e.clientY-r.top)*bgEditCanvas.height/r.height};
+  }
+  function bgShowBrush(e){
+    if(bgEditMode==='pan'||!bgEditBase){bgBrushCursor.style.display='none';return;}
+    const r=bgEditCanvas.getBoundingClientRect();
+    if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){bgBrushCursor.style.display='none';return;}
+    const diameter=Number(bgBrushSize.value)*r.width/bgEditCanvas.width;
+    bgBrushCursor.style.width=diameter+'px';bgBrushCursor.style.height=diameter+'px';
+    const vr=bgEditView.getBoundingClientRect();
+    bgBrushCursor.style.left=(e.clientX-vr.left)+'px';bgBrushCursor.style.top=(e.clientY-vr.top)+'px';
+    bgBrushCursor.style.display='block';
+  }
+  bgEditView.addEventListener('pointerdown',e=>{
+    if(bgEditMode==='pan'||!bgEditBase||e.button!==0)return;
+    const pt=bgEditPoint(e);if(!pt||pt.x<0||pt.y<0||pt.x>bgEditCanvas.width||pt.y>bgEditCanvas.height)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    bgEditActive={mode:bgEditMode,size:Number(bgBrushSize.value),points:[pt]};
+    bgEditView.setPointerCapture(e.pointerId);bgReplayEdits();
+  },true);
+  bgEditView.addEventListener('pointermove',e=>{
+    bgShowBrush(e);
+    if(!bgEditActive)return;
+    const pt=bgEditPoint(e);if(!pt)return;
+    bgEditActive.points.push(pt);
+    if(!bgEditRenderPending){bgEditRenderPending=true;requestAnimationFrame(()=>{bgEditRenderPending=false;bgReplayEdits();});}
+  });
+  function bgFinishEdit(){
+    if(!bgEditActive)return;
+    bgEditHistory=bgEditHistory.slice(0,bgEditPosition);
+    bgEditHistory.push(bgEditActive);bgEditPosition++;
+    bgEditActive=null;bgReplayEdits();
+  }
+  bgEditView.addEventListener('pointerup',bgFinishEdit);
+  bgEditView.addEventListener('pointercancel',bgFinishEdit);
+  bgEditView.addEventListener('pointerleave',()=>{if(!bgEditActive)bgBrushCursor.style.display='none';});
+  for(const [mode,id] of [['erase','bgEraseMode'],['restore','bgRestoreMode'],['pan','bgPanMode']])
+    document.getElementById(id).addEventListener('click',()=>{bgFinishEdit();bgEditMode=mode;bgBrushCursor.style.display='none';bgUpdateEditButtons();});
+  bgBrushSize.addEventListener('input',()=>{document.getElementById('bgBrushSizeValue').textContent=bgBrushSize.value+' px';});
+  document.getElementById('bgUndo').addEventListener('click',()=>{if(bgEditPosition>0){bgEditPosition--;bgReplayEdits();}});
+  document.getElementById('bgRedo').addEventListener('click',()=>{if(bgEditPosition<bgEditHistory.length){bgEditPosition++;bgReplayEdits();}});
+  document.getElementById('bgClearEdits').addEventListener('click',()=>{bgEditHistory=[];bgEditPosition=0;bgReplayEdits();});
+  window.addEventListener('resize',bgSyncEditCanvas);
+  bgAfter.addEventListener('load',bgSyncEditCanvas);
+  bgUpdateEditButtons();
 
   // Contadores animados
   var designs = 1847, orders = 126;
