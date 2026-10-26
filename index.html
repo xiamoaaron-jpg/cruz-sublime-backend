@@ -2086,93 +2086,7 @@ document.addEventListener("DOMContentLoaded", function(){
     }
   });
 
-  // ===== VERIFICADOR DTF =====
-  // CRUZ SUBLIME: verificación DTF local, sin llamadas al servidor
-  (function(){
-    const fileInput=document.getElementById("checkFile"),drop=document.getElementById("checkDrop");
-    const width=document.getElementById("checkW"),bg=document.getElementById("checkBg");
-    const status=document.getElementById("checkStatus"),results=document.getElementById("checkResults");
-    const button=document.getElementById("btnCheck"),color=document.getElementById("csDtfColor");
-    let image=null,filename="",bytes=0;
-    const setText=(id,value)=>document.getElementById(id).textContent=value;
-    const garment=()=>bg.value==="black"?"#101015":bg.value==="color"?color.value:"#f5f5f5";
-    function showColor(){document.getElementById("csDtfColorWrap").hidden=bg.value!=="color";if(image)renderSimulation();}
-    function renderSimulation(){
-      if(!image)return;
-      const c=document.createElement("canvas"),max=1100,scale=Math.min(1,max/Math.max(image.width,image.height));
-      c.width=Math.max(1,Math.round(image.width*scale));c.height=Math.max(1,Math.round(image.height*scale));
-      const x=c.getContext("2d");x.fillStyle=garment();x.fillRect(0,0,c.width,c.height);x.drawImage(image,0,0,c.width,c.height);
-      document.getElementById("checkAfter").src=c.toDataURL("image/png");
-      setText("checkAfterInfo","Vista digital · "+(bg.value==="black"?"prenda negra":bg.value==="color"?"prenda de color":"prenda blanca"));
-    }
-    function load(file){
-      if(!file)return;
-      if(!/\\.png$/i.test(file.name)||file.type&&file.type!=="image/png"){status.textContent="Selecciona un archivo PNG válido.";return;}
-      if(file.size>50*1024*1024){status.textContent="El archivo supera el límite de 50 MB.";return;}
-      const reader=new FileReader();
-      reader.onerror=()=>status.textContent="No se pudo leer el archivo.";
-      reader.onload=()=>{
-        const img=new Image();
-        img.onerror=()=>status.textContent="El archivo no contiene una imagen PNG válida.";
-        img.onload=()=>{
-          image=img;filename=file.name;bytes=file.size;
-          document.getElementById("checkBefore").src=reader.result;
-          setText("checkBeforeInfo",filename+" · "+(bytes/1024/1024).toFixed(2)+" MB");
-          status.textContent="✓ "+filename+" cargado correctamente.";
-          button.disabled=false;results.className="empty";results.textContent="Archivo listo. Presiona «Analizar archivo DTF».";
-          renderSimulation();
-        };
-        img.src=reader.result;
-      };
-      reader.readAsDataURL(file);
-    }
-    width.addEventListener("input",()=>{setText("vCheckW",width.value);if(image)analyze();});
-    bg.addEventListener("change",()=>{showColor();if(image)analyze();});
-    color.addEventListener("input",renderSimulation);
-    drop.addEventListener("click",()=>fileInput.click());
-    drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fileInput.click();}});
-    drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag");});
-    drop.addEventListener("dragleave",()=>drop.classList.remove("drag"));
-    drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("drag");load(e.dataTransfer.files[0]);});
-    fileInput.addEventListener("change",e=>load(e.target.files[0]));
-    function analyze(){
-      if(!image)return;
-      try{
-        const cm=Number(width.value),dpi=Math.round(image.width/cm*2.54),heightCm=(image.height/image.width)*cm;
-        const canvas=document.createElement("canvas");
-        const scale=Math.min(1,900/Math.max(image.width,image.height));
-        canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
-        const ctx=canvas.getContext("2d",{willReadFrequently:true});
-        ctx.drawImage(image,0,0,canvas.width,canvas.height);
-        const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
-        let transparent=0,semi=0,opaque=0;
-        for(let i=0;i<data.length;i+=4){const a=data[i+3];if(a===0)transparent++;else if(a<250)semi++;else opaque++;}
-        const total=data.length/4,transparentPct=100*transparent/total,semiPct=100*semi/total;
-        const warnings=[];
-        if(dpi<150)warnings.push("Resolución muy baja para el ancho elegido: existe alto riesgo de pixelación.");
-        else if(dpi<250)warnings.push("Resolución moderada: revisa los bordes y detalles finos antes de imprimir.");
-        if(semiPct>5)warnings.push("La imagen tiene zonas semitransparentes; revisa cómo las procesa tu RIP y la base blanca.");
-        if(transparent===0)warnings.push("El PNG no tiene píxeles totalmente transparentes; revisa si el fondo es intencional.");
-        const row=(a,b)=>'<div class="res-line"><span>'+a+'</span><span class="val">'+b+'</span></div>';
-        const grade=dpi>=300?"Alta":dpi>=250?"Buena":dpi>=150?"Moderada":"Baja";
-        results.className="";
-        results.innerHTML='<div class="res-block"><h3>Dimensiones</h3>'+
-          row("Archivo",image.width.toLocaleString("es-MX")+" × "+image.height.toLocaleString("es-MX")+" px")+
-          row("Tamaño de impresión",cm+" × "+heightCm.toFixed(1)+" cm")+
-          row("Resolución al imprimir",dpi+" DPI")+
-          row("Calidad estimada",grade)+'</div>'+
-          '<div class="res-block"><h3>Canal alfa</h3>'+
-          row("Píxeles transparentes",transparentPct.toFixed(1)+" %")+
-          row("Semitransparentes",semiPct.toFixed(1)+" %")+
-          row("Opacos",(100*opaque/total).toFixed(1)+" %")+'</div>'+
-          '<div class="res-block"><h3>Recomendaciones</h3>'+
-          (warnings.length?warnings.map(w=>'<div class="cs-dtf-warn">⚠ '+w+'</div>').join(''):'<div class="cs-dtf-ok">✓ Sin alertas básicas detectadas.</div>')+'</div>';
-        renderSimulation();
-      }catch(err){results.className="empty";results.textContent="No fue posible analizar esta imagen en el navegador.";}
-    }
-    button.addEventListener("click",analyze);
-    showColor();
-  })();
+  // El Verificador DTF se inicializa en un script independiente al final de la página.
 
   // ===== CONTADOR CANVA DIARIO (REAL - RENDER) =====
   var API_BASE = "https://cruz-sublime-api.onrender.com";
@@ -3266,6 +3180,102 @@ body > *:not(#cs-galaxy-portal) {
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarQrNeon);
   else iniciarQrNeon();
 })();
+</script>
+<script id="cs-dtf-script-independiente">
+  // ===== VERIFICADOR DTF INDEPENDIENTE =====
+  // CRUZ SUBLIME: verificación DTF local, sin llamadas al servidor
+  (function(){
+    try {
+    const fileInput=document.getElementById("checkFile"),drop=document.getElementById("checkDrop");
+    const width=document.getElementById("checkW"),bg=document.getElementById("checkBg");
+    const status=document.getElementById("checkStatus"),results=document.getElementById("checkResults");
+    const button=document.getElementById("btnCheck"),color=document.getElementById("csDtfColor");
+    let image=null,filename="",bytes=0;
+    const setText=(id,value)=>document.getElementById(id).textContent=value;
+    const garment=()=>bg.value==="black"?"#101015":bg.value==="color"?color.value:"#f5f5f5";
+    function showColor(){document.getElementById("csDtfColorWrap").hidden=bg.value!=="color";if(image)renderSimulation();}
+    function renderSimulation(){
+      if(!image)return;
+      const c=document.createElement("canvas"),max=1100,scale=Math.min(1,max/Math.max(image.width,image.height));
+      c.width=Math.max(1,Math.round(image.width*scale));c.height=Math.max(1,Math.round(image.height*scale));
+      const x=c.getContext("2d");x.fillStyle=garment();x.fillRect(0,0,c.width,c.height);x.drawImage(image,0,0,c.width,c.height);
+      document.getElementById("checkAfter").src=c.toDataURL("image/png");
+      setText("checkAfterInfo","Vista digital · "+(bg.value==="black"?"prenda negra":bg.value==="color"?"prenda de color":"prenda blanca"));
+    }
+    function load(file){
+      if(!file)return;
+      if(!/\\.png$/i.test(file.name)||file.type&&file.type!=="image/png"){status.textContent="Selecciona un archivo PNG válido.";return;}
+      if(file.size>50*1024*1024){status.textContent="El archivo supera el límite de 50 MB.";return;}
+      const reader=new FileReader();
+      reader.onerror=()=>status.textContent="No se pudo leer el archivo.";
+      reader.onload=()=>{
+        const img=new Image();
+        img.onerror=()=>status.textContent="El archivo no contiene una imagen PNG válida.";
+        img.onload=()=>{
+          image=img;filename=file.name;bytes=file.size;
+          document.getElementById("checkBefore").src=reader.result;
+          setText("checkBeforeInfo",filename+" · "+(bytes/1024/1024).toFixed(2)+" MB");
+          status.textContent="✓ "+filename+" cargado correctamente.";
+          button.disabled=false;results.className="empty";results.textContent="Archivo listo. Presiona «Analizar archivo DTF».";
+          renderSimulation();
+        };
+        img.src=reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    width.addEventListener("input",()=>{setText("vCheckW",width.value);if(image)analyze();});
+    bg.addEventListener("change",()=>{showColor();if(image)analyze();});
+    color.addEventListener("input",renderSimulation);
+    drop.addEventListener("click",()=>fileInput.click());
+    drop.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fileInput.click();}});
+    drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag");});
+    drop.addEventListener("dragleave",()=>drop.classList.remove("drag"));
+    drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("drag");load(e.dataTransfer.files[0]);});
+    fileInput.addEventListener("change",e=>load(e.target.files[0]));
+    function analyze(){
+      if(!image)return;
+      try{
+        const cm=Number(width.value),dpi=Math.round(image.width/cm*2.54),heightCm=(image.height/image.width)*cm;
+        const canvas=document.createElement("canvas");
+        const scale=Math.min(1,900/Math.max(image.width,image.height));
+        canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
+        const ctx=canvas.getContext("2d",{willReadFrequently:true});
+        ctx.drawImage(image,0,0,canvas.width,canvas.height);
+        const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+        let transparent=0,semi=0,opaque=0;
+        for(let i=0;i<data.length;i+=4){const a=data[i+3];if(a===0)transparent++;else if(a<250)semi++;else opaque++;}
+        const total=data.length/4,transparentPct=100*transparent/total,semiPct=100*semi/total;
+        const warnings=[];
+        if(dpi<150)warnings.push("Resolución muy baja para el ancho elegido: existe alto riesgo de pixelación.");
+        else if(dpi<250)warnings.push("Resolución moderada: revisa los bordes y detalles finos antes de imprimir.");
+        if(semiPct>5)warnings.push("La imagen tiene zonas semitransparentes; revisa cómo las procesa tu RIP y la base blanca.");
+        if(transparent===0)warnings.push("El PNG no tiene píxeles totalmente transparentes; revisa si el fondo es intencional.");
+        const row=(a,b)=>'<div class="res-line"><span>'+a+'</span><span class="val">'+b+'</span></div>';
+        const grade=dpi>=300?"Alta":dpi>=250?"Buena":dpi>=150?"Moderada":"Baja";
+        results.className="";
+        results.innerHTML='<div class="res-block"><h3>Dimensiones</h3>'+
+          row("Archivo",image.width.toLocaleString("es-MX")+" × "+image.height.toLocaleString("es-MX")+" px")+
+          row("Tamaño de impresión",cm+" × "+heightCm.toFixed(1)+" cm")+
+          row("Resolución al imprimir",dpi+" DPI")+
+          row("Calidad estimada",grade)+'</div>'+
+          '<div class="res-block"><h3>Canal alfa</h3>'+
+          row("Píxeles transparentes",transparentPct.toFixed(1)+" %")+
+          row("Semitransparentes",semiPct.toFixed(1)+" %")+
+          row("Opacos",(100*opaque/total).toFixed(1)+" %")+'</div>'+
+          '<div class="res-block"><h3>Recomendaciones</h3>'+
+          (warnings.length?warnings.map(w=>'<div class="cs-dtf-warn">⚠ '+w+'</div>').join(''):'<div class="cs-dtf-ok">✓ Sin alertas básicas detectadas.</div>')+'</div>';
+        renderSimulation();
+      }catch(err){results.className="empty";results.textContent="No fue posible analizar esta imagen en el navegador.";}
+    }
+    button.addEventListener("click",analyze);
+    showColor();
+    } catch (error) {
+      console.error("Cruz Sublime DTF: error de inicio",error);
+      const status=document.getElementById("checkStatus");
+      if(status) status.textContent="No se pudo iniciar el verificador. Recarga la página.";
+    }
+  })();
+
 </script>
 </body>
 </html>
