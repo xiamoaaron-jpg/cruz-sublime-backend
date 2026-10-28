@@ -653,6 +653,12 @@ html body #gate .box {
 #panel-plans #planPremiumVIP .btn[href*="stripe"]{background:linear-gradient(100deg,#bb8834,#ffe3a0);color:#24170b}
 @media(max-width:700px){#panel-plans #planPremiumVIP{transform:none}#panel-plans #planPremiumVIP:hover{transform:translateY(-5px)}}
 </style>
+<style id="cs-membership-details">
+#panel-plans .plan ul{margin-top:18px}
+#panel-plans .plan ul li{line-height:1.4;padding:9px 0}
+#panel-plans .plan .cs-plan-message{min-height:38px}
+@media(max-width:700px){#panel-plans .plan .cs-plan-message{min-height:0}}
+</style>
 </head>
 <body>
 <div id="gate" style="display:none">
@@ -1524,7 +1530,10 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
             <li>Mejorador de Imágenes AI</li>
             <li>Verificador de Archivos DTF</li>
             <li>Generador QR</li>
-            <li>Remover Fondo</li>
+            <li>Removedor de Fondo</li>
+            <li>Cotizador de trabajos</li>
+            <li>Separador de Colores</li>
+            <li>☕ Mug Studio PRO (sin consumir créditos)</li>
             <li>Descargas ilimitadas</li>
             <li>Soporte por WhatsApp</li>
           </ul>
@@ -1537,9 +1546,13 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
           <h3>Medio</h3><div class="cs-plan-kicker">Más herramientas y beneficios</div><p class="cs-plan-message">Da el siguiente paso con beneficios creativos adicionales.</p>
           <div class="price">$99 <span>MXN/mes</span></div>
           <ul>
-            <li>Todo lo del plan Básico</li>
-            <li>1 mes de Canva Pro Premium</li>
-            <li>🎁 CapCut Pro 7 días de regalo</li>
+            <li>Todas las herramientas del plan Básico</li>
+            <li>Calculadora DTF, Semitonos Master y Mejorador AI</li>
+            <li>Verificador DTF y Generador QR</li>
+            <li>Removedor de Fondo y Separador de Colores</li>
+            <li>Cotizador y Mug Studio PRO</li>
+            <li>🎨 1 mes de Canva Pro Premium</li>
+            <li>🎁 7 días de CapCut Pro de regalo</li>
             <li>Acceso prioritario a novedades</li>
             <li>Soporte prioritario</li>
           </ul>
@@ -1584,11 +1597,14 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
           <h3>Anual</h3><div class="cs-plan-kicker">Acceso por 12 meses</div><p class="cs-plan-message">Una opción práctica para trabajar todo el año.</p>
           <div class="price">$499 <span>MXN/año</span></div>
           <ul>
-            <li>Todo lo del plan Básico</li>
-            <li>12 meses de herramientas</li>
+            <li>Todas las herramientas del plan Básico</li>
+            <li>Calculadora DTF, Semitonos Master y Mejorador AI</li>
+            <li>Verificador DTF y Generador QR</li>
+            <li>Removedor de Fondo y Separador de Colores</li>
+            <li>Cotizador y Mug Studio PRO</li>
+            <li>12 meses de herramientas generales</li>
             <li>1 mes de Canva Pro de regalo</li>
             <li>🎁 CapCut Pro 7 días gratis</li>
-            <li>Ahorra más de 2 meses</li>
             <li>Soporte prioritario</li>
           </ul>
           <button class="btn big" id="btnAnual">Pagar con tarjeta</button>
