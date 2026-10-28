@@ -588,7 +588,20 @@ html body #gate .box {
 #panel-mug .mug-scene-controls input{accent-color:#fa3d9b}
 #panel-mug .mug-stage{overflow:hidden;border-radius:14px}
 </style>
-</head>
+<style>
+/* Cruz Sublime: sección de pedidos con LED, aislada de las herramientas */
+.cs-orders{isolation:isolate;margin:24px 0 12px;padding:2px;border-radius:23px;background:linear-gradient(105deg,#00eaff,#a143ff,#ff36c9,#00eaff);background-size:300% 300%;animation:csOrdersBorder 8s linear infinite;box-shadow:0 0 19px #00dfff75,0 0 35px #ff24cf3d}
+.cs-orders-inner{position:relative;overflow:hidden;border-radius:21px;background:radial-gradient(ellipse at 50% 0%,#311050 0%,#101126 54%,#080e21 100%);padding:34px 25px 30px;text-align:center}
+.cs-orders-kicker{display:inline-block;border:1px solid #58dfff;color:#fff;border-radius:30px;padding:10px 22px;letter-spacing:1.3px;font-weight:900;font-size:12px;box-shadow:0 0 14px #00eaff88,inset 0 0 12px #b339ff44}
+.cs-orders h2{font-size:clamp(36px,6vw,72px);font-weight:900;letter-spacing:-2px;margin:18px 0 2px;line-height:1.12;color:#fff}.cs-orders h2 span{color:#20e4ff;text-shadow:0 0 18px #00dcff55}.cs-orders h2 em{font-style:normal;color:#ff69e5;text-shadow:0 0 20px #ff3fc94a}
+.cs-orders-slogan{letter-spacing:clamp(2px,.55vw,7px);font-weight:800;font-size:clamp(11px,1.4vw,19px);color:#eef1ff}.cs-orders-desc{max-width:850px;margin:16px auto 20px;color:#e6e7ff;font-size:clamp(14px,1.5vw,18px);line-height:1.6}.cs-orders-desc strong{color:#ffb4ec}
+.cs-orders-products{display:flex;flex-wrap:wrap;justify-content:center;gap:11px;margin:18px auto 26px;max-width:1050px}.cs-orders-products span{border:1px solid #8d5effaa;border-radius:13px;padding:13px 15px;background:#0a1532;box-shadow:0 0 13px #7841f744;color:#fff;font-size:13px;font-weight:750}.cs-orders-products span:nth-child(3n+2){border-color:#00e4ffbb;box-shadow:0 0 14px #00d9ff3d}.cs-orders-products span:nth-child(3n){border-color:#f6bd54bb;box-shadow:0 0 14px #f4b83b38}
+.cs-orders-cta-row{display:flex;justify-content:center;align-items:center;gap:20px;margin:12px auto 24px}.cs-orders-whatsapp{display:flex;justify-content:center;align-items:center;gap:14px;min-width:min(100%,440px);padding:17px 25px;border:2px solid #c3ffc9;border-radius:19px;text-decoration:none!important;color:#fff!important;font-size:clamp(15px,1.8vw,22px);font-weight:900;background:linear-gradient(110deg,#087a36,#10d95a,#008d40);box-shadow:0 0 16px #21ff73,0 0 36px #18ff6680;transition:transform .2s,box-shadow .2s;animation:csOrdersPulse 2.8s ease-in-out infinite}.cs-orders-whatsapp:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 0 25px #4aff93,0 0 50px #22ff90a0}.cs-orders-whatsapp small{display:block;color:#e9ff91;font-size:clamp(13px,1.7vw,20px);letter-spacing:.5px;margin-top:3px}.cs-orders-wa-symbol{font-size:30px;display:grid;place-items:center;border:2px solid #fff;border-radius:50%;width:50px;height:50px;flex-shrink:0}
+.cs-orders-arrow{font-size:clamp(28px,5vw,58px);color:#ff52d4;line-height:1;animation:csOrdersPoint 1.3s ease-in-out infinite alternate;text-shadow:0 0 10px #ff36cc,0 0 24px #ff36cc}.cs-orders-arrow-right{transform:scaleX(-1);animation:csOrdersPointRight 1.3s ease-in-out infinite alternate}.cs-orders-perks{display:flex;justify-content:center;flex-wrap:wrap;gap:15px 30px;color:#dce7ff;font-size:12px;font-weight:700}
+.cs-orders-payment{margin:14px 0 20px;border:1px solid #536080;border-radius:12px;background:#0d1126;padding:14px 18px;color:#dce6ff}.cs-orders-payment summary{cursor:pointer;font-weight:750}.cs-orders-payment p{font-size:12px;color:#b7c4e2;margin:13px 0}.cs-orders-payment a{color:#83eaff;font-weight:750;font-size:13px}
+@keyframes csOrdersBorder{50%{background-position:100% 50%}100%{background-position:0% 50%}}@keyframes csOrdersPulse{50%{box-shadow:0 0 25px #21ff73,0 0 53px #18ff6680}}@keyframes csOrdersPoint{to{transform:translateX(9px)}}@keyframes csOrdersPointRight{to{transform:scaleX(-1) translateX(9px)}}
+@media(max-width:700px){.cs-orders-inner{padding:27px 12px}.cs-orders-products{gap:7px}.cs-orders-products span{padding:9px;font-size:11px}.cs-orders-cta-row{gap:6px}.cs-orders-arrow{font-size:24px}.cs-orders-whatsapp{min-width:0;flex:1;padding:14px 7px;gap:7px}.cs-orders-wa-symbol{width:36px;height:36px;font-size:21px}}@media(prefers-reduced-motion:reduce){.cs-orders,.cs-orders-whatsapp,.cs-orders-arrow{animation:none}}
+</style></head>
 <body>
 <div id="gate" style="display:none">
   <div class="box">
@@ -1504,16 +1517,23 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
 
 
       </div>
-      <div class="card" style="margin-top:22px;text-align:center">
-        <h2><span class="num">💬</span> ¿Ya pagaste o tienes dudas?</h2>
-        <p style="color:var(--muted);font-size:14px;margin-bottom:18px;line-height:1.6">
-          Después de pagar con tarjeta (Stripe) o Mercado Pago, mándame tu comprobante por WhatsApp con tu nombre y correo.<br>
-          Yo te genero tu código y te lo mando en minutos.
-        </p>
-        <a href="https://wa.me/525669717042?text=Hola%2C%20quiero%20enviar%20mi%20comprobante%20de%20pago" target="_blank" class="btn big" style="text-decoration:none;display:inline-block">
-          <svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> Enviar comprobante por WhatsApp
-        </a>
-      </div>
+      <!-- Pedidos personalizados: independiente de pagos y membresías -->
+      <section class="cs-orders" aria-labelledby="cs-orders-title">
+        <div class="cs-orders-inner">
+          <div class="cs-orders-kicker">🛍️ PEDIDOS PERSONALIZADOS</div>
+          <h2 id="cs-orders-title"><span>Cruz</span> <em>Sublime</em> 👑</h2>
+          <p class="cs-orders-slogan">TUS IDEAS, NUESTRO TRABAJO</p>
+          <p class="cs-orders-desc">Cotiza productos personalizados para <strong>regalos, negocios, eventos y ocasiones especiales.</strong></p>
+          <div class="cs-orders-products"><span>☕ Tazas personalizadas</span><span>👕 Playeras sublimadas</span><span>🥤 Termos y botellas</span><span>🧢 Gorras</span><span>👜 Bolsas</span><span>✨ DTF y sublimación</span></div>
+          <div class="cs-orders-cta-row">
+            <span class="cs-orders-arrow" aria-hidden="true">➜➜</span>
+            <a class="cs-orders-whatsapp" href="https://wa.me/525669717042?text=Hola%2C%20vengo%20de%20Cruz%20Sublime%20y%20quiero%20cotizar%20un%20pedido%20personalizado." target="_blank" rel="noopener noreferrer" aria-label="Cotizar pedido personalizado por WhatsApp al 56 6971 7042"><span class="cs-orders-wa-symbol" aria-hidden="true">☎</span><span>Hacer mi pedido por WhatsApp<small>+52 56 6971 7042</small></span></a>
+            <span class="cs-orders-arrow cs-orders-arrow-right" aria-hidden="true">➜➜</span>
+          </div>
+          <div class="cs-orders-perks"><span>💬 Atención personalizada</span><span>📋 Cotizaciones</span><span>⚡ Pedidos especiales y por mayoreo</span></div>
+        </div>
+      </section>
+      <details class="cs-orders-payment"><summary>💳 ¿Ya pagaste una membresía? Enviar comprobante</summary><p>Envía tu comprobante con tu nombre y correo para verificar tu membresía.</p><a href="https://wa.me/527201520366?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20de%20membres%C3%ADa%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer">Enviar comprobante de membresía por WhatsApp</a></details>
       <p style="margin-top:20px;font-size:12.5px;color:var(--muted);text-align:center;">
         Los botones redirigen a Mercado Pago. Después del pago, te mandamos el código por WhatsApp.
       </p>
