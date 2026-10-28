@@ -603,7 +603,7 @@ html body #gate .box {
 @media(max-width:700px){.cs-orders-inner{padding:27px 12px}.cs-orders-products{gap:7px}.cs-orders-products span{padding:9px;font-size:11px}.cs-orders-cta-row{gap:6px}.cs-orders-arrow{font-size:24px}.cs-orders-whatsapp{min-width:0;flex:1;padding:14px 7px;gap:7px}.cs-orders-wa-symbol{width:36px;height:36px;font-size:21px}}@media(prefers-reduced-motion:reduce){.cs-orders,.cs-orders-whatsapp,.cs-orders-arrow{animation:none}}
 </style><style>
 /* Banner original de pedidos: imagen real con área clicable sobre el botón dibujado */
-.cs-orders.cs-orders-art{padding:2px;background:linear-gradient(105deg,#00eaff,#a143ff,#ff36c9,#00eaff);background-size:300% 300%;animation:csOrdersBorder 8s linear infinite;overflow:hidden}
+.cs-orders.cs-orders-art{max-width:980px;margin:24px auto 12px;padding:2px;background:linear-gradient(105deg,#00eaff,#a143ff,#ff36c9,#00eaff);background-size:300% 300%;animation:csOrdersBorder 8s linear infinite;overflow:hidden}
 .cs-orders-artwrap{position:relative;width:100%;line-height:0;overflow:hidden;border-radius:21px}
 .cs-orders-artwrap img{display:block;width:100%;height:auto;object-fit:contain}
 .cs-orders-artlink{position:absolute;left:31%;top:64%;width:38%;height:17%;border-radius:20px;z-index:2;cursor:pointer}
@@ -612,6 +612,29 @@ html body #gate .box {
 @keyframes csArtGlow{to{box-shadow:0 0 32px #37ff8e}}
 @media(max-width:650px){.cs-orders-artlink{left:29%;top:62%;width:42%;height:20%}.cs-orders-artnote{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.cs-orders-artlink{animation:none}}
+</style>
+
+<style id="cs-membership-neon-v1">
+/* SOLO apariencia de las cuatro membresías: sin tocar precios, créditos ni pagos */
+#panel-plans .plans>.plan{--led:#00dfff;--halo:0,223,255;isolation:isolate;border:2px solid var(--led)!important;box-shadow:0 0 9px rgba(var(--halo),.45),0 0 27px rgba(var(--halo),.15),inset 0 0 18px rgba(var(--halo),.055)!important;transition:transform .25s ease,box-shadow .3s ease;overflow:visible}
+#panel-plans .plans>.plan:nth-child(1){--led:#00dfff;--halo:0,223,255}
+#panel-plans .plans>.plan:nth-child(2){--led:#ff4acb;--halo:255,74,203}
+#panel-plans .plans>.plan:nth-child(3){--led:#ffd36b;--halo:255,211,107}
+#panel-plans .plans>.plan:nth-child(4){--led:#b48cff;--halo:180,140,255}
+#panel-plans .plans>.plan::after{content:"";pointer-events:none;position:absolute;inset:4px;border:1px solid rgba(var(--halo),.27);border-radius:15px;opacity:.75;animation:csPlanLed 4.8s ease-in-out infinite;z-index:0}
+#panel-plans .plans>.plan:nth-child(2)::after{animation-delay:.8s}
+#panel-plans .plans>.plan:nth-child(3)::after{animation-delay:1.6s}
+#panel-plans .plans>.plan:nth-child(4)::after{animation-delay:2.4s}
+#panel-plans .plans>.plan:hover{transform:translateY(-5px);box-shadow:0 0 18px rgba(var(--halo),.72),0 0 42px rgba(var(--halo),.30),inset 0 0 24px rgba(var(--halo),.08)!important}
+#panel-plans .plans>.plan .price{background:linear-gradient(90deg,#fff,var(--led),#fff);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:csPlanPrice 7s linear infinite}
+#panel-plans .plans>.plan .price span{background:none;-webkit-text-fill-color:var(--muted);color:var(--muted)}
+#panel-plans .plans>.plan h3{text-shadow:0 0 13px rgba(var(--halo),.4)}
+#panel-plans .plans>.plan:nth-child(3) .badge{box-shadow:0 0 15px rgba(255,211,107,.55),0 0 28px rgba(255,211,107,.22)}
+#panel-plans .plans>.plan:nth-child(4) h3::before{content:"✦ ";color:#c6a7ff;text-shadow:0 0 14px #b48cff}
+#panel-plans .plans>.plan .btn:hover,#panel-plans .plans>.plan a.btn:hover{filter:brightness(1.12);box-shadow:0 0 20px rgba(var(--halo),.4)}
+@keyframes csPlanLed{0%,100%{opacity:.28;box-shadow:inset 0 0 2px rgba(var(--halo),.1)}50%{opacity:.95;box-shadow:inset 0 0 14px rgba(var(--halo),.24)}}
+@keyframes csPlanPrice{to{background-position:200% center}}
+@media(prefers-reduced-motion:reduce){#panel-plans .plans>.plan::after,#panel-plans .plans>.plan .price{animation:none}}
 </style>
 </head>
 <body>
