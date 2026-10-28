@@ -926,7 +926,7 @@ html body #gate .box {
       <button type="button" class="vip-back" id="csPlayeraBack">← Volver a herramientas Premium VIP</button>
       <div class="vip-crown">👕</div><h2>PLAYERA STUDIO PRO</h2>
       <p>Cuatro modelos · Ocho colores · Frente y espalda · Diseños en PNG</p>
-      <iframe id="csPlayeraVipFrame" title="Editor Playera Studio PRO" style="width:100%;height:82vh;min-height:680px;border:1px solid #b98c47;border-radius:16px;background:#0b1020" allow="clipboard-write"></iframe>
+      <iframe id="csPlayeraVipFrame" title="Editor Playera Studio PRO" style="display:block;width:100%;height:1100px;min-height:680px;overflow:hidden;border:1px solid #b98c47;border-radius:16px;background:#0b1020" scrolling="no" allow="clipboard-write"></iframe>
     </section>
     <section id="vipBgStudio" class="vip-lobby" hidden aria-label="Removedor de Fondo VIP">
       <div style="text-align:left;margin-bottom:22px"><button class="vip-back" type="button" id="vipBgBack">← Volver al estudio VIP</button></div>
@@ -3698,6 +3698,58 @@ $('save').onclick=()=&gt;{if(!photosFor()[color][side]){alert('Primero carga la 
  for(const id of ['vipOpenStudio','vipOpenBackground']){
    const btn=$(id);if(btn)btn.addEventListener('click',()=>{section.hidden=true;});
  }
+})();
+</script>
+
+<!-- Playera Studio PRO: altura automática, sin doble desplazamiento -->
+<style>
+#csPlayeraVipStudio{width:100%;max-width:100%;box-sizing:border-box}
+#csPlayeraVipFrame{display:block;width:100%;max-width:100%;overflow:hidden;box-sizing:border-box}
+@media(max-width:700px){#csPlayeraVipStudio{padding-left:8px!important;padding-right:8px!important}#csPlayeraVipFrame{border-radius:10px!important}}
+</style>
+<script>
+(function(){
+  const frame=document.getElementById('csPlayeraVipFrame');
+  if(!frame)return;
+  let observer=null, resizeObserver=null;
+  function fit(){
+    try{
+      const doc=frame.contentDocument;
+      if(!doc||!doc.body)return;
+      const root=doc.documentElement;
+      // The iframe has no internal scroll: use the rendered document height.
+      const h=Math.max(doc.body.scrollHeight,root.scrollHeight,doc.body.offsetHeight,root.offsetHeight);
+      if(Number.isFinite(h)&&h>200){
+        const next=Math.ceil(h+12);
+        if(Math.abs(frame.offsetHeight-next)>3)frame.style.height=next+'px';
+      }
+    }catch(e){console.warn('No se pudo ajustar la altura del estudio',e);}
+  }
+  frame.addEventListener('load',function(){
+    if(observer)observer.disconnect();
+    if(resizeObserver)resizeObserver.disconnect();
+    try{
+      const doc=frame.contentDocument;
+      doc.documentElement.style.overflow='hidden';
+      doc.body.style.overflow='hidden';
+      doc.body.style.minHeight='0';
+      if(typeof ResizeObserver!=='undefined'){
+        resizeObserver=new ResizeObserver(fit);
+        resizeObserver.observe(doc.body);
+        const main=doc.querySelector('main');if(main)resizeObserver.observe(main);
+      }
+      observer=new MutationObserver(fit);
+      observer.observe(doc.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','hidden']});
+      doc.addEventListener('change',fit);
+      doc.addEventListener('click',()=>requestAnimationFrame(fit));
+      if(doc.fonts&&doc.fonts.ready)doc.fonts.ready.then(fit);
+      Array.from(doc.images).forEach(img=>img.addEventListener('load',fit));
+    }catch(e){console.warn('No se pudo configurar el estudio',e);}
+    fit();requestAnimationFrame(fit);
+  });
+  window.addEventListener('resize',fit);
+  const open=document.getElementById('csPlayeraOpen');
+  if(open)open.addEventListener('click',()=>requestAnimationFrame(fit));
 })();
 </script>
 </body>
