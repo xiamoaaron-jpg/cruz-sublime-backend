@@ -907,12 +907,32 @@ html body #gate .box {
           <div class="vip-balance-line" id="vipBgBalance">Saldo del removedor: consultando…</div>
           <button type="button" id="vipOpenBackground">✨ Abrir Removedor VIP</button>
         </article>
-        <article class="vip-tool-card vip-future">
-          <span class="vip-tool-icon" aria-hidden="true">✨</span>
-          <h3>Próximas herramientas VIP</h3>
-          <p>Este espacio está reservado para nuevas funciones exclusivas que incorporaremos más adelante.</p>
-          <button type="button" disabled>🔒 Próximamente</button>
+        <article class="vip-tool-card">
+          <span class="vip-tool-icon" aria-hidden="true">🖼️</span>
+          <h3>Restaurador AI PRO</h3>
+          <p>Recupera fotografías antiguas con IA. 20 créditos exclusivos cada 30 días: estándar 1, avanzada 2.</p>
+          <div class="vip-balance-line" id="csRestoreLobbyBalance">Saldo de restauración: consultar al abrir</div>
+          <button type="button" id="csRestoreOpen">✨ Abrir Restaurador AI PRO</button>
         </article>
+      </div>
+    </section>
+    <section id="csRestoreStudio" class="vip-lobby" hidden aria-label="Restaurador AI PRO">
+      <button type="button" class="vip-back" id="csRestoreBack">← Volver al estudio VIP</button>
+      <div class="vip-crown">🖼️</div><h2>RESTAURADOR AI PRO</h2>
+      <p>Fotografías antiguas y recuerdos · 20 créditos exclusivos por periodo de 30 días.</p>
+      <div class="cs-restore-grid">
+        <div class="cs-restore-editor">
+          <h3>✨ Preparar restauración</h3>
+          <p id="csRestoreBalance" role="status">Consulta tu saldo al abrir esta herramienta.</p>
+          <label for="csRestoreFile">Fotografía original (JPG, PNG o WEBP, hasta 10 MB)</label>
+          <input id="csRestoreFile" type="file" accept="image/jpeg,image/png,image/webp" />
+          <label for="csRestoreMode">Tipo de restauración</label>
+          <select id="csRestoreMode"><option value="standard">Estándar · 1 crédito</option><option value="advanced">Avanzada + colorización opcional · 2 créditos</option></select>
+          <label class="cs-restore-check"><input id="csRestoreColor" type="checkbox"/> Solicitar colorización (solo avanzada)</label>
+          <button id="csRestoreRun" type="button" disabled>🔒 Procesamiento pendiente de conectar con IA</button>
+          <p class="cs-restore-notice" id="csRestoreNotice">La carga y vista previa funcionan sin gastar créditos. La restauración con IA se habilitará después de configurar y probar el proveedor seguro en el servidor.</p>
+        </div>
+        <div class="cs-restore-preview"><h3>Fotografía original</h3><img id="csRestoreImage" alt="Vista previa de la fotografía seleccionada" hidden/><p id="csRestorePlaceholder">Selecciona una fotografía para verla aquí.</p><p>El comparador antes/después estará disponible cuando se conecte la generación real.</p></div>
       </div>
     </section>
     <section id="vipBgStudio" class="vip-lobby" hidden aria-label="Removedor de Fondo VIP">
@@ -3435,7 +3455,8 @@ function costs(){let n=id=>Math.max(0,+$(id).value||0),cost=n('mugBlank')+n('mug
 function quality(){if(!pic){$('mugQuality').textContent='Sube una imagen para revisar su resolución.';return}let [w,h]=cm(),s=+$('mugScale').value/100;let fit=Math.min(w/pic.width,h/pic.height)*s;let usedW=pic.width*fit,usedH=pic.height*fit;let dpi=Math.round(Math.min(pic.width/(usedW/2.54),pic.height/(usedH/2.54)));$('mugQuality').textContent=`Imagen: ${pic.width} × ${pic.height} px · Resolución estimada: ${dpi} PPP (${dpi>=300?'buena':dpi>=150?'moderada':'baja'}). Estimación según la escala del diseño.`}
 function exportCanvas(){let [w,h]=cm(),c=artwork(Math.round(w/2.54*300),Math.round(h/2.54*300));if($('mugMirror').checked){let flipped=document.createElement('canvas');flipped.width=c.width;flipped.height=c.height;let x=flipped.getContext('2d');x.translate(c.width,0);x.scale(-1,1);x.drawImage(c,0,0);c=flipped}return c}
 function download(){let c=exportCanvas();c.toBlob(b=>{if(!b){$('mugStatus').textContent='No se pudo generar el PNG.';return}let url=URL.createObjectURL(b),a=document.createElement('a');a.href=url;a.download='Cruz_Sublime_Taza_300DPI.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);$('mugStatus').textContent=`PNG generado: ${c.width} × ${c.height} píxeles · 300 DPI (dimensiones nominales).`},'image/png')}
-function print(){let c=exportCanvas(),[w,h]=cm(),url=c.toDataURL('image/png'),win=window.open('','_blank');if(!win){$('mugStatus').textContent='Permite ventanas emergentes para imprimir o guardar como PDF.';return}win.document.write(`<html><head><title>Cruz Sublime · Taza</title><style>@page{size:${w}cm ${h}cm;margin:0}body{margin:0}img{display:block;width:${w}cm;height:${h}cm}</style></head><body><img src="${url}" onload="setTimeout(()=>window.print(),400)"></body></html>`);win.document.close()}
+function print(){let c=exportCanvas(),[w,h]=cm(),url=c.toDataURL('image/png'),win=window.open('','_blank');if(!win){$('mugStatus').textContent='Permite ventanas emergentes para imprimir o guardar como PDF.';return}win.document.write(`<html><head><title>Cruz Sublime · Taza</title><style>@page{size:${w}cm ${h}cm;margin:0}body{margin:0}img{display:block;width:${w}cm;height:${h}cm}</style></head><body><img src="${url}" onload="setTimeout(()=>window.print(),400)">
+</body></html>`);win.document.close()}
 $('mugScene').addEventListener('change',()=>{mugSceneImage=new Image();mugSceneImage.onload=draw;mugSceneImage.src=mugScenes[$('mugScene').value];draw()});
 $('mugZoom').addEventListener('input',()=>{p.style.transform='scale('+($('mugZoom').value/100)+')';p.style.transformOrigin='center center'});
 $('mugMockupSave').addEventListener('click',e=>{if(window.csMug3DUpdate)return;const a=document.createElement('a');a.download='Cruz_Sublime_Mug_Mockup.png';a.href=p.toDataURL('image/png');a.click()});
@@ -3568,6 +3589,46 @@ $('mugFile').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;
  }catch(err){console.warn('Visor 3D no disponible; se conserva el visor 2D',err)}
 })();
 
+})();
+</script>
+<style>
+#panel-premium #csRestoreStudio[hidden]{display:none!important}
+#csRestoreStudio .cs-restore-grid{display:grid;grid-template-columns:minmax(240px,320px) minmax(0,1fr);gap:18px;text-align:left;margin-top:22px}
+#csRestoreStudio .cs-restore-editor,#csRestoreStudio .cs-restore-preview{background:#141422;border:1px solid #b38d4b;border-radius:16px;padding:20px;min-width:0}
+#csRestoreStudio h3{color:#ffe2a0;margin:0 0 15px}
+#csRestoreStudio label{display:block;margin:15px 0 8px;color:#e4d5b5;font-weight:700;font-size:13px}
+#csRestoreStudio input[type=file],#csRestoreStudio select{max-width:100%;width:100%;padding:10px;border-radius:8px;background:#0d1022;color:#fff;border:1px solid #877046}
+#csRestoreStudio .cs-restore-check{display:flex;align-items:center;gap:8px}
+#csRestoreStudio button[disabled]{background:#504253;color:#ddd;opacity:.75;cursor:not-allowed;padding:13px;border-radius:10px;width:100%}
+#csRestoreStudio .cs-restore-notice{font-size:12px;color:#c8bfd2;line-height:1.6}
+#csRestoreStudio .cs-restore-preview img{display:block;max-width:100%;max-height:520px;margin:0 auto;object-fit:contain}
+#csRestoreStudio .cs-restore-preview img[hidden]{display:none}
+@media(max-width:750px){#csRestoreStudio .cs-restore-grid{grid-template-columns:1fr}}
+</style>
+<script>
+(function(){
+ const byId=id=>document.getElementById(id),open=byId('csRestoreOpen'),back=byId('csRestoreBack'),studio=byId('csRestoreStudio'),lobby=byId('vipLobby');
+ if(!open||!back||!studio||!lobby)return;
+ let previewUrl=null;
+ open.addEventListener('click',async()=>{
+   const inner=byId('vipStudioInner'),bg=byId('vipBgStudio');if(inner)inner.hidden=true;if(bg)bg.hidden=true;lobby.hidden=true;studio.hidden=false;studio.style.display='block';
+   const balance=byId('csRestoreBalance');balance.textContent='Consultando saldo seguro…';
+   const token=sessionStorage.getItem('cruz_member_token');
+   if(!token){balance.textContent='Para consultar el saldo, inicia sesión con tu código VIP. La vista previa es gratuita.';return;}
+   try{const r=await fetch('https://cruz-sublime-api.onrender.com/api/vip/restoration/credits',{headers:{Authorization:'Bearer '+token}});
+     const d=await r.json();if(!r.ok)throw Error(d.error||'No disponible');
+     balance.textContent='Créditos de restauración: '+d.left+' de '+d.max+' disponibles';byId('csRestoreLobbyBalance').textContent=balance.textContent;
+   }catch(e){balance.textContent='Saldo no disponible todavía: '+e.message;}
+ });
+ back.addEventListener('click',()=>{studio.hidden=true;studio.style.display='none';lobby.hidden=false});
+ byId('csRestoreFile').addEventListener('change',e=>{
+  if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null;}
+  const f=e.target.files&&e.target.files[0],img=byId('csRestoreImage'),msg=byId('csRestoreNotice');
+  img.hidden=true;if(!f)return;
+  if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>10*1024*1024){msg.textContent='Selecciona JPG, PNG o WEBP de hasta 10 MB.';e.target.value='';return;}
+  previewUrl=URL.createObjectURL(f);img.src=previewUrl;img.hidden=false;byId('csRestorePlaceholder').hidden=true;
+  msg.textContent='Fotografía lista para restaurar. No se han descontado créditos.';
+ });
 })();
 </script>
 </body>
