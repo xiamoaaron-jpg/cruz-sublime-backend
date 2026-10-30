@@ -661,6 +661,7 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 import uuid
 
 VIP_PLAN = "premium_vip"
+VIP_UPSCALE_CREDIT_LIMIT = 40  # Saldo compartido del estudio VIP (Clarity / Topaz)
 GPU_WORKER_URL = os.environ.get("GPU_WORKER_URL", "").rstrip("/")
 GPU_WORKER_KEY = os.environ.get("GPU_WORKER_KEY", "")
 SESSION_SECRET = os.environ.get("SESSION_SECRET", "")
@@ -812,7 +813,7 @@ def _vip_status(member):
         with conn.cursor() as c:
             c.execute("SELECT COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
             used = c.fetchone()[0]
-        return {"max":50,"used":used,"left":max(0,50-used)}
+        return {"max":VIP_UPSCALE_CREDIT_LIMIT,"used":used,"left":max(0,VIP_UPSCALE_CREDIT_LIMIT-used)}
     finally: conn.close()
 
 @app.route("/api/vip/credits", methods=["GET"])
@@ -834,7 +835,7 @@ def _reserve(member, job_id):
                 conn.commit()
                 return ("already_" + prior[0], prior[1]), None
             c.execute("SELECT COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
-            if c.fetchone()[0] >= 50:
+            if c.fetchone()[0] >= VIP_UPSCALE_CREDIT_LIMIT:
                 conn.commit()
                 return None, "Créditos agotados"
             c.execute("INSERT INTO vip_credit_jobs(job_id,code,period,status) VALUES (%s,%s,%s,'reserved')", (job_id,member["code"],_vip_period(member)))
@@ -895,7 +896,14 @@ def _process_trial(kind):
             _job_update(job_id, "failed")
             return jsonify(error="Falta REPLICATE_UPSCALE_VERSION; crédito liberado"), 503
         inputs = {"image": image_uri}
-        if kind == "upscale": inputs["scale_factor"] = 3
+        if kind == "upscale":
+            # Ajustes aprobados en la prueba visual de Clarity para diseños y letras.
+            inputs.update({
+                "scale_factor": 3,
+                "creativity": 0.35,
+                "resemblance": 0.6,
+                "num_inference_steps": 18,
+            })
         if kind == "halftone": inputs["halftone_only"] = True
         r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json={"version":version,"input":inputs},timeout=30)
         if r.status_code not in (200, 201):
@@ -931,7 +939,7 @@ def _process_trial(kind):
                 return jsonify(error="Replicate no completó el trabajo; crédito liberado"),502
             time.sleep(2)
         _job_update(job_id,"uncertain")
-        return jsonify(status="pending", job_id=job_id, message="Trabajo en proceso; consulta el estado sin volver a cobrar"), 202
+        return jsonify(error="Trabajo pendiente; crédito reservado hasta confirmar resultado"),202
     except Exception:
         _job_update(job_id,"uncertain")
         return jsonify(error="No se pudo confirmar el resultado; crédito reservado para conciliación"),502
@@ -986,16 +994,6 @@ def vip_job_status(job_id):
         return jsonify(status="processing", credits=_vip_status(member)), 202
     except requests.RequestException:
         return jsonify(status="uncertain", message="Replicate no respondió; vuelve a consultar"), 202
-
-# Cruz Sublime VIP: compatible routes used by the published VIP studio.
-# They share the existing authorization, reservation and idempotency logic.
-@app.route("/api/vip/upscale", methods=["POST"])
-def vip_upscale_compatible():
-    return _process_trial("upscale")
-
-@app.route("/api/vip/job/<job_id>", methods=["GET"])
-def vip_job_compatible(job_id):
-    return vip_job_status(job_id)
 
 app.view_functions["upscale"] = lambda: _process_trial("upscale")
 app.view_functions["halftone"] = lambda: _process_trial("halftone")
