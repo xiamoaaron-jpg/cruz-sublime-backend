@@ -939,7 +939,7 @@ def _process_trial(kind):
                 return jsonify(error="Replicate no completó el trabajo; crédito liberado"),502
             time.sleep(2)
         _job_update(job_id,"uncertain")
-        return jsonify(error="Trabajo pendiente; crédito reservado hasta confirmar resultado"),202
+        return jsonify(status="pending", message="Trabajo pendiente; consulta el estado con el mismo job_id", job_id=job_id),202
     except Exception:
         _job_update(job_id,"uncertain")
         return jsonify(error="No se pudo confirmar el resultado; crédito reservado para conciliación"),502
