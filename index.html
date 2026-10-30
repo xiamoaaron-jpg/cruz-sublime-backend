@@ -3668,10 +3668,10 @@ body > *:not(#cs-galaxy-portal) {
  async function waitForJob(jobId,t){
    for(let i=0;i<60;i++){
      await sleep(3000);
-     const r=await fetch(api+'/api/vip/job/'+encodeURIComponent(jobId),{headers:{Authorization:'Bearer '+t}});
+     const r=await fetch(api+'/api/vip/jobs/'+encodeURIComponent(jobId),{headers:{Authorization:'Bearer '+t}});
      const d=await r.json();
      if(d.status==='completed'&&d.image)return d.image;
-     if(d.status==='failed')throw new Error(d.error||'La mejora no se completó');
+     if(d.status==='failed'){sessionStorage.removeItem('cs_vip_pending_job');throw new Error(d.error||'La mejora no se completó');}
      if(!r.ok&&r.status!==202)throw new Error(d.error||'Error al consultar el trabajo');
      setMessage('Replicate está mejorando tu imagen… '+Math.round((i+1)*3)+' segundos.');
    }
@@ -3729,12 +3729,16 @@ body > *:not(#cs-galaxy-portal) {
    setMessage('Preparando imagen para Replicate…');
    try{
      const image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('No se pudo leer la imagen'));reader.readAsDataURL(file);});
+     const pendingJob=sessionStorage.getItem('cs_vip_pending_job');
+     if(pendingJob){setMessage('Consultando la mejora anterior para evitar un doble cobro…');const previous=await waitForJob(pendingJob,t);showImage('vipResult',previous);$('vipDownload').href=previous;$('vipDownload').style.display='inline-block';sessionStorage.removeItem('cs_vip_pending_job');setMessage('¡Imagen recuperada!');return;}
      const jobId=crypto.randomUUID();
+     sessionStorage.setItem('cs_vip_pending_job',jobId);
      const r=await fetch(api+'/api/vip/upscale',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({image,job_id:jobId,mode:$('vipMode').value})});
      const d=await r.json();
      if(!r.ok&&r.status!==202)throw new Error(d.error||'No se pudo procesar la imagen');
-     const result=d.image||(d.status==='pending'?await waitForJob(jobId,t):null);
+     const result=d.image||(r.status===202||['pending','processing','uncertain','reserved'].includes(d.status)?await waitForJob(jobId,t):null);
      if(!result)throw new Error('Replicate no devolvió una imagen');
+     sessionStorage.removeItem('cs_vip_pending_job');
      showImage('vipResult',result);$('vipDownload').href=result;$('vipDownload').style.display='inline-block';
      setMessage('¡Imagen mejorada! Ya puedes descargarla.');
    }catch(e){setMessage(e.message||'No se pudo completar la mejora.');}
