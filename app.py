@@ -944,6 +944,15 @@ def _process_trial(kind):
         _job_update(job_id,"uncertain")
         return jsonify(error="No se pudo confirmar el resultado; crédito reservado para conciliación"),502
 
+# Rutas que conectan el estudio Premium VIP con el procesador existente.
+@app.route("/api/vip/upscale", methods=["POST"])
+def vip_upscale():
+    return _process_trial("upscale")
+
+@app.route("/api/vip/halftone", methods=["POST"])
+def vip_halftone():
+    return _process_trial("halftone")
+
 @app.route("/api/vip/jobs/<job_id>", methods=["GET"])
 def vip_job_status(job_id):
     """Reconciles a pending Replicate job without charging a second credit."""
