@@ -931,7 +931,7 @@ def _process_trial(kind):
                 return jsonify(error="Replicate no completó el trabajo; crédito liberado"),502
             time.sleep(2)
         _job_update(job_id,"uncertain")
-        return jsonify(error="Trabajo pendiente; crédito reservado hasta confirmar resultado"),202
+        return jsonify(status="pending", job_id=job_id, message="Trabajo en proceso; consulta el estado sin volver a cobrar"), 202
     except Exception:
         _job_update(job_id,"uncertain")
         return jsonify(error="No se pudo confirmar el resultado; crédito reservado para conciliación"),502
@@ -986,6 +986,16 @@ def vip_job_status(job_id):
         return jsonify(status="processing", credits=_vip_status(member)), 202
     except requests.RequestException:
         return jsonify(status="uncertain", message="Replicate no respondió; vuelve a consultar"), 202
+
+# Cruz Sublime VIP: compatible routes used by the published VIP studio.
+# They share the existing authorization, reservation and idempotency logic.
+@app.route("/api/vip/upscale", methods=["POST"])
+def vip_upscale_compatible():
+    return _process_trial("upscale")
+
+@app.route("/api/vip/job/<job_id>", methods=["GET"])
+def vip_job_compatible(job_id):
+    return vip_job_status(job_id)
 
 app.view_functions["upscale"] = lambda: _process_trial("upscale")
 app.view_functions["halftone"] = lambda: _process_trial("halftone")
