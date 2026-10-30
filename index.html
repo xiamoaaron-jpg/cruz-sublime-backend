@@ -724,7 +724,7 @@ function download(name,content,type){const blob=new Blob([content],{type}),url=U
 $('csoExport').addEventListener('click',()=>download('Cruz_Sublime_Pedidos_'+today()+'.json',JSON.stringify({version:1,exported:new Date().toISOString(),orders},null,2),'application/json'));
 $('csoCsv').addEventListener('click',()=>{const cols=['folio','client','phone','product','qty','due','status','total','paid','notes','created'];const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"';download('Cruz_Sublime_Pedidos_'+today()+'.csv','\ufeff'+[cols.join(','),...orders.map(o=>cols.map(k=>q(o[k])).join(','))].join('\r\n'),'text/csv;charset=utf-8')});
 $('csoImport').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>5e6)throw Error('El archivo supera 5 MB');const parsed=JSON.parse(await file.text());if(parsed.version!==1||!Array.isArray(parsed.orders)||parsed.orders.length>5000||parsed.orders.some(o=>!o||typeof o.id!=='string'||typeof o.client!=='string'||typeof o.product!=='string'||!Number.isFinite(o.total)||!Number.isFinite(o.paid)))throw Error('Formato de respaldo no válido');if(!confirm('¿Reemplazar TODOS los pedidos actuales con este respaldo?'))return;orders=parsed.orders.map(o=>({...o,client:String(o.client).slice(0,100),phone:String(o.phone||'').slice(0,30),product:String(o.product).slice(0,120),notes:String(o.notes||'').slice(0,1500),qty:Math.max(1,Math.floor(Number(o.qty)||1)),total:Math.max(0,Number(o.total)),paid:Math.max(0,Number(o.paid))}));if(save()){reset();$('csoBackupMsg').textContent='Respaldo importado correctamente.'}}catch(err){$('csoBackupMsg').textContent='No se pudo importar: '+err.message}finally{e.target.value=''}});
-$('csoReceipt').addEventListener('click',()=>{const d=getForm();if(!d.client||!d.product){$('csoMessage').textContent='Completa el cliente y producto antes de imprimir.';return}const folio=editing?(orders.find(o=>o.id===editing)||{}).folio:'BORRADOR',win=window.open('','_blank');if(!win){$('csoMessage').textContent='Permite ventanas emergentes para imprimir el comprobante.';return}win.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Comprobante '+esc(folio)+'</title><style>body{font:15px Arial,sans-serif;max-width:720px;margin:35px auto;color:#17213a}h1{font-size:24px}table{width:100%;border-collapse:collapse}td{padding:10px;border-bottom:1px solid #ddd}td:last-child{text-align:right}footer{margin-top:40px;color:#555;font-size:12px}</style></head><body><h1>👑 Cruz Sublime · Comprobante de pedido</h1><p>Folio: '+esc(folio)+'</p><table><tr><td>Cliente</td><td>'+esc(d.client)+'</td></tr><tr><td>Teléfono</td><td>'+esc(d.phone)+'</td></tr><tr><td>Producto</td><td>'+esc(d.product)+'</td></tr><tr><td>Cantidad</td><td>'+d.qty+'</td></tr><tr><td>Entrega</td><td>'+esc(d.due)+'</td></tr><tr><td>Estado</td><td>'+esc(d.status)+'</td></tr><tr><td>Total</td><td>'+fmt(d.total)+'</td></tr><tr><td>Anticipo recibido</td><td>'+fmt(d.paid)+'</td></tr><tr><td><b>Saldo</b></td><td><b>'+fmt(Math.max(0,d.total-d.paid))+'</b></td></tr></table><h3>Detalles</h3><p style="white-space:pre-wrap">'+esc(d.notes)+'</p><footer>Comprobante informativo de pedido; no es factura fiscal.</footer></body></html>');win.document.close();win.focus();setTimeout(()=>win.print(),300)});
+$('csoReceipt').addEventListener('click',()=>{const d=getForm();if(!d.client||!d.product){$('csoMessage').textContent='Completa el cliente y producto antes de imprimir.';return}const folio=editing?(orders.find(o=>o.id===editing)||{}).folio:'BORRADOR',win=window.open('','_blank');if(!win){$('csoMessage').textContent='Permite ventanas emergentes para imprimir el comprobante.';return}win.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Comprobante '+esc(folio)+'</title><style>body{font:15px Arial,sans-serif;max-width:720px;margin:35px auto;color:#17213a}h1{font-size:24px}table{width:100%;border-collapse:collapse}td{padding:10px;border-bottom:1px solid #ddd}td:last-child{text-align:right}footer{margin-top:40px;color:#555;font-size:12px}</style>892<body><h1>👑 Cruz Sublime · Comprobante de pedido</h1><p>Folio: '+esc(folio)+'</p><table><tr><td>Cliente</td><td>'+esc(d.client)+'</td></tr><tr><td>Teléfono</td><td>'+esc(d.phone)+'</td></tr><tr><td>Producto</td><td>'+esc(d.product)+'</td></tr><tr><td>Cantidad</td><td>'+d.qty+'</td></tr><tr><td>Entrega</td><td>'+esc(d.due)+'</td></tr><tr><td>Estado</td><td>'+esc(d.status)+'</td></tr><tr><td>Total</td><td>'+fmt(d.total)+'</td></tr><tr><td>Anticipo recibido</td><td>'+fmt(d.paid)+'</td></tr><tr><td><b>Saldo</b></td><td><b>'+fmt(Math.max(0,d.total-d.paid))+'</b></td></tr></table><h3>Detalles</h3><p style="white-space:pre-wrap">'+esc(d.notes)+'</p><footer>Comprobante informativo de pedido; no es factura fiscal.</footer></body></html>');win.document.close();win.focus();setTimeout(()=>win.print(),300)});
 open.addEventListener('click',()=>{document.querySelectorAll('#panel-premium > .vip-lobby').forEach(el=>el.hidden=true);studio.hidden=false;studio.scrollIntoView({block:'start',behavior:'smooth'});render()});$('csoBack').addEventListener('click',()=>{studio.hidden=true;lobby.hidden=false;lobby.scrollIntoView({block:'start',behavior:'smooth'})});reset();
 });
 </script>
@@ -888,6 +888,73 @@ $('dtfpMode').addEventListener('change',syncMode);setupCanvas();syncMode();rende
 #csDtfProStudio .dtfp-mode-hint{grid-column:1/-1;border:1px solid #cba65b66;background:#d7ad4e12;color:#f0dca6;padding:11px 13px;border-radius:12px;font-size:12px;line-height:1.5}
 #csDtfProStudio .dtfp-mode-hint strong{color:#ffe5a7}
 #csDtfProStudio .dtfp-mode-hint small{display:block;color:#c7d4e7;margin-top:4px}
+
+<style id="cs-canva-boton-v2">
+/* SOLO diseño de Canva + CapCut */
+
+html body button#tabCanva.tab {
+  position: relative !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 3px !important;
+  min-height: 57px !important;
+  padding: 7px 19px !important;
+  margin-top: 8px !important;
+  overflow: visible !important;
+
+  background: #050508 !important;
+  border: 2px solid #9f66ff !important;
+  border-radius: 13px !important;
+  color: #f8d58b !important;
+
+  box-shadow:
+    0 0 8px #00efff,
+    0 0 18px #a84dff,
+    inset 0 0 12px #9b3cff44 !important;
+}
+
+html body #tabCanva .cs-canva-label {
+  display: block !important;
+  color: #ffe39e !important;
+  font: 800 9px 'Segoe UI', sans-serif !important;
+  letter-spacing: 1.2px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+}
+
+html body #tabCanva .cs-canva-main {
+  font: 700 15px 'Playfair Display', Georgia, serif !important;
+  color: #ffdf93 !important;
+  white-space: nowrap !important;
+  text-shadow: 0 0 9px #f2b85788 !important;
+}
+
+html body #tabCanva .cs-canva-arrow {
+  color: #62f6ff !important;
+  font: 900 16px 'Segoe UI', sans-serif !important;
+  text-shadow: 0 0 10px #00eaff !important;
+}
+
+html body #tabCanva .cs-lock {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  font-size: 9px !important;
+  margin: 0 !important;
+}
+
+html body #tabCanva:hover {
+  border-color: #ffdb78 !important;
+  box-shadow:
+    0 0 14px #00efff,
+    0 0 26px #d04dff,
+    0 0 12px #ffd66b99 !important;
+  transform: translateY(-2px) !important;
+}
+</style>
+
 </style></head>
 <body>
 <div id="gate" style="display:none">
@@ -929,7 +996,16 @@ $('dtfpMode').addEventListener('change',syncMode);setupCanvas();syncMode();rende
     <button class="tab" data-tab="quote">Cotizador <span class="cs-lock" aria-hidden="true">🔒</span></button>
     
     <button class="tab" data-tab="sep">Separar Colores <span class="cs-lock" aria-hidden="true">🔒</span></button>
-    <button class="tab" data-tab="canva" id="tabCanva">Canva + CapCut <span class="cs-lock" aria-hidden="true">🔒</span></button>
+    
+<button class="tab" data-tab="canva" id="tabCanva">
+  <span class="cs-canva-label">💎 EXCLUSIVO ✦</span>
+  <span class="cs-canva-main">
+    ✎ Canva + CapCut
+    <span class="cs-canva-arrow">➜</span>
+  </span>
+  <span class="cs-lock" aria-hidden="true">🔒</span>
+</button>
+
     <button class="tab" data-tab="mug" title="Incluido en todos los paquetes, sin créditos">☕ Mug Studio PRO <span class="cs-lock" aria-hidden="true">🔒</span></button>
     <button class="tab" type="button" id="csPacksTab" aria-controls="panel-packs">📦 Packs</button>
     <button class="tab active" data-tab="plans">Membresía</button>
@@ -1449,7 +1525,7 @@ $('cpDownload').addEventListener('click',async()=>{
       <div class="vip-studio-head"><button class="vip-back" id="vipBackToLobby" type="button">← Volver al estudio VIP</button><small>👑 Herramienta exclusiva Premium VIP</small></div>
     <div class="card cs-premium-card">
       <h2>👑 Mejorador IA Premium VIP</h2>
-      <p style="color:#b9c5df;margin-bottom:15px">Mejora de imagen con Replicate · 50 créditos por membresía.</p>
+      <p style="color:#b9c5df;margin-bottom:15px">Mejora de imagen con Replicate · 40 créditos por membresía.</p>
       <div class="cs-vip-studio">
         <section class="cs-vip-tools" aria-label="Herramientas Premium">
           <h3>⚙️ Herramientas</h3>
@@ -1470,6 +1546,26 @@ $('cpDownload').addEventListener('click',async()=>{
           </div>
           <button class="btn big" id="vipImprove" type="button">✨ Mejorar imagen con IA</button>
           <p id="vipMessage" class="status" aria-live="polite"></p>
+          
+<div id="csVipTimer" class="cs-vip-timer" hidden>
+  <div class="cs-vip-timer-title">
+    👑 CRUZ SUBLIME · PREMIUM VIP
+  </div>
+
+  <div class="cs-vip-clock">
+    <div class="cs-vip-clock-inner">
+      <strong id="csVipTime">00:00</strong>
+      <span>Tiempo transcurrido</span>
+    </div>
+  </div>
+
+  <div id="csVipTimerMessage" class="cs-vip-timer-message">
+    ✨ Preparando tu imagen...
+  </div>
+
+  <small>La IA está trabajando en tu imagen 💙</small>
+</div>
+
           <a id="vipDownload" class="btn ghost" download="cruz-sublime-premium.png" style="display:none;margin-top:12px;text-align:center">⬇️ Descargar resultado</a>
         </section>
         <section class="cs-vip-output" aria-label="Original y resultado">
@@ -2032,16 +2128,23 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
           <span class="badge">👑 PLAN DESTACADO</span>
           <h3>👑 Premium VIP</h3><div class="cs-plan-kicker">El paquete más completo</div><p class="cs-plan-message">Potencia tus diseños con herramientas premium y créditos independientes de IA.</p>
           <div class="price">$280 <span>MXN / 30 días</span></div>
-          <div class="cs-vip-reason" style="margin:12px 0;padding:12px;border:1px solid #d5a53d;border-radius:12px;background:#b18b2520;text-align:left"><strong style="color:#ffe19a">👑 ¿Por qué te conviene Premium VIP?</strong><p style="font-size:13px;line-height:1.5;margin:6px 0 0">Todo en un solo paquete: 50 créditos para el Mejorador Premium y 50 eliminaciones de fondo VIP adicionales, con saldos independientes. Incluye 1 mes de Canva Pro Premium, 7 días de CapCut Pro de regalo y Playera Studio PRO para crear mockups con fotografías reales de playeras. Diseña, presenta y vende desde Cruz Sublime.</p></div><ul>
+          <div class="cs-vip-reason" style="margin:12px 0;padding:12px;border:1px solid #d5a53d;border-radius:12px;background:#b18b2520;text-align:left"><strong style="color:#ffe19a">👑 ¿Por qué te conviene Premium VIP?</strong><p style="font-size:13px;line-height:1.5;margin:6px 0 0">
+Todo en un solo paquete: 40 créditos mensuales para el Mejorador Premium y 50 eliminaciones de fondo VIP con saldos independientes. Incluye Playera Studio PRO, Calculadora DTF Studio PRO VIP, Gestor de Pedidos Studio PRO y Optimizador de Impresión PRO, sin consumo de créditos. Además, disfruta de 1 mes de Canva Pro Premium y 7 días de CapCut Pro de regalo. Diseña, organiza tus pedidos y prepara tus productos desde Cruz Sublime.
+</p></div><ul>
             <li>🎨 1 mes de Canva Pro Premium</li>
             <li>🎁 7 días de CapCut Pro de regalo</li>
             <li>👕 Playera Studio PRO: niña, niño, mujer y hombre; 8 colores, frente y espalda; sin descontar créditos</li>
             <li>Acceso a todas las herramientas de Cruz Sublime</li>
             <li>Todos los beneficios de las membresías existentes</li>
-            <li>💎 Mejorador Premium: 50 créditos por mes (modos de 1 y 2 créditos)</li><li>✨ Removedor de Fondo VIP: 50 eliminaciones por mes, saldo independiente</li>
+            <li>💎 Mejorador Premium: 40 créditos por mes (modos de 1 y 2 créditos)</li><li>✨ Removedor de Fondo VIP: 50 eliminaciones por mes, saldo independiente</li>
             <li>Removedor VIP: 1 crédito de su propio saldo por eliminación exitosa</li>
             <li>Ambos saldos se renuevan cada 30 días; no acumulables</li>
             <li>Acceso durante 30 días</li>
+            
+<li>📐 Calculadora DTF Studio PRO VIP: costos, ganancias y cotizaciones; sin consumo de créditos</li>
+<li>📋 Gestor de Pedidos Studio PRO: clientes, anticipos y entregas; sin consumo de créditos</li>
+<li>🖨️ Optimizador de Impresión PRO: preparación de imágenes para DTF y sublimación; sin consumo de créditos</li>
+
           </ul>
           <a class="btn big" href="https://buy.stripe.com/00wfZj0JY3QL5rr57DaEE03"
              target="_blank" rel="noopener noreferrer"
@@ -3458,6 +3561,94 @@ body > *:not(#cs-galaxy-portal) {
 }
 </style>
 
+<style>
+/* TEMPORIZADOR PREMIUM VIP - CRUZ SUBLIME */
+
+#csVipTimer[hidden] {
+  display: none !important;
+}
+
+#csVipTimer {
+  width: 100%;
+  max-width: 340px;
+  box-sizing: border-box;
+  margin: 14px auto;
+  padding: 18px 14px;
+  text-align: center;
+  color: #ffffff;
+  background: #111a35;
+  border: 1px solid #7b3e9d;
+  border-radius: 16px;
+  box-shadow: 0 0 18px rgba(255, 45, 165, 0.12);
+}
+
+.cs-vip-timer-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #f3c45d;
+  margin-bottom: 14px;
+}
+
+.cs-vip-clock {
+  width: 120px;
+  height: 120px;
+  padding: 6px;
+  box-sizing: border-box;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #00d8ff, #ff2da5, #00d8ff
+  );
+  animation: csVipSpin 3s linear infinite;
+}
+
+.cs-vip-clock-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #111a35;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: csVipSpin 3s linear infinite reverse;
+}
+
+.cs-vip-clock-inner strong {
+  font-size: 27px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-vip-clock-inner span {
+  font-size: 10px;
+  color: #b8c4dc;
+}
+
+.cs-vip-timer-message {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+#csVipTimer small {
+  font-size: 11px;
+  color: #b8c4dc;
+}
+
+@keyframes csVipSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-vip-clock,
+  .cs-vip-clock-inner {
+    animation: none;
+  }
+}
+</style>
+
+
 <canvas id="cs-galaxy-portal" aria-hidden="true"></canvas>
 
 <script>
@@ -3727,6 +3918,7 @@ body > *:not(#cs-galaxy-portal) {
    const t=await ensureToken();if(!t){setMessage('No se pudo validar tu sesión Premium VIP.');return;}
    const btn=$('vipImprove');running=true;btn.disabled=true;vipMode.disabled=true;clearResult();
    setMessage('Preparando imagen para Replicate…');
+   iniciarTemporizadorVIP();
    try{
      const image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('No se pudo leer la imagen'));reader.readAsDataURL(file);});
      const pendingJob=sessionStorage.getItem('cs_vip_pending_job');
@@ -3742,13 +3934,78 @@ body > *:not(#cs-galaxy-portal) {
      showImage('vipResult',result);$('vipDownload').href=result;$('vipDownload').style.display='inline-block';
      setMessage('¡Imagen mejorada! Ya puedes descargarla.');
    }catch(e){setMessage(e.message||'No se pudo completar la mejora.');}
-   finally{running=false;btn.disabled=false;vipMode.disabled=false;balance();}
+   
+finally{
+  detenerTemporizadorVIP();
+  running=false;
+  btn.disabled=false;
+  vipMode.disabled=false;
+  balance();
+}
  });
  document.addEventListener('DOMContentLoaded',balance);
  document.addEventListener('click',e=>{if(e.target.closest('[data-tab="premium"]'))balance();});
  window.addEventListener('focus',balance);
 })();
 </script>
+
+<script>
+/* RELOJ PREMIUM VIP - CRUZ SUBLIME */
+
+let csVipTimerInterval = null;
+let csVipTimerStart = 0;
+
+function iniciarTemporizadorVIP() {
+  detenerTemporizadorVIP();
+
+  const panel = document.getElementById('csVipTimer');
+  if (!panel) return;
+
+  panel.hidden = false;
+  csVipTimerStart = Date.now();
+
+  function actualizarTemporizadorVIP() {
+    const segundos = Math.floor(
+      (Date.now() - csVipTimerStart) / 1000
+    );
+
+    const minutos = String(Math.floor(segundos / 60)).padStart(2, '0');
+    const resto = String(segundos % 60).padStart(2, '0');
+
+    document.getElementById('csVipTime').textContent =
+      `${minutos}:${resto}`;
+
+    let mensaje = '✨ Preparando tu imagen...';
+
+    if (segundos >= 5)
+      mensaje = '📤 Enviando imagen a Replicate...';
+    if (segundos >= 15)
+      mensaje = '✨ La IA está mejorando los detalles...';
+    if (segundos >= 30)
+      mensaje = '💎 Refinando colores y texturas...';
+    if (segundos >= 60)
+      mensaje = '👑 Seguimos trabajando en tu imagen Premium...';
+    if (segundos >= 120)
+      mensaje = '💙 La mejora continúa. Gracias por esperar...';
+
+    document.getElementById('csVipTimerMessage').textContent = mensaje;
+  }
+
+  actualizarTemporizadorVIP();
+  csVipTimerInterval = setInterval(actualizarTemporizadorVIP, 1000);
+}
+
+function detenerTemporizadorVIP() {
+  if (csVipTimerInterval !== null) {
+    clearInterval(csVipTimerInterval);
+    csVipTimerInterval = null;
+  }
+
+  const panel = document.getElementById('csVipTimer');
+  if (panel) panel.hidden = true;
+}
+</script>
+
 <script>
 /* Navegación interna del estudio VIP: no toca autenticación, créditos ni procesamiento */
 (function(){
