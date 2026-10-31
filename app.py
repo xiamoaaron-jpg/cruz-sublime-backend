@@ -798,6 +798,7 @@ def _init_vip():
                 prediction_id TEXT
             )""")
             c.execute("ALTER TABLE vip_credit_jobs ADD COLUMN IF NOT EXISTS prediction_id TEXT")
+            c.execute("ALTER TABLE vip_credit_jobs ADD COLUMN IF NOT EXISTS credit_cost INTEGER NOT NULL DEFAULT 1")
         conn.commit()
     finally: conn.close()
 _init_vip()
@@ -811,7 +812,7 @@ def _vip_status(member):
     if not conn: return None
     try:
         with conn.cursor() as c:
-            c.execute("SELECT COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
+            c.execute("SELECT COALESCE(SUM(credit_cost),0) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
             used = c.fetchone()[0]
         return {"max":VIP_UPSCALE_CREDIT_LIMIT,"used":used,"left":max(0,VIP_UPSCALE_CREDIT_LIMIT-used)}
     finally: conn.close()
@@ -823,7 +824,7 @@ def vip_credits():
     if member["plan"] != VIP_PLAN: return jsonify(error="Solo Premium VIP"), 403
     return jsonify(_vip_status(member))
 
-def _reserve(member, job_id):
+def _reserve(member, job_id, credit_cost=1):
     conn = get_conn()
     if not conn: return None, "Base de datos no disponible"
     try:
@@ -834,11 +835,11 @@ def _reserve(member, job_id):
             if prior:
                 conn.commit()
                 return ("already_" + prior[0], prior[1]), None
-            c.execute("SELECT COUNT(*) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
-            if c.fetchone()[0] >= VIP_UPSCALE_CREDIT_LIMIT:
+            c.execute("SELECT COALESCE(SUM(credit_cost),0) FROM vip_credit_jobs WHERE code=%s AND period=%s AND status IN ('reserved','completed','uncertain')", (member["code"], _vip_period(member)))
+            if c.fetchone()[0] + credit_cost > VIP_UPSCALE_CREDIT_LIMIT:
                 conn.commit()
                 return None, "Créditos agotados"
-            c.execute("INSERT INTO vip_credit_jobs(job_id,code,period,status) VALUES (%s,%s,%s,'reserved')", (job_id,member["code"],_vip_period(member)))
+            c.execute("INSERT INTO vip_credit_jobs(job_id,code,period,status,credit_cost) VALUES (%s,%s,%s,'reserved',%s)", (job_id,member["code"],_vip_period(member),credit_cost))
         conn.commit()
         return ("reserved", None), None
     except Exception:
@@ -874,10 +875,16 @@ def _process_trial(kind):
             return jsonify(image=output["image"],processor="gpu")
         except Exception:
             return jsonify(error="El servicio GPU no respondió correctamente"), 502
+    # Retratos usan Topaz; Clarity conserva exactamente su configuración previa.
+    mode = data.get("mode", "detalle") if kind == "upscale" else "detalle"
+    if mode not in ("detalle", "retrato"):
+        return jsonify(error="Modo de mejora no válido"), 400
+    is_topaz = kind == "upscale" and mode == "retrato"
+    credit_cost = 2 if is_topaz else 1
     job_id = str(data.get("job_id", ""))
     try: uuid.UUID(job_id)
     except (ValueError,AttributeError): return jsonify(error="Se requiere job_id UUID para evitar doble cobro"), 400
-    reservation, error = _reserve(member, job_id)
+    reservation, error = _reserve(member, job_id, credit_cost)
     if error: return jsonify(error=error), 402 if error == "Créditos agotados" else 503
     state, prior_result = reservation
     if state in ("completed", "already_completed"): return jsonify(image=prior_result, credits=_vip_status(member), processor="replicate")
@@ -891,21 +898,31 @@ def _process_trial(kind):
             return jsonify(error="Replicate no configurado; crédito liberado"), 503
         image_uri = img if img.startswith("data:") else "data:image/png;base64," + img
         headers = {"Authorization":"Bearer " + REPLICATE_TOKEN, "Content-Type":"application/json"}
-        version = os.environ.get("REPLICATE_UPSCALE_VERSION") if kind == "upscale" else os.environ.get("REPLICATE_HALFTONE_VERSION", "aa0216c7968dd050f73f3f3d5eee023c07bc5d265cb06b44c6dd94fb31ce973b")
+        version = ("topazlabs/image-upscale" if is_topaz else os.environ.get("REPLICATE_UPSCALE_VERSION")) if kind == "upscale" else os.environ.get("REPLICATE_HALFTONE_VERSION", "aa0216c7968dd050f73f3f3d5eee023c07bc5d265cb06b44c6dd94fb31ce973b")
         if not version:
             _job_update(job_id, "failed")
             return jsonify(error="Falta REPLICATE_UPSCALE_VERSION; crédito liberado"), 503
         inputs = {"image": image_uri}
-        if kind == "upscale":
+        if is_topaz:
+            inputs.update({
+                "enhance_model": "Low Resolution V2",
+                "upscale_factor": "4x",
+                "output_format": "jpg",
+                "face_enhancement": True,
+                "subject_detection": "Foreground",
+                "face_enhancement_strength": 0.8,
+                "face_enhancement_creativity": 0.5,
+            })
+        elif kind == "upscale":
             # Ajustes aprobados en la prueba visual de Clarity para diseños y letras.
             inputs.update({
                 "scale_factor": 3,
-                "creativity": 0.35,
-                "resemblance": 0.6,
+                "creativity": 0.30,
+                "resemblance": 1.2,
                 "num_inference_steps": 18,
             })
         if kind == "halftone": inputs["halftone_only"] = True
-        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json={"version":version,"input":inputs},timeout=30)
+        r = requests.post(("https://api.replicate.com/v1/models/topazlabs/image-upscale/predictions" if is_topaz else "https://api.replicate.com/v1/predictions"), headers=headers, json=({"input":inputs} if is_topaz else {"version":version,"input":inputs}),timeout=30)
         if r.status_code not in (200, 201):
             _job_update(job_id, "failed")
             return jsonify(error="Replicate rechazó el trabajo; crédito liberado"), 502
