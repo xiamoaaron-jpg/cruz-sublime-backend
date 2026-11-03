@@ -4592,9 +4592,48 @@ $('save').onclick=()=&gt;{if(!photosFor()[color][side]){alert('Primero carga la 
 </script>
 
 <script>
-  // AQUÍ VA TODO EL CÓDIGO
-  // DEL BOTÓN DE PRUEBA GRATIS
-</script>
+document.getElementById("btnPruebaGratis")?.addEventListener("click", async function () {
+  const email = prompt("🎁 Ingresa tu correo electrónico para activar tu prueba gratis de 24 horas:");
 
+  if (email === null) return;
+
+  if (!email.trim()) {
+    alert("Por favor, escribe tu correo electrónico.");
+    return;
+  }
+
+  const boton = this;
+  boton.disabled = true;
+  boton.textContent = "⏳ Registrando prueba...";
+
+  try {
+    const respuesta = await fetch(
+      "https://cruz-sublime-api.onrender.com/api/free-trial/register",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() })
+      }
+    );
+
+    const datos = await respuesta.json();
+
+    if (!respuesta.ok || !datos.success) {
+      alert(datos.message || "No se pudo activar la prueba.");
+      return;
+    }
+
+    alert("🎉 Tu prueba gratuita de 24 horas fue registrada.\n\nTu código es: " + datos.code);
+
+  } catch (error) {
+    alert("No se pudo conectar con el servidor. Intenta nuevamente.");
+    console.error(error);
+
+  } finally {
+    boton.disabled = false;
+    boton.textContent = "🎁 ACTIVAR PRUEBA GRATIS DE 24 HORAS";
+  }
+});
+</script>
 </body>
 </html>
