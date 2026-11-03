@@ -718,13 +718,14 @@ def admin():
     <h3>🎁 Pruebas gratuitas de 24 horas</h3>
     <p class="muted">Códigos generados automáticamente. Se muestran las últimas 500 solicitudes.</p>
     <div class="table-wrap"><table>
-      <tr><th>Correo</th><th>Código</th><th>Registrada (UTC)</th><th>Vence (UTC)</th><th>Estado</th><th>Copiar</th></tr>
+      <tr><th>Correo</th><th>Código</th><th>Registrada (UTC)</th><th>Vence (UTC)</th><th>⏳ Tiempo restante</th><th>Estado</th><th>Copiar</th></tr>
       {% for t in trials %}
       <tr><td>{{ t.email }}</td><td><code>{{ t.code }}</code></td><td>{{ t.created }}</td>
           <td>{{ t.expires }}</td>
+          <td><strong class="cs-admin-trial-timer" data-expiry="{{ t.expires }}" data-active="{{ '1' if t.active else '0' }}">Calculando...</strong></td>
           <td class="{{ 'active' if t.active else 'expired' }}">{{ '🟢 Activa' if t.active else '⛔ Vencida o inactiva' }}</td>
           <td><button type="button" class="small" data-code="{{ t.code }}" onclick="navigator.clipboard.writeText(this.dataset.code).then(() => this.textContent='✓ Copiado').catch(() => window.prompt('Copia el código:', this.dataset.code))">📋 Copiar</button></td></tr>
-      {% else %}<tr><td colspan="6">Todavía no hay pruebas gratuitas registradas.</td></tr>{% endfor %}
+      {% else %}<tr><td colspan="7">Todavía no hay pruebas gratuitas registradas.</td></tr>{% endfor %}
     </table></div>
     <h3>Últimos 50 accesos</h3>
     <form action="/admin/clear-usages" method="post" onsubmit="return confirm('¿Borrar TODOS los registros de uso? Esto eliminará también el historial de primera conexión.')"><input type="hidden" name="csrf" value="{{ csrf }}">
@@ -740,6 +741,26 @@ def admin():
       </form></td></tr>
       {% else %}<tr><td colspan="5">Sin accesos registrados.</td></tr>{% endfor %}
     </table></div>
+    <script>
+    /* Temporizador visual de pruebas, sin cambiar códigos ni membresías. */
+    (function(){
+      function draw(){
+        document.querySelectorAll('.cs-admin-trial-timer').forEach(function(el){
+          if(el.dataset.active!=='1'){el.textContent='⛔ Vencida';return;}
+          var raw=el.dataset.expiry.trim();
+          // Las columnas TIMESTAMP de free_trials guardan UTC.
+          var until=Date.parse(raw.replace(' ','T')+(raw.includes('+')||raw.endsWith('Z')?'':'Z'));
+          if(!Number.isFinite(until)){el.textContent='Fecha no disponible';return;}
+          var left=Math.max(0,Math.floor((until-Date.now())/1000));
+          if(!left){el.textContent='⛔ Vencida';return;}
+          var hh=Math.floor(left/3600),mm=Math.floor(left%3600/60),ss=left%60;
+          el.textContent='⏳ '+[hh,mm,ss].map(function(v){return String(v).padStart(2,'0')}).join(':');
+          el.style.color=left<3600?'#ff9a9a':'#74e9ff';
+        });
+      }
+      draw();setInterval(draw,1000);
+    })();
+    </script>
     </body></html>
     """
     return render_template_string(html, codes=codes, usages=usages, trials=trials, csrf=session["admin_csrf"])
