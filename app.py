@@ -82,17 +82,98 @@ def init_db():
             plan TEXT,
             used_at TEXT
         )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS canva_daily (
+c.execute('''CREATE TABLE IF NOT EXISTS canva_daily (
             day TEXT PRIMARY KEY,
             used INTEGER DEFAULT 0
         )''')
-        conn.commit()
+c.execute('''CREATE TABLE IF NOT EXISTS free_trials (
+            id SERIAL PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            code TEXT UNIQUE NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active'
+        )''')
+conn.commit()
     except Exception as e:
         print("Init error:", e)
     finally:
         conn.close()
 
 init_db()
+
+
+
+@app.route("/api/free-trial/register", methods=["POST"])
+def register_free_trial():
+    import re
+    from datetime import datetime, timedelta, timezone
+
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return jsonify({
+            "success": False,
+            "message": "Escribe un correo electrónico válido."
+        }), 400
+
+    conn = get_conn()
+    if not conn:
+        return jsonify({
+            "success": False,
+            "message": "Servicio no disponible. Intenta más tarde."
+        }), 503
+
+    try:
+        c = conn.cursor()
+
+        # Un correo solamente puede solicitar una prueba.
+        c.execute(
+            "SELECT id FROM free_trials WHERE email = %s",
+            (email,)
+        )
+
+        if c.fetchone():
+            return jsonify({
+                "success": False,
+                "message": "Este correo ya solicitó una prueba gratuita."
+            }), 409
+
+        # La duración se calcula en el servidor.
+        now = datetime.now(timezone.utc)
+        expires = now + timedelta(hours=24)
+
+        # Este código identifica la prueba, no una membresía de pago.
+        trial_code = "TRIAL-" + secrets.token_hex(12).upper()
+
+        c.execute("""
+            INSERT INTO free_trials
+                (email, code, created_at, expires_at, status)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (email, trial_code, now, expires, "active"))
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Tu prueba gratuita de 24 horas fue registrada.",
+            "code": trial_code,
+            "plan": "basico",
+            "expires_at": expires.isoformat()
+        }), 201
+
+    except Exception as e:
+        conn.rollback()
+        print("Free trial registration error:", e)
+        return jsonify({
+            "success": False,
+            "message": "No se pudo registrar la prueba."
+        }), 500
+
+    finally:
+        conn.close()
+
 
 @app.route("/")
 def home():
