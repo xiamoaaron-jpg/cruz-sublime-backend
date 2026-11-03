@@ -2386,7 +2386,18 @@ Todo en un solo paquete: 40 créditos mensuales para el Mejorador Premium y 50 e
     }
   }
   checkStoredAccess();
+// CRUZ SUBLIME | Revisar periódicamente las pruebas gratuitas
+setInterval(async function () {
+    const codigo = localStorage.getItem("cruz_sublime_code") || "";
 
+    if (codigo.trim().toUpperCase().startsWith("TRIAL-")) {
+        if (typeof window.csRevisarPrueba === "function") {
+            await window.csRevisarPrueba();
+        }
+
+        await checkStoredAccess();
+    }
+}, 15000);
 document.addEventListener("DOMContentLoaded", function(){
   var API_URL = "https://cruz-sublime-api.onrender.com/api/verify";
   async function verificarCodigo(code, user) {
@@ -4623,7 +4634,9 @@ document.getElementById("btnPruebaGratis")?.addEventListener("click", async func
       return;
     }
 
-    alert("🎉 Tu prueba gratuita de 24 horas fue registrada.\n\nTu código es: " + datos.code);
+    
+window.csMostrarCodigoPrueba(datos.code, email.trim());
+
 
   } catch (error) {
     alert("No se pudo conectar con el servidor. Intenta nuevamente.");
@@ -4635,5 +4648,476 @@ document.getElementById("btnPruebaGratis")?.addEventListener("click", async func
   }
 });
 </script>
+
+<!-- CRUZ SUBLIME | RELOJ DE PRUEBA GRATUITA -->
+<style>
+  #csTrialClock {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    bottom: auto;
+    left: auto;
+    z-index: 90000;
+    width: 280px;
+    max-width: calc(100vw - 24px);
+    padding: 15px;
+    border-radius: 16px;
+    border: 1px solid #00d4ff;
+    background: linear-gradient(145deg, #0c1c32, #241137);
+    box-shadow: 0 0 25px rgba(0, 212, 255, .35);
+    color: white;
+    text-align: center;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+/* CRUZ SUBLIME | FIJAR RELOJ ARRIBA A LA DERECHA */
+#csTrialClock:not([hidden]) {
+  position: fixed !important;
+  top: 12px !important;
+  right: 12px !important;
+  bottom: auto !important;
+  left: auto !important;
+}
+
+  #csTrialClock[hidden] {
+    display: none !important;
+  }
+
+  #csTrialClock .cs-clock-email {
+    color: #bcefff;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+    margin-bottom: 9px;
+  }
+
+  #csTrialClock .cs-clock-title {
+    color: #e9c778;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  #csTrialClock .cs-clock-time {
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: 800;
+    margin: 9px 0;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 12px rgba(0, 212, 255, .5);
+  }
+
+  #csTrialClock .cs-clock-bar {
+    width: 100%;
+    height: 7px;
+    border-radius: 20px;
+    background: #31304b;
+    overflow: hidden;
+  }
+
+  #csTrialClock .cs-clock-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #00d4ff, #ff2d95);
+    border-radius: 20px;
+  }
+
+  @media (max-width: 650px) {
+    #csTrialClock {
+      top: 8px;
+      right: 8px;
+      width: 215px;
+      padding: 11px;
+    }
+
+    #csTrialClock .cs-clock-time {
+      font-size: 25px;
+    }
+  }
+</style>
+
+<div id="csTrialClock" hidden aria-live="off">
+  <div class="cs-clock-email" id="csTrialEmail"></div>
+  <div class="cs-clock-title">🎁 PRUEBA GRATIS · TIEMPO RESTANTE</div>
+  <div class="cs-clock-time" id="csTrialTime">24:00:00</div>
+  <div class="cs-clock-bar">
+    <div class="cs-clock-fill" id="csTrialFill"></div>
+  </div>
+</div>
+<!-- FIN RELOJ DE PRUEBA GRATUITA -->
+
+<!-- CRUZ SUBLIME | TEMPORIZADOR REAL DE 24 HORAS -->
+<script>
+(function () {
+  "use strict";
+
+  const API = "https://cruz-sublime-api.onrender.com/api/verify";
+  const reloj = document.getElementById("csTrialClock");
+  const correo = document.getElementById("csTrialEmail");
+  const tiempo = document.getElementById("csTrialTime");
+  const barra = document.getElementById("csTrialFill");
+
+  if (!reloj || !correo || !tiempo || !barra) return;
+
+  let vencimiento = 0;
+  let codigoActivo = "";
+  let correoActivo = "";
+  let ultimaRevision = 0;
+
+  function ocultar() {
+    reloj.hidden = true;
+    vencimiento = 0;
+    codigoActivo = "";
+    correoActivo = "";
+  }
+
+  function mostrarTiempo() {
+    if (!vencimiento) return;
+
+    const restante = Math.max(0, vencimiento - Date.now());
+    const segundos = Math.floor(restante / 1000);
+
+    const horas = Math.floor(segundos / 3600);
+    const minutos = Math.floor((segundos % 3600) / 60);
+    const seg = segundos % 60;
+
+    const dos = n => String(n).padStart(2, "0");
+
+    tiempo.textContent =
+      dos(horas) + ":" + dos(minutos) + ":" + dos(seg);
+
+    barra.style.width =
+      Math.min(100, restante / 86400000 * 100) + "%";
+
+    if (restante <= 0) {
+      ocultar();
+    }
+  }
+
+  async function revisarPrueba() {
+    const codigo = (
+      localStorage.getItem("cruz_sublime_code") || ""
+    ).trim().toUpperCase();
+
+    const usuario = (
+      localStorage.getItem("cruz_sublime_user") || ""
+    ).trim();
+
+    if (!codigo.startsWith("TRIAL-") || !usuario) {
+      ocultar();
+      return;
+    }
+
+    const ahora = Date.now();
+
+    if (
+      codigo === codigoActivo &&
+      usuario === correoActivo &&
+      vencimiento > ahora &&
+      ahora - ultimaRevision < 60000
+    ) {
+      return;
+    }
+
+    try {
+      const respuesta = await fetch(API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          code: codigo,
+          user: usuario
+        })
+      });
+
+      if (!respuesta.ok) return;
+
+      const datos = await respuesta.json();
+
+     if (
+    !datos.valid ||
+    datos.trial !== true ||
+    !datos.expires
+) {
+    ocultar();
+
+    if (
+        datos.valid === false &&
+        typeof datos.message === "string" &&
+        /vencid|expirad|finalizad/i.test(datos.message) &&
+        !sessionStorage.getItem("cs_aviso_prueba_vencida")
+    ) {
+        sessionStorage.setItem("cs_aviso_prueba_vencida", "1");
+
+        alert(
+            "⏰ Tu prueba gratuita de 24 horas ha finalizado.\n\n" +
+            "Gracias por probar Cruz Sublime. 💙👑\n\n" +
+            "Para continuar utilizando nuestras herramientas, " +
+            "puedes adquirir una membresía."
+        );
+    }
+
+    return;
+}
+
+      const fecha = Date.parse(datos.expires);
+
+      if (!Number.isFinite(fecha) || fecha <= Date.now()) {
+    ocultar();
+
+    if (!sessionStorage.getItem("cs_aviso_prueba_vencida")) {
+        sessionStorage.setItem("cs_aviso_prueba_vencida", "1");
+
+        alert(
+            "⏰ Tu prueba gratuita de 24 horas ha finalizado.\n\n" +
+            "Gracias por probar Cruz Sublime. 💙👑\n\n" +
+            "Para continuar utilizando nuestras herramientas, " +
+            "puedes adquirir una membresía."
+        );
+    }
+
+    return;
+}
+      // Evita mostrar datos de otra sesión si cambió el acceso.
+      if (
+        (localStorage.getItem("cruz_sublime_code") || "")
+          .trim().toUpperCase() !== codigo ||
+        (localStorage.getItem("cruz_sublime_user") || "")
+          .trim() !== usuario
+      ) {
+        ocultar();
+        return;
+      }
+
+      codigoActivo = codigo;
+      correoActivo = usuario;
+      vencimiento = fecha;
+      ultimaRevision = Date.now();
+
+      correo.textContent = "👤 " + usuario;
+      reloj.hidden = false;
+
+      mostrarTiempo();
+
+    } catch (error) {
+      // Si falla la conexión, no inventamos un vencimiento.
+      console.warn("Temporizador: conexión no disponible");
+    }
+  }
+window.csRevisarPrueba = revisarPrueba;
+  // Actualiza los segundos sin recargar la página.
+  setInterval(mostrarTiempo, 1000);
+
+  // Comprueba periódicamente el estado real en el servidor.
+  setInterval(revisarPrueba, 5000);
+
+  // Comprueba al abrir o regresar a la página.
+  window.addEventListener("focus", revisarPrueba);
+  document.addEventListener(
+    "visibilitychange",
+    function () {
+      if (!document.hidden) revisarPrueba();
+    }
+  );
+
+  revisarPrueba();
+})();
+</script>
+<!-- FIN TEMPORIZADOR REAL -->
+
+<!-- CRUZ SUBLIME | VENTANA PARA COPIAR CÓDIGO -->
+<style>
+#csTrialCodeModal[hidden] {
+  display: none !important;
+}
+
+#csTrialCodeModal {
+  position: fixed;
+  inset: 0;
+  z-index: 100010;
+  background: rgba(0, 0, 0, .85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+#csTrialCodeModal .cs-tcm-card {
+  width: min(100%, 490px);
+  background: linear-gradient(145deg, #0c1c32, #241137);
+  border: 1px solid #55ddff;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 0 35px #00d4ff44;
+  color: #fff;
+  text-align: center;
+}
+
+#csTrialCodeModal h2 {
+  color: #7beaff;
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+
+#csTrialCodeModal p {
+  font-size: 14px;
+  color: #d9d4ef;
+  line-height: 1.6;
+  margin: 9px 0;
+}
+
+#csTrialCodeModal input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: #080f20;
+  color: #fff;
+  border: 1px solid #6cdfff;
+  border-radius: 10px;
+  padding: 14px 10px;
+  font: 700 16px monospace;
+  text-align: center;
+  user-select: text;
+  -webkit-user-select: text;
+  margin: 15px 0;
+}
+
+#csTrialCodeModal .cs-tcm-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#csTrialCodeModal button {
+  border: 0;
+  border-radius: 11px;
+  padding: 13px 17px;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(90deg, #00b9e9, #f02d9b);
+}
+
+#csTrialCodeModal button.cs-tcm-close {
+  background: #31304b;
+  border: 1px solid #676188;
+}
+
+#csTrialCodeModal .cs-tcm-status {
+  min-height: 20px;
+  color: #8cf7d5;
+  font-size: 13px;
+  font-weight: 700;
+}
+</style>
+
+<div id="csTrialCodeModal" hidden
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="csTrialCodeTitle">
+
+  <div class="cs-tcm-card">
+
+    <h2 id="csTrialCodeTitle">
+      🎉 ¡Tu prueba está lista!
+    </h2>
+
+    <p>
+      Guarda este código. Lo necesitarás junto
+      con tu correo para ingresar a Cruz Sublime.
+    </p>
+
+    <input id="csTrialCodeValue"
+           type="text"
+           readonly
+           aria-label="Tu código de prueba gratuita"
+           autocomplete="off">
+
+    <p id="csTrialCodeEmail"></p>
+
+    <div class="cs-tcm-actions">
+      <button type="button" id="csTrialCopyCode">
+        📋 Copiar código
+      </button>
+
+      <button type="button"
+              class="cs-tcm-close"
+              id="csTrialCloseCode">
+        Cerrar
+      </button>
+    </div>
+
+    <p class="cs-tcm-status"
+       id="csTrialCopyStatus"
+       aria-live="polite"></p>
+
+    <p>
+      También puedes seleccionar el código
+      y copiarlo con Ctrl + C.
+    </p>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const modal = document.getElementById("csTrialCodeModal");
+  const campo = document.getElementById("csTrialCodeValue");
+  const estado = document.getElementById("csTrialCopyStatus");
+
+  window.csMostrarCodigoPrueba = function (codigo, email) {
+    campo.value = String(codigo || "");
+
+    document.getElementById("csTrialCodeEmail")
+      .textContent = "📧 " + String(email || "");
+
+    estado.textContent = "";
+    modal.hidden = false;
+
+    campo.focus();
+    campo.select();
+  };
+
+  document.getElementById("csTrialCopyCode")
+    .addEventListener("click", async function () {
+
+      campo.focus();
+      campo.select();
+
+      try {
+        if (!navigator.clipboard || !window.isSecureContext) {
+          throw new Error("Usar copia alternativa");
+        }
+
+        await navigator.clipboard.writeText(campo.value);
+
+        estado.textContent =
+          "✓ Código copiado. ¡Ya puedes pegarlo!";
+
+      } catch (error) {
+        let copiado = false;
+
+        try {
+          copiado = document.execCommand("copy");
+        } catch (e) {}
+
+        estado.textContent = copiado
+          ? "✓ Código copiado. ¡Ya puedes pegarlo!"
+          : "Código seleccionado: presiona Ctrl + C.";
+      }
+    });
+
+  document.getElementById("csTrialCloseCode")
+    .addEventListener("click", function () {
+      modal.hidden = true;
+    });
+
+})();
+</script>
+<!-- FIN VENTANA PARA COPIAR CÓDIGO -->
+
 </body>
 </html>
