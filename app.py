@@ -82,11 +82,11 @@ def init_db():
             plan TEXT,
             used_at TEXT
         )''')
-c.execute('''CREATE TABLE IF NOT EXISTS canva_daily (
+        c.execute('''CREATE TABLE IF NOT EXISTS canva_daily (
             day TEXT PRIMARY KEY,
             used INTEGER DEFAULT 0
         )''')
-c.execute('''CREATE TABLE IF NOT EXISTS free_trials (
+        c.execute('''CREATE TABLE IF NOT EXISTS free_trials (
             id SERIAL PRIMARY KEY,
             email TEXT UNIQUE NOT NULL,
             code TEXT UNIQUE NOT NULL,
@@ -94,7 +94,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS free_trials (
             expires_at TIMESTAMP NOT NULL,
             status TEXT NOT NULL DEFAULT 'active'
         )''')
-conn.commit()
+        conn.commit()
     except Exception as e:
         print("Init error:", e)
     finally:
