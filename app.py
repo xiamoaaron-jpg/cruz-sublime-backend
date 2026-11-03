@@ -227,7 +227,6 @@ def verify():
         if email and email.lower() != user.lower():
             return jsonify({"valid": False, "message": "Este código está asociado a otro correo"})
         # Check expiration
-        from datetime import datetime, timedelta, timedelta
         created = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
         expires = created + timedelta(days=days)
         if datetime.now() > expires:
@@ -724,7 +723,7 @@ def admin():
       <tr><td>{{ t.email }}</td><td><code>{{ t.code }}</code></td><td>{{ t.created }}</td>
           <td>{{ t.expires }}</td>
           <td class="{{ 'active' if t.active else 'expired' }}">{{ '🟢 Activa' if t.active else '⛔ Vencida o inactiva' }}</td>
-          <td><button type="button" class="small" onclick="navigator.clipboard.writeText({{ t.code|tojson }}).then(()=>{this.textContent='✓ Copiado'}).catch(()=>{window.prompt('Copia el código:',{{ t.code|tojson }})})">📋 Copiar</button></td></tr>
+          <td><button type="button" class="small" data-code="{{ t.code }}" onclick="navigator.clipboard.writeText(this.dataset.code).then(() => this.textContent='✓ Copiado').catch(() => window.prompt('Copia el código:', this.dataset.code))">📋 Copiar</button></td></tr>
       {% else %}<tr><td colspan="6">Todavía no hay pruebas gratuitas registradas.</td></tr>{% endfor %}
     </table></div>
     <h3>Últimos 50 accesos</h3>
