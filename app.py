@@ -186,6 +186,34 @@ def verify():
     user = data.get("user", "").strip()
     if not code or not user:
         return jsonify({"valid": False, "message": "Faltan datos"})
+    # Las pruebas TRIAL se validan en su propia tabla, sin alterar las membresías.
+    if code.startswith("TRIAL-"):
+        from datetime import timezone
+        conn = get_conn()
+        if not conn:
+            return jsonify({"valid": False, "message": "Base de datos no disponible"}), 503
+        try:
+            with conn.cursor() as c:
+                c.execute("SELECT email, expires_at, status FROM free_trials WHERE code = %s", (code,))
+                trial = c.fetchone()
+                if not trial:
+                    return jsonify({"valid": False, "message": "Código de prueba inválido"})
+                trial_email, expires_at, status = trial
+                if trial_email.strip().lower() != user.lower():
+                    return jsonify({"valid": False, "message": "El código pertenece a otro correo"})
+                # created_at y expires_at se almacenan en UTC en columnas TIMESTAMP.
+                expiry = expires_at if isinstance(expires_at, datetime) else datetime.fromisoformat(str(expires_at))
+                if expiry.tzinfo is None:
+                    expiry = expiry.replace(tzinfo=timezone.utc)
+                if status != "active" or datetime.now(timezone.utc) >= expiry:
+                    return jsonify({"valid": False, "message": "La prueba gratuita ha vencido o fue desactivada"})
+                # El frontend usa el plan basico para desbloquear sus herramientas.
+                return jsonify({"valid": True, "plan": "basico", "expires": expiry.isoformat(), "trial": True})
+        except Exception:
+            app.logger.exception("Error al verificar prueba gratuita")
+            return jsonify({"valid": False, "message": "No se pudo verificar la prueba"}), 500
+        finally:
+            conn.close()
     conn = get_conn()
     if not conn:
         return jsonify({"valid": False, "message": "Base de datos no disponible"})
@@ -553,7 +581,7 @@ def admin():
     denied = _admin_guard()
     if denied: return denied
     conn = get_conn()
-    codes, usages = [], []
+    codes, usages, trials = [], [], []
     if conn:
         try:
             with conn.cursor() as c:
@@ -597,6 +625,18 @@ def admin():
                     })
                 c.execute('SELECT id, code, "user", plan, used_at FROM usages ORDER BY used_at DESC LIMIT 50')
                 usages = c.fetchall()
+                c.execute("SELECT email, code, created_at, expires_at, status FROM free_trials ORDER BY created_at DESC LIMIT 500")
+                trial_rows = c.fetchall()
+                from datetime import timezone
+                trials = []
+                for trial_email, trial_code, created_at, expires_at, trial_status in trial_rows:
+                    expiry = expires_at if isinstance(expires_at, datetime) else datetime.fromisoformat(str(expires_at))
+                    if expiry.tzinfo is None:
+                        expiry = expiry.replace(tzinfo=timezone.utc)
+                    is_active = trial_status == "active" and datetime.now(timezone.utc) < expiry
+                    trials.append({"email": trial_email, "code": trial_code,
+                                   "created": str(created_at), "expires": str(expires_at),
+                                   "active": is_active})
         except Exception:
             app.logger.exception("Error al consultar panel de membresías")
             return "No se pudo cargar el panel. Revisa los logs de Render.", 500
@@ -676,6 +716,17 @@ def admin():
       {% else %}<tr><td colspan="11">Todavía no hay códigos.</td></tr>{% endfor %}
     </table></div>
     <p class="muted">WhatsApp abre un mensaje preparado; tú eliges al destinatario y lo envías manualmente.</p>
+    <h3>🎁 Pruebas gratuitas de 24 horas</h3>
+    <p class="muted">Códigos generados automáticamente. Se muestran las últimas 500 solicitudes.</p>
+    <div class="table-wrap"><table>
+      <tr><th>Correo</th><th>Código</th><th>Registrada (UTC)</th><th>Vence (UTC)</th><th>Estado</th><th>Copiar</th></tr>
+      {% for t in trials %}
+      <tr><td>{{ t.email }}</td><td><code>{{ t.code }}</code></td><td>{{ t.created }}</td>
+          <td>{{ t.expires }}</td>
+          <td class="{{ 'active' if t.active else 'expired' }}">{{ '🟢 Activa' if t.active else '⛔ Vencida o inactiva' }}</td>
+          <td><button type="button" class="small" onclick="navigator.clipboard.writeText({{ t.code|tojson }}).then(()=>{this.textContent='✓ Copiado'}).catch(()=>{window.prompt('Copia el código:',{{ t.code|tojson }})})">📋 Copiar</button></td></tr>
+      {% else %}<tr><td colspan="6">Todavía no hay pruebas gratuitas registradas.</td></tr>{% endfor %}
+    </table></div>
     <h3>Últimos 50 accesos</h3>
     <form action="/admin/clear-usages" method="post" onsubmit="return confirm('¿Borrar TODOS los registros de uso? Esto eliminará también el historial de primera conexión.')"><input type="hidden" name="csrf" value="{{ csrf }}">
       <button class="danger small" type="submit">Vaciar historial de usos</button>
@@ -692,7 +743,7 @@ def admin():
     </table></div>
     </body></html>
     """
-    return render_template_string(html, codes=codes, usages=usages, csrf=session["admin_csrf"])
+    return render_template_string(html, codes=codes, usages=usages, trials=trials, csrf=session["admin_csrf"])
 
 @app.route("/admin/generate", methods=["POST"])
 def admin_generate():
