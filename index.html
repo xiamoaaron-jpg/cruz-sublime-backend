@@ -964,7 +964,135 @@ html body #tabCanva:hover {
 }
 </style>
 
-</style></head>
+</style>
+
+
+<style>
+/* CRUZ SUBLIME - REGALO VIP 24 HORAS */
+
+.cs-trial-gift {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: 24px;
+  padding: 23px 17px 19px;
+  border: 2px solid #e7be6a;
+  border-radius: 19px;
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 50% -20%, #60401e66, transparent 66%),
+    linear-gradient(145deg, #15112a, #0a1930 56%, #1b1028);
+  box-shadow: 0 0 22px #d4a44855, 0 12px 28px #0006;
+}
+
+.cs-trial-gift::before {
+  content: "";
+  position: absolute;
+  inset: -70%;
+  z-index: -1;
+  pointer-events: none;
+  background: conic-gradient(
+    transparent,
+    #f8d17c25,
+    transparent,
+    #39dcff22,
+    transparent,
+    #ff4eb422,
+    transparent
+  );
+  animation: csTrialGiftGlow 14s linear infinite;
+}
+
+.cs-trial-gift-top {
+  color: #ffdc90;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+}
+
+.cs-trial-gift-icon {
+  font-size: 38px;
+  margin: 12px 0 6px;
+}
+
+.cs-trial-gift-title {
+  font-size: clamp(23px, 3vw, 32px);
+  font-weight: 900;
+  color: white;
+  line-height: 1.2;
+}
+
+.cs-trial-gift-title span {
+  color: #ffdd85;
+  text-shadow: 0 0 16px #dba84288;
+}
+
+.cs-trial-gift-description {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #d5def3;
+  margin: 12px auto 17px;
+  max-width: 360px;
+}
+
+#btnPruebaGratis.cs-trial-gift-button {
+  display: block;
+  width: 100%;
+  min-height: 55px;
+  margin: 0 !important;
+  padding: 13px 9px !important;
+  border: 1px solid #ffffff66;
+  border-radius: 13px;
+  background: linear-gradient(
+    105deg, #00c8ee, #7955f3, #ed39a2, #00c8ee
+  ) !important;
+  background-size: 260% 100% !important;
+  color: white !important;
+  font-size: clamp(11px, 1.3vw, 14px);
+  font-weight: 900;
+  box-shadow: 0 7px 25px #b84de477;
+  animation: csTrialGiftButton 5s ease-in-out infinite;
+  cursor: pointer;
+}
+
+#btnPruebaGratis.cs-trial-gift-button:hover {
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+}
+
+.cs-trial-gift-foot {
+  font-size: 10px;
+  color: #a5f4d6;
+  margin-top: 14px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+@keyframes csTrialGiftGlow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes csTrialGiftButton {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-trial-gift::before,
+  #btnPruebaGratis.cs-trial-gift-button {
+    animation: none;
+  }
+}
+
+@media (max-width: 450px) {
+  .cs-trial-gift {
+    padding: 20px 12px 17px;
+  }
+}
+</style>
+
+
+</head>
 <body>
 <div id="gate" style="display:none">
   <div class="box">
@@ -2109,9 +2237,42 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
             <li>Soporte por WhatsApp</li>
           </ul>
           
-<button type="button" id="btnPruebaGratis" class="btn big" style="width:100%;margin-top:24px;background:linear-gradient(135deg,#00d4ff,#a855f7);color:white;font-weight:800;">
-  🎁 ACTIVAR PRUEBA GRATIS DE 24 HORAS
-</button>
+
+<!-- CRUZ SUBLIME - REGALO ESPECIAL 24 HORAS -->
+<div class="cs-trial-gift">
+
+  <div class="cs-trial-gift-top">
+    <span aria-hidden="true">✦</span>
+    REGALO ESPECIAL DE BIENVENIDA
+    <span aria-hidden="true">✦</span>
+  </div>
+
+  <div class="cs-trial-gift-icon" aria-hidden="true">
+    🎁
+  </div>
+
+  <div class="cs-trial-gift-title">
+    ¡24 HORAS <span>GRATIS!</span>
+  </div>
+
+  <p class="cs-trial-gift-description">
+    Descubre Cruz Sublime y disfruta de una prueba
+    gratuita de nuestras herramientas.
+  </p>
+
+  <button
+    type="button"
+    id="btnPruebaGratis"
+    class="btn big cs-trial-gift-button">
+    ✨ ACTIVAR MI REGALO GRATIS ✨
+  </button>
+
+  <div class="cs-trial-gift-foot">
+    ✓ Sin tarjeta bancaria · ✉ Verificación por correo
+  </div>
+
+</div>
+
 
           <button class="btn big" id="btnBasico">Pagar con tarjeta</button>
           <button class="btn big" id="btnBasicoMP" style="background:#00a8e8;margin-top:8px">Pagar con Mercado Pago</button>
