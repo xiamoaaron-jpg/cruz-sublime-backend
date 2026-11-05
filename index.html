@@ -5129,16 +5129,24 @@ window.csRevisarPrueba = revisarPrueba;
   display: none !important;
 }
 
+
 #csTrialCodeModal {
-  position: fixed;
-  inset: 0;
-  z-index: 100010;
-  background: rgba(0, 0, 0, .85);
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 2147483647 !important;
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 18px;
 }
+
 
 #csTrialCodeModal .cs-tcm-card {
   width: min(100%, 490px);
