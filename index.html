@@ -4755,50 +4755,96 @@ $('save').onclick=()=&gt;{if(!photosFor()[color][side]){alert('Primero carga la 
 </script>
 
 <script>
+
 document.getElementById("btnPruebaGratis")?.addEventListener("click", async function () {
-  const email = prompt("🎁 Ingresa tu correo electrónico para activar tu prueba gratis de 24 horas:");
+  const emailIngresado = prompt("🎁 Ingresa tu correo electrónico para solicitar tu prueba gratis de 24 horas:");
 
-  if (email === null) return;
+  if (emailIngresado === null) return;
 
-  if (!email.trim()) {
-    alert("Por favor, escribe tu correo electrónico.");
+  const email = emailIngresado.trim().toLowerCase();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert("Por favor, escribe un correo electrónico válido.");
     return;
   }
 
   const boton = this;
+  const textoOriginal = boton.textContent;
+  const API = "https://cruz-sublime-api.onrender.com";
+
   boton.disabled = true;
-  boton.textContent = "⏳ Registrando prueba...";
 
   try {
-    const respuesta = await fetch(
-      "https://cruz-sublime-api.onrender.com/api/free-trial/register",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() })
-      }
-    );
+    boton.textContent = "⌛ Enviando código al correo...";
 
-    const datos = await respuesta.json();
+    const respuestaEnvio = await fetch(API + "/api/free-trial/request-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
 
-    if (!respuesta.ok || !datos.success) {
-      alert(datos.message || "No se pudo activar la prueba.");
+    const datosEnvio = await respuestaEnvio.json();
+
+    if (!respuestaEnvio.ok || !datosEnvio.success) {
+      alert(datosEnvio.message || "No se pudo enviar el correo.");
       return;
     }
 
-    
-window.csMostrarCodigoPrueba(datos.code, email.trim());
+    const codigoIngresado = prompt(
+      "📩 Te enviamos un código de 6 dígitos a " + email +
+      "\n\nRevisa también tu carpeta de spam.\n\nEscribe el código recibido:"
+    );
 
+    if (codigoIngresado === null) return;
+
+    const codigo = codigoIngresado.trim();
+
+    if (!/^\d{6}$/.test(codigo)) {
+      alert("El código debe contener exactamente 6 dígitos.");
+      return;
+    }
+
+    boton.textContent = "⌛ Verificando correo...";
+
+    const respuestaVerificacion = await fetch(API + "/api/free-trial/verify-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code: codigo })
+    });
+
+    const datosVerificacion = await respuestaVerificacion.json();
+
+    if (!respuestaVerificacion.ok || !datosVerificacion.success) {
+      alert(datosVerificacion.message || "No se pudo verificar el código.");
+      return;
+    }
+
+    boton.textContent = "⌛ Activando prueba gratis...";
+
+    const respuestaRegistro = await fetch(API + "/api/free-trial/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+
+    const datosRegistro = await respuestaRegistro.json();
+
+    if (!respuestaRegistro.ok || !datosRegistro.success) {
+      alert(datosRegistro.message || "No se pudo activar la prueba.");
+      return;
+    }
+
+    window.csMostrarCodigoPrueba(datosRegistro.code, email);
 
   } catch (error) {
-    alert("No se pudo conectar con el servidor. Intenta nuevamente.");
-    console.error(error);
-
+    console.error("Error de prueba gratuita:", error);
+    alert("No se pudo completar la solicitud. Revisa tu conexión e intenta nuevamente.");
   } finally {
     boton.disabled = false;
-    boton.textContent = "🎁 ACTIVAR PRUEBA GRATIS DE 24 HORAS";
+    boton.textContent = textoOriginal;
   }
 });
+
 </script>
 
 <!-- CRUZ SUBLIME | RELOJ DE PRUEBA GRATUITA -->
