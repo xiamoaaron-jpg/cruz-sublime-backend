@@ -13,6 +13,7 @@ import time
 import hmac
 import hashlib
 import secrets
+import re
 
 app = Flask(__name__)
 
@@ -45,7 +46,48 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 REPLICATE_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
 STRIPE_SECRET = os.environ.get("STRIPE_SECRET_KEY")
 STRIPE_PUBLIC = os.environ.get("STRIPE_PUBLIC_KEY")
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = "Cruz Sublime <acceso@cruzsublim.com>"
 stripe.api_key = STRIPE_SECRET
+
+def enviar_codigo_verificacion(correo, codigo):
+    if not RESEND_API_KEY:
+        print("RESEND_API_KEY no está configurada.")
+        return False
+
+    try:
+        respuesta = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": RESEND_FROM_EMAIL,
+                "to": [correo],
+                "subject": "Tu código de verificación - Cruz Sublime",
+                "html": f"""
+                <div style="font-family:Arial,sans-serif;padding:24px;">
+                    <h2>Bienvenido a Cruz Sublime 💙👑</h2>
+                    <p>Tu código de verificación es:</p>
+                    <h1 style="letter-spacing:6px;">{codigo}</h1>
+                    <p>Si no solicitaste este código, ignora este mensaje.</p>
+                </div>
+                """
+            },
+            timeout=15
+        )
+
+        if respuesta.status_code == 200:
+            return True
+
+        print("Error de Resend:", respuesta.status_code, respuesta.text[:300])
+        return False
+
+    except requests.RequestException as error:
+        print("Error al enviar correo:", str(error))
+        return False
+
 
 def get_conn():
     if not DATABASE_URL:
@@ -94,6 +136,17 @@ def init_db():
             expires_at TIMESTAMP NOT NULL,
             status TEXT NOT NULL DEFAULT 'active'
         )''')
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS trial_email_verifications (
+                id SERIAL PRIMARY KEY,
+                email TEXT NOT NULL,
+                code_hash TEXT NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP NOT NULL,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                verified BOOLEAN NOT NULL DEFAULT FALSE
+            )
+        """)
         conn.commit()
     except Exception as e:
         print("Init error:", e)
@@ -103,6 +156,192 @@ def init_db():
 init_db()
 
 
+@app.route("/api/free-trial/request-code", methods=["POST"])
+def solicitar_codigo_prueba():
+    import re
+
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return jsonify({
+            "success": False,
+            "message": "Escribe un correo electrónico válido."
+        }), 400
+
+        import secrets
+    import hashlib
+    from datetime import datetime, timedelta, timezone
+
+    conn = get_conn()
+    if not conn:
+        return jsonify({
+            "success": False,
+            "message": "Servicio temporalmente no disponible."
+        }), 503
+
+    try:
+        with conn.cursor() as c:
+            c.execute(
+                "SELECT id FROM free_trials WHERE email = %s",
+                (email,)
+            )
+            if c.fetchone():
+                return jsonify({
+                    "success": False,
+                    "message": "Este correo ya solicitó una prueba gratuita."
+                }), 409
+
+            codigo = f"{secrets.randbelow(1000000):06d}"
+            codigo_hash = hashlib.sha256(codigo.encode()).hexdigest()
+            ahora = datetime.now(timezone.utc)
+            vence = ahora + timedelta(minutes=10)
+
+            c.execute(
+                "DELETE FROM trial_email_verifications WHERE email = %s",
+                (email,)
+            )
+
+            c.execute("""
+                INSERT INTO trial_email_verifications
+                (email, code_hash, created_at, expires_at, attempts, verified)
+                VALUES (%s, %s, %s, %s, 0, FALSE)
+            """, (email, codigo_hash, ahora, vence))
+
+            if not enviar_codigo_verificacion(email, codigo):
+                conn.rollback()
+                return jsonify({
+                    "success": False,
+                    "message": "No se pudo enviar el correo de verificación."
+                }), 502
+
+            conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Te enviamos un código de verificación a tu correo."
+        }), 200
+
+    except Exception:
+        conn.rollback()
+        app.logger.exception("Error al solicitar código de prueba")
+        return jsonify({
+            "success": False,
+            "message": "No se pudo procesar la solicitud."
+        }), 500
+
+    finally:
+        conn.close()
+
+
+@app.route("/api/free-trial/verify-code", methods=["POST"])
+def verificar_codigo_prueba():
+    import re
+    import hashlib
+    import hmac
+    from datetime import datetime, timezone
+
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+    codigo = str(data.get("code", "")).strip()
+
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        return jsonify({
+            "success": False,
+            "message": "Correo electrónico inválido."
+        }), 400
+
+    if not re.fullmatch(r"\d{6}", codigo):
+        return jsonify({
+            "success": False,
+            "message": "Ingresa los 6 dígitos."
+        }), 400
+
+    conn = get_conn()
+    if not conn:
+        return jsonify({
+            "success": False,
+            "message": "Servicio no disponible."
+        }), 503
+
+    try:
+        with conn.cursor() as c:
+            c.execute("""
+                SELECT id, code_hash, expires_at, attempts, verified
+                FROM trial_email_verifications
+                WHERE email = %s
+                FOR UPDATE
+            """, (email,))
+
+            registro = c.fetchone()
+
+            if not registro:
+                return jsonify({
+                    "success": False,
+                    "message": "Primero solicita un código."
+                }), 404
+
+            registro_id, hash_guardado, vence, intentos, verificado = registro
+
+            if verificado:
+                return jsonify({
+                    "success": False,
+                    "message": "Este correo ya fue verificado."
+                }), 409
+
+            if datetime.now(timezone.utc) >= vence.replace(
+                tzinfo=timezone.utc
+            ) if vence.tzinfo is None else datetime.now(timezone.utc) >= vence:
+                return jsonify({
+                    "success": False,
+                    "message": "El código ha vencido."
+                }), 410
+
+            if intentos >= 5:
+                return jsonify({
+                    "success": False,
+                    "message": "Demasiados intentos. Solicita otro código."
+                }), 429
+
+            hash_ingresado = hashlib.sha256(
+                codigo.encode("utf-8")
+            ).hexdigest()
+
+            if not hmac.compare_digest(hash_ingresado, hash_guardado):
+                c.execute("""
+                    UPDATE trial_email_verifications
+                    SET attempts = attempts + 1
+                    WHERE id = %s
+                """, (registro_id,))
+                conn.commit()
+                return jsonify({
+                    "success": False,
+                    "message": "Código incorrecto."
+                }), 400
+
+            c.execute("""
+                UPDATE trial_email_verifications
+                SET verified = TRUE
+                WHERE id = %s
+            """, (registro_id,))
+
+            conn.commit()
+
+            return jsonify({
+                "success": True,
+                "message": "Correo verificado correctamente."
+            }), 200
+
+    except Exception:
+        conn.rollback()
+        app.logger.exception("Error al verificar código de prueba")
+        return jsonify({
+            "success": False,
+            "message": "No se pudo verificar el código."
+        }), 500
+
+    finally:
+        conn.close()
 
 @app.route("/api/free-trial/register", methods=["POST"])
 def register_free_trial():
@@ -127,6 +366,20 @@ def register_free_trial():
 
     try:
         c = conn.cursor()
+        c.execute("""
+            SELECT id
+            FROM trial_email_verifications
+            WHERE email = %s
+              AND verified = TRUE
+            ORDER BY id DESC
+            LIMIT 1
+        """, (email,))
+
+        if not c.fetchone():
+            return jsonify({
+                "success": False,
+                "message": "Primero debes verificar tu correo electrónico."
+            }), 403
 
         # Un correo solamente puede solicitar una prueba.
         c.execute(
@@ -152,6 +405,14 @@ def register_free_trial():
                 (email, code, created_at, expires_at, status)
             VALUES (%s, %s, %s, %s, %s)
         """, (email, trial_code, now, expires, "active"))
+
+               
+        
+
+        c.execute(
+            "DELETE FROM trial_email_verifications WHERE email = %s",
+            (email,)
+        )
 
         conn.commit()
 
