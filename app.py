@@ -169,7 +169,7 @@ def solicitar_codigo_prueba():
             "message": "Escribe un correo electrónico válido."
         }), 400
 
-        import secrets
+    import secrets
     import hashlib
     from datetime import datetime, timedelta, timezone
 
@@ -192,7 +192,8 @@ def solicitar_codigo_prueba():
                     "message": "Este correo ya solicitó una prueba gratuita."
                 }), 409
 
-            codigo = f"{secrets.randbelow(1000000):06d}"
+            from secrets import randbelow
+            codigo = f"{randbelow(1000000):06d}"
             codigo_hash = hashlib.sha256(codigo.encode()).hexdigest()
             ahora = datetime.now(timezone.utc)
             vence = ahora + timedelta(minutes=10)
