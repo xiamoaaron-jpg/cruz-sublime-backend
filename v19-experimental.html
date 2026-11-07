@@ -1,230 +1,148 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cruz Sublime | V19 Experimental</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 25px;
-      font-family: Arial, sans-serif;
-      color: white;
-      background: linear-gradient(135deg, #061b38, #22052f);
-    }
-    main {
-      max-width: 1100px;
-      margin: auto;
-    }
-    h1 { color: #35d8ff; }
-    .panel {
-      padding: 22px;
-      border: 1px solid #ed32b3;
-      border-radius: 18px;
-      background: #0b1027;
-    }
-    button {
-      padding: 13px 22px;
-      margin-top: 15px;
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      background: linear-gradient(90deg, #00c9ff, #ff249f);
-    }
-    .imagenes {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 15px;
-      margin-top: 20px;
-    }
-    .imagen {
-      padding: 12px;
-      border: 1px solid #435174;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    canvas {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-    @media (max-width: 650px) {
-      .imagenes { grid-template-columns: 1fr; }
-    }
-  </style>
-  
-<script type="module">
-  import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.webgpu.min.mjs";
-  window.ortV19 = ort;
-  window.dispatchEvent(new Event("ort-v19-ready"));
-</script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cruz Sublime | V19 Experimental IA x4</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:25px;font-family:Arial,sans-serif;color:#fff;background:linear-gradient(135deg,#061b38,#22052f);min-height:100vh}main{max-width:1100px;margin:auto}h1{color:#35d8ff}.panel{padding:22px;border:1px solid #ed32b3;border-radius:18px;background:#0b1027}button{padding:13px 22px;margin:15px 8px 0 0;border:0;border-radius:10px;color:white;font-weight:bold;cursor:pointer;background:linear-gradient(90deg,#00c9ff,#ff249f)}button:disabled{opacity:.45;cursor:not-allowed}.imagenes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:20px}.imagen{padding:12px;border:1px solid #435174;border-radius:12px;overflow:hidden}canvas{display:block;width:100%;height:auto}.nota{color:#b7c5e7;font-size:14px;line-height:1.5}#estado{white-space:pre-wrap;line-height:1.5}input{max-width:100%}@media(max-width:650px){.imagenes{grid-template-columns:1fr}body{padding:14px}}
+</style>
 </head>
 <body>
 <main>
-  <h1>👑 Cruz Sublime · V19 Experimental</h1>
-  <p>Laboratorio independiente de mejora de imágenes con Real-ESRGAN x4. Primera prueba con imágenes pequeñas (máximo 256 px de entrada).</p>
-
-  <section class="panel">
-    <label for="archivo">Selecciona una imagen:</label>
-    <input id="archivo" type="file" accept="image/*">
-
-    <div>
-      <button id="mejorar" disabled>Probar mejora IA x4 (experimental)</button>
-      <button id="descargar" disabled>Descargar PNG</button>
-    </div>
-
-    <p id="estado" role="status">Esperando imagen...</p>
-
-    <div class="imagenes">
-      <div class="imagen">
-        <h3>Original</h3>
-        <canvas id="original"></canvas>
-      </div>
-      <div class="imagen">
-        <h3>Resultado experimental</h3>
-        <canvas id="resultado"></canvas>
-      </div>
-    </div>
-  </section>
+<h1>👑 Cruz Sublime · V19 Experimental</h1>
+<p>Laboratorio independiente de mejora de imágenes mediante modelo ONNX x4.</p>
+<section class="panel">
+<label for="archivo">Selecciona una imagen:</label>
+<input id="archivo" type="file" accept="image/*">
+<div><button id="mejorar" disabled>Probar mejora IA x4 (experimental)</button><button id="descargar" disabled>Descargar PNG</button></div>
+<p id="estado" role="status" aria-live="polite">Esperando imagen...</p>
+<p class="nota">Prueba inicial: máximo 256 píxeles en el lado mayor de entrada. Las imágenes grandes se reducen antes de procesarlas. El resultado no es todavía adecuado para evaluar calidad de impresión. No modifica V18 ni Premium VIP.</p>
+<div class="imagenes"><div class="imagen"><h3>Original</h3><canvas id="original"></canvas></div><div class="imagen"><h3>Resultado experimental</h3><canvas id="resultado"></canvas></div></div>
+</section>
 </main>
+<script type="module">
+const $=id=>document.getElementById(id);
+const archivo=$("archivo"),mejorar=$("mejorar"),descargar=$("descargar"),original=$("original"),resultado=$("resultado"),estado=$("estado");
+const MODEL_URL="./static/models/model_fp16.onnx";
+const MAX_SIDE=256;
+let ort=null,session=null,imagen=null,trabajando=false,proveedorActivo="";
+const mensaje=t=>{estado.textContent=t;};
+const detalle=e=>e?.message||String(e);
+const clamp=x=>Math.max(0,Math.min(1,x));
 
-<script>
-const archivo = document.getElementById("archivo");
-const mejorar = document.getElementById("mejorar");
-const descargar = document.getElementById("descargar");
-const original = document.getElementById("original");
-const resultado = document.getElementById("resultado");
-const estado = document.getElementById("estado");
-const MODEL_URL = "./static/models/model_fp16.onnx";
-const MAX_SIDE = 256; // Prueba segura: limita el uso de memoria.
-let imagen = null;
-let session = null;
-let trabajando = false;
-
-function mensaje(texto) { estado.textContent = texto; }
-function detalle(error) { return error?.message || String(error); }
-
-window.addEventListener("ort-v19-ready", () => {
-  mensaje("Motor ONNX cargado. Selecciona una imagen para probar IA x4.");
-});
-
-archivo.addEventListener("change", async () => {
-  mejorar.disabled = true;
-  descargar.disabled = true;
-  if (imagen) imagen.close();
-  imagen = null;
-  const file = archivo.files?.[0];
-  if (!file) return;
-  try {
-    imagen = await createImageBitmap(file);
-    original.width = imagen.width;
-    original.height = imagen.height;
-    original.getContext("2d").drawImage(imagen, 0, 0);
-    resultado.width = resultado.height = 1;
-    mejorar.disabled = false;
-    mensaje(`Imagen cargada (${imagen.width} × ${imagen.height}). La prueba IA limitará el lado mayor a ${MAX_SIDE} px.`);
-  } catch (e) { mensaje("No se pudo abrir la imagen: " + detalle(e)); }
-});
-
-async function iniciarModelo() {
-  if (session) return session;
-  if (!window.ortV19) throw new Error("ONNX Runtime todavía no cargó. Comprueba tu conexión y recarga la página.");
-  const ort = window.ortV19;
-  mensaje("Cargando modelo IA (aprox. 34 MB). Puede tardar...");
-  // WebGPU primero; WASM como alternativa cuando sea posible.
-  const proveedores = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"];
-  let ultimoError;
-  for (const proveedor of proveedores) {
-    try {
-      session = await ort.InferenceSession.create(MODEL_URL, {
-        executionProviders: [proveedor],
-        graphOptimizationLevel: "all"
-      });
-      console.info("V19 proveedor:", proveedor, "entradas:", session.inputNames, "salidas:", session.outputNames);
-      return session;
-    } catch (e) {
-      ultimoError = e;
-      console.warn("V19: fallo con", proveedor, e);
-    }
-  }
-  throw new Error("No se pudo abrir el modelo con WebGPU ni WASM: " + detalle(ultimoError));
+async function cargarRuntime(){
+ if(ort)return ort;
+ mensaje("Cargando ONNX Runtime Web...");
+ try{
+  ort=await import("https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.webgpu.min.mjs");
+  console.info("V19: ONNX Runtime listo. WebGPU detectado:",!!navigator.gpu);
+  return ort;
+ }catch(e){throw new Error("No se pudo cargar ONNX Runtime desde internet: "+detalle(e));}
 }
 
-mejorar.addEventListener("click", async () => {
-  if (!imagen || trabajando) return;
-  trabajando = true;
-  mejorar.disabled = true;
-  descargar.disabled = true;
-  let inputTensor;
-  try {
-    const ort = window.ortV19;
-    const modelo = await iniciarModelo();
-    const ancho = Math.max(1, Math.round(imagen.width * Math.min(1, MAX_SIDE / Math.max(imagen.width, imagen.height))));
-    const alto = Math.max(1, Math.round(imagen.height * Math.min(1, MAX_SIDE / Math.max(imagen.width, imagen.height))));
-    const temporal = document.createElement("canvas");
-    temporal.width = ancho;
-    temporal.height = alto;
-    const tctx = temporal.getContext("2d", { willReadFrequently: true });
-    tctx.drawImage(imagen, 0, 0, ancho, alto);
-    const rgba = tctx.getImageData(0, 0, ancho, alto).data;
-    const plano = ancho * alto;
-    const rgb = new Float32Array(plano * 3);
-    for (let i = 0; i < plano; i++) {
-      rgb[i] = rgba[i * 4] / 255;
-      rgb[plano + i] = rgba[i * 4 + 1] / 255;
-      rgb[2 * plano + i] = rgba[i * 4 + 2] / 255;
-    }
-    inputTensor = new ort.Tensor("float32", rgb, [1, 3, alto, ancho]);
-    mensaje("Procesando imagen con IA... No cierres esta pestaña.");
-    // Permite que el navegador pinte el mensaje antes de inferencia.
-    await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-    const salida = await modelo.run({ [modelo.inputNames[0]]: inputTensor });
-    const tensor = salida[modelo.outputNames[0]];
-    const dimensiones = tensor.dims;
-    if (dimensiones.length !== 4 || dimensiones[0] !== 1 || dimensiones[1] !== 3) {
-      throw new Error("Salida ONNX inesperada: " + JSON.stringify(dimensiones));
-    }
-    const h = dimensiones[2], w = dimensiones[3];
-    const pixeles = tensor.data;
-    const total = w * h;
-    const datos = new Uint8ClampedArray(total * 4);
-    for (let i = 0; i < total; i++) {
-      datos[4 * i] = Math.round(Math.max(0, Math.min(1, pixeles[i])) * 255);
-      datos[4 * i + 1] = Math.round(Math.max(0, Math.min(1, pixeles[total + i])) * 255);
-      datos[4 * i + 2] = Math.round(Math.max(0, Math.min(1, pixeles[2 * total + i])) * 255);
-      datos[4 * i + 3] = 255;
-    }
-    resultado.width = w;
-    resultado.height = h;
-    resultado.getContext("2d").putImageData(new ImageData(datos, w, h), 0, 0);
-    descargar.disabled = false;
-    mensaje(`✅ IA ejecutada. Resultado: ${w} × ${h} px. Prueba experimental con límite de entrada de ${MAX_SIDE} px.`);
-    tensor.dispose?.();
-  } catch (e) {
-    console.error("Error V19:", e);
-    mensaje("❌ Prueba IA fallida: " + detalle(e));
-  } finally {
-    inputTensor?.dispose?.();
-    trabajando = false;
-    mejorar.disabled = !imagen;
-  }
+archivo.addEventListener("change",async()=>{
+ mejorar.disabled=true;descargar.disabled=true;
+ if(imagen)imagen.close();imagen=null;
+ const file=archivo.files?.[0];if(!file){mensaje("Esperando imagen...");return;}
+ try{
+  imagen=await createImageBitmap(file);
+  original.width=imagen.width;original.height=imagen.height;
+  original.getContext("2d").drawImage(imagen,0,0);
+  resultado.width=resultado.height=1;
+  mejorar.disabled=false;
+  mensaje(`Imagen cargada: ${imagen.width} × ${imagen.height} px. Lista para probar IA x4.`);
+ }catch(e){mensaje("No se pudo abrir la imagen: "+detalle(e));}
 });
 
-descargar.addEventListener("click", () => {
-  resultado.toBlob(blob => {
-    if (!blob) { mensaje("No se pudo crear el PNG."); return; }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "CruzSublime_V19_IA_x4.png";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  }, "image/png");
+async function iniciarModelo(){
+ if(session)return session;
+ const runtime=await cargarRuntime();
+ mensaje("Comprobando archivo del modelo ONNX...");
+ let respuesta;
+ try{respuesta=await fetch(MODEL_URL,{cache:"no-store"});}
+ catch(e){throw new Error("No se pudo solicitar el modelo: "+detalle(e));}
+ if(!respuesta.ok)throw new Error(`Modelo no disponible (HTTP ${respuesta.status}) en ${MODEL_URL}. Verifica la carpeta desde la que ejecutas el servidor.`);
+ const tipo=respuesta.headers.get("content-type")||"";
+ if(tipo.includes("text/html"))throw new Error("La URL del modelo devolvió HTML en vez de un archivo ONNX.");
+ const bytes=new Uint8Array(await respuesta.arrayBuffer());
+ if(bytes.byteLength<1024)throw new Error(`El modelo pesa solamente ${bytes.byteLength} bytes; comprueba que sea el archivo ONNX real.`);
+ mensaje(`Modelo recibido (${(bytes.byteLength/1048576).toFixed(1)} MB). Inicializando IA...`);
+ let ultimoError;
+ for(const proveedor of (navigator.gpu?["webgpu","wasm"]:["wasm"])){
+  try{
+   console.info("V19: probando proveedor",proveedor);
+   const creada=await runtime.InferenceSession.create(bytes,{executionProviders:[proveedor],graphOptimizationLevel:"all"});
+   session=creada;proveedorActivo=proveedor;
+   console.info("V19 modelo listo",{proveedor,entradas:session.inputNames,salidas:session.outputNames,metadataEntradas:session.inputMetadata,metadataSalidas:session.outputMetadata});
+   return session;
+  }catch(e){ultimoError=e;console.warn("V19 fallo inicializando",proveedor,e);}
+ }
+ throw new Error("No se pudo iniciar el modelo con WebGPU ni WASM: "+detalle(ultimoError));
+}
+
+function verificarEntrada(modelo){
+ if(modelo.inputNames.length!==1||modelo.outputNames.length!==1)throw new Error("El modelo tiene múltiples entradas o salidas. Necesitamos revisar su estructura antes de procesarlo.");
+ const meta=modelo.inputMetadata?.[modelo.inputNames[0]];
+ if(meta){
+  console.info("V19 metadatos de entrada:",meta);
+  const tipo=meta.type||meta.tensorType;
+  if(tipo&&tipo!=="float32"&&tipo!=="tensor(float)")throw new Error(`El modelo espera entrada ${tipo}, pero esta prueba prepara float32. Necesitamos adaptar la conversión de tensores.`);
+  const dims=meta.dimensions||meta.dims;
+  if(Array.isArray(dims)&&dims.length!==4)throw new Error("El modelo no espera una entrada de cuatro dimensiones: "+JSON.stringify(dims));
+  if(Array.isArray(dims)&&typeof dims[1]==="number"&&dims[1]!==3)throw new Error("El modelo no parece aceptar RGB en formato NCHW: "+JSON.stringify(dims));
+ }
+}
+
+mejorar.addEventListener("click",async()=>{
+ if(!imagen||trabajando)return;
+ trabajando=true;mejorar.disabled=true;descargar.disabled=true;
+ let entrada=null,salida=null;
+ try{
+  const modelo=await iniciarModelo();
+  verificarEntrada(modelo);
+  const factor=Math.min(1,MAX_SIDE/Math.max(imagen.width,imagen.height));
+  const ancho=Math.max(1,Math.round(imagen.width*factor));
+  const alto=Math.max(1,Math.round(imagen.height*factor));
+  const temporal=document.createElement("canvas");temporal.width=ancho;temporal.height=alto;
+  const ctx=temporal.getContext("2d",{willReadFrequently:true});
+  ctx.drawImage(imagen,0,0,ancho,alto);
+  const rgba=ctx.getImageData(0,0,ancho,alto).data;
+  const plano=ancho*alto,rgb=new Float32Array(plano*3);
+  for(let i=0;i<plano;i++){rgb[i]=rgba[i*4]/255;rgb[plano+i]=rgba[i*4+1]/255;rgb[2*plano+i]=rgba[i*4+2]/255;}
+  entrada=new ort.Tensor("float32",rgb,[1,3,alto,ancho]);
+  mensaje(`Procesando ${ancho} × ${alto} px con IA (${proveedorActivo}). Espera...`);
+  await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));
+  const outputs=await modelo.run({[modelo.inputNames[0]]:entrada});
+  salida=outputs[modelo.outputNames[0]];
+  const dims=salida?.dims;
+  if(!dims||dims.length!==4||dims[0]!==1||dims[1]!==3)throw new Error("Salida inesperada. Dimensiones: "+JSON.stringify(dims));
+  const h=dims[2],w=dims[3];
+  if(!Number.isSafeInteger(w)||!Number.isSafeInteger(h)||w<1||h<1||w*h>16000000)throw new Error("Dimensiones de salida no válidas: "+JSON.stringify(dims));
+  const valores=await salida.getData();
+  if(valores.length<w*h*3)throw new Error("El tensor de salida tiene menos valores de los esperados.");
+  const total=w*h,pixeles=new Uint8ClampedArray(total*4);
+  for(let i=0;i<total;i++){
+   pixeles[4*i]=Math.round(clamp(valores[i])*255);
+   pixeles[4*i+1]=Math.round(clamp(valores[total+i])*255);
+   pixeles[4*i+2]=Math.round(clamp(valores[2*total+i])*255);
+   pixeles[4*i+3]=255;
+  }
+  resultado.width=w;resultado.height=h;
+  resultado.getContext("2d").putImageData(new ImageData(pixeles,w,h),0,0);
+  descargar.disabled=false;
+  mensaje(`✅ Inferencia ONNX completada con ${proveedorActivo}. Entrada: ${ancho} × ${alto} px. Salida: ${w} × ${h} px. Revisa visualmente la calidad.`);
+ }catch(e){console.error("V19 error:",e);mensaje("❌ Prueba IA fallida: "+detalle(e)+"\nAbre F12 → Console para ver el diagnóstico completo.");}
+ finally{try{entrada?.dispose?.();}catch{}try{salida?.dispose?.();}catch{}trabajando=false;mejorar.disabled=!imagen;}
+});
+
+descargar.addEventListener("click",()=>{
+ resultado.toBlob(blob=>{
+  if(!blob){mensaje("No se pudo crear el PNG.");return;}
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="CruzSublime_V19_IA_x4.png";a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+ },"image/png");
 });
 </script>
 </body>
