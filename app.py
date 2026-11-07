@@ -1379,7 +1379,7 @@ def _process_trial(kind):
             # Ajustes aprobados en la prueba visual de Clarity para diseños y letras.
             inputs.update({
                 "scale_factor": 3,
-                "creativity": 0.30,
+                "creativity": 0.0,
                 "resemblance": 1.2,
                 "num_inference_steps": 18,
             })
