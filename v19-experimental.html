@@ -95,6 +95,37 @@ const resultado = document.getElementById("resultado");
 const estado = document.getElementById("estado");
 
 let imagen = null;
+  
+async function comprobarWebGPU() {
+  if (!navigator.gpu) {
+    estado.textContent =
+      "WebGPU no está disponible en este navegador.";
+    return;
+  }
+
+  try {
+    const adapter = await navigator.gpu.requestAdapter();
+
+    if (!adapter) {
+      estado.textContent =
+        "WebGPU existe, pero no se encontró una GPU compatible.";
+      return;
+    }
+
+    const device = await adapter.requestDevice();
+
+    estado.textContent =
+      "✅ WebGPU disponible. GPU lista para pruebas de IA.";
+
+    device.destroy();
+  } catch (error) {
+    estado.textContent =
+      "No se pudo iniciar WebGPU: " + error.message;
+  }
+}
+
+comprobarWebGPU();
+
 
 archivo.addEventListener("change", async () => {
   mejorar.disabled = true;
