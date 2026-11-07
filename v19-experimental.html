@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cruz Sublime | V19 Experimental</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 25px;
+      font-family: Arial, sans-serif;
+      color: white;
+      background: linear-gradient(135deg, #061b38, #22052f);
+    }
+    main {
+      max-width: 1100px;
+      margin: auto;
+    }
+    h1 { color: #35d8ff; }
+    .panel {
+      padding: 22px;
+      border: 1px solid #ed32b3;
+      border-radius: 18px;
+      background: #0b1027;
+    }
+    button {
+      padding: 13px 22px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(90deg, #00c9ff, #ff249f);
+    }
+    .imagenes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .imagen {
+      padding: 12px;
+      border: 1px solid #435174;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    @media (max-width: 650px) {
+      .imagenes { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>👑 Cruz Sublime · V19 Experimental</h1>
+  <p>Laboratorio independiente de mejora de imágenes.</p>
+
+  <section class="panel">
+    <label for="archivo">Selecciona una imagen:</label>
+    <input id="archivo" type="file" accept="image/*">
+
+    <div>
+      <button id="mejorar" disabled>Probar mejora conservadora 2X</button>
+      <button id="descargar" disabled>Descargar PNG</button>
+    </div>
+
+    <p id="estado" role="status">Esperando imagen...</p>
+
+    <div class="imagenes">
+      <div class="imagen">
+        <h3>Original</h3>
+        <canvas id="original"></canvas>
+      </div>
+      <div class="imagen">
+        <h3>Resultado experimental</h3>
+        <canvas id="resultado"></canvas>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const archivo = document.getElementById("archivo");
+const mejorar = document.getElementById("mejorar");
+const descargar = document.getElementById("descargar");
+const original = document.getElementById("original");
+const resultado = document.getElementById("resultado");
+const estado = document.getElementById("estado");
+
+let imagen = null;
+
+archivo.addEventListener("change", async () => {
+  mejorar.disabled = true;
+  descargar.disabled = true;
+  imagen = null;
+
+  const file = archivo.files[0];
+  if (!file) return;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    imagen = bitmap;
+
+    original.width = bitmap.width;
+    original.height = bitmap.height;
+    original.getContext("2d").drawImage(bitmap, 0, 0);
+
+    resultado.width = 1;
+    resultado.height = 1;
+
+    mejorar.disabled = false;
+    estado.textContent = "Imagen cargada. Lista para la prueba.";
+  } catch (error) {
+    estado.textContent = "No se pudo abrir la imagen.";
+  }
+});
+
+mejorar.addEventListener("click", () => {
+  if (!imagen) return;
+
+  resultado.width = imagen.width * 2;
+  resultado.height = imagen.height * 2;
+
+  const ctx = resultado.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(
+    imagen, 0, 0,
+    resultado.width, resultado.height
+  );
+
+  descargar.disabled = false;
+  estado.textContent =
+    "Prueba 2X terminada. Escalado convencional, sin IA.";
+});
+
+descargar.addEventListener("click", () => {
+  resultado.toBlob(blob => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "CruzSublime_V19_Prueba.png";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, "image/png");
+});
+</script>
+</body>
+</html>
