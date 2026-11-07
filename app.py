@@ -797,6 +797,32 @@ def admin_delete():
     return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{code}</p><a href="/admin" style="color:#3b82f6">Volver al panel</a></body></html>'
 
 
+@app.route("/admin/delete-trial", methods=["POST"])
+def admin_delete_trial():
+    denied = _admin_post_guard()
+    if denied: return denied
+    trial_code = request.form.get("code", "").strip().upper()
+    if not trial_code.startswith("TRIAL-") or len(trial_code) > 100:
+        return "Código de prueba no válido", 400
+    conn = get_conn()
+    if not conn:
+        return "Base de datos no disponible", 503
+    try:
+        with conn.cursor() as c:
+            c.execute("DELETE FROM free_trials WHERE code = %s RETURNING id", (trial_code,))
+            deleted = c.fetchone()
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        app.logger.exception("Error al eliminar prueba gratuita")
+        return "No se pudo eliminar la prueba", 500
+    finally:
+        conn.close()
+    if not deleted:
+        return "La prueba ya no existe", 404
+    return redirect(url_for("admin"))
+
+
 @app.route("/api/halftone", methods=["POST"])
 def halftone():
     if not REPLICATE_TOKEN:
@@ -930,6 +956,8 @@ def admin():
       .used{color:#4ade80;font-weight:700}.unused{color:#aaa}
       .danger{background:#c72c45}.muted{color:#aaa;font-size:13px}
       .small{font-size:12px;padding:7px 9px}
+      .copy-actions{display:flex;gap:6px;flex-wrap:wrap}
+      .copy-actions button{white-space:nowrap}
       .summary{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0}
       .summary span{background:#161616;border:1px solid #333;border-radius:9px;padding:10px}
     </style></head><body>
@@ -959,7 +987,7 @@ def admin():
     <div class="table-wrap"><table>
       <tr><th>Código</th><th>Plan</th><th>Correo</th><th>Inicio administrativo</th>
           <th>Primer ingreso</th><th>Uso</th><th>Vence</th><th>Días restantes</th>
-          <th>Estado</th><th>Renovación</th><th>Acción</th></tr>
+          <th>Estado</th><th>Renovación</th><th>Copiar</th><th>Acción</th></tr>
       {% for c in codes %}
       <tr>
         <td><b>{{ c.code }}</b></td><td>{{ c.plan }}</td><td>{{ c.email }}</td>
@@ -969,25 +997,37 @@ def admin():
         <td>{{ c.expires }}</td><td>{{ c.remaining }}</td>
         <td class="{{ c.css }}">{{ c.status }}</td>
         <td><a href="{{ c.whatsapp }}" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a></td>
+        <td><div class="copy-actions">
+          <button type="button" class="small" data-copy="{{ c.code }}" onclick="csCopy(this)">📋 Código</button>
+          {% if c.email != '—' %}<button type="button" class="small" data-copy="{{ c.email }}" onclick="csCopy(this)">📧 Correo</button>{% endif %}
+        </div></td>
         <td><form action="/admin/delete" method="post" onsubmit="return confirm('¿Eliminar este código y revocar su acceso definitivamente?')"><input type="hidden" name="csrf" value="{{ csrf }}">
           <input type="hidden" name="code" value="{{ c.code }}">
           <button type="submit" class="danger small">Eliminar</button>
         </form></td>
       </tr>
-      {% else %}<tr><td colspan="11">Todavía no hay códigos.</td></tr>{% endfor %}
+      {% else %}<tr><td colspan="12">Todavía no hay códigos.</td></tr>{% endfor %}
     </table></div>
     <p class="muted">WhatsApp abre un mensaje preparado; tú eliges al destinatario y lo envías manualmente.</p>
     <h3>🎁 Pruebas gratuitas de 24 horas</h3>
     <p class="muted">Códigos generados automáticamente. Se muestran las últimas 500 solicitudes.</p>
     <div class="table-wrap"><table>
-      <tr><th>Correo</th><th>Código</th><th>Registrada (UTC)</th><th>Vence (UTC)</th><th>⏳ Tiempo restante</th><th>Estado</th><th>Copiar</th></tr>
+      <tr><th>Correo</th><th>Código</th><th>Registrada (UTC)</th><th>Vence (UTC)</th><th>⏳ Tiempo restante</th><th>Estado</th><th>Copiar</th><th>Acción</th></tr>
       {% for t in trials %}
       <tr><td>{{ t.email }}</td><td><code>{{ t.code }}</code></td><td>{{ t.created }}</td>
           <td>{{ t.expires }}</td>
           <td><strong class="cs-admin-trial-timer" data-expiry="{{ t.expires }}" data-active="{{ '1' if t.active else '0' }}">Calculando...</strong></td>
           <td class="{{ 'active' if t.active else 'expired' }}">{{ '🟢 Activa' if t.active else '⛔ Vencida o inactiva' }}</td>
-          <td><button type="button" class="small" data-code="{{ t.code }}" onclick="navigator.clipboard.writeText(this.dataset.code).then(() => this.textContent='✓ Copiado').catch(() => window.prompt('Copia el código:', this.dataset.code))">📋 Copiar</button></td></tr>
-      {% else %}<tr><td colspan="7">Todavía no hay pruebas gratuitas registradas.</td></tr>{% endfor %}
+          <td><div class="copy-actions">
+            <button type="button" class="small" data-copy="{{ t.code }}" onclick="csCopy(this)">📋 Código</button>
+            <button type="button" class="small" data-copy="{{ t.email }}" onclick="csCopy(this)">📧 Correo</button>
+          </div></td>
+          <td><form action="/admin/delete-trial" method="post" onsubmit="return confirm('¿Eliminar esta prueba gratuita? Su código dejará de funcionar y el correo podrá solicitar otra prueba. Esta acción no se puede deshacer.')">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="code" value="{{ t.code }}">
+            <button type="submit" class="danger small">🗑️ Eliminar</button>
+          </form></td></tr>
+      {% else %}<tr><td colspan="8">Todavía no hay pruebas gratuitas registradas.</td></tr>{% endfor %}
     </table></div>
     <h3>Últimos 50 accesos</h3>
     <form action="/admin/clear-usages" method="post" onsubmit="return confirm('¿Borrar TODOS los registros de uso? Esto eliminará también el historial de primera conexión.')"><input type="hidden" name="csrf" value="{{ csrf }}">
@@ -1004,6 +1044,14 @@ def admin():
       {% else %}<tr><td colspan="5">Sin accesos registrados.</td></tr>{% endfor %}
     </table></div>
     <script>
+    function csCopy(button){
+      var value=button.dataset.copy;
+      var original=button.textContent;
+      function success(){button.textContent='✓ Copiado';setTimeout(function(){button.textContent=original},1600)}
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(value).then(success).catch(function(){window.prompt('Copia este dato:',value)});
+      }else{window.prompt('Copia este dato:',value)}
+    }
     /* Temporizador visual de pruebas, sin cambiar códigos ni membresías. */
     (function(){
       function draw(){
