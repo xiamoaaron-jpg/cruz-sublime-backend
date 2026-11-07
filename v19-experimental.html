@@ -58,31 +58,23 @@
   </style>
   
 <script type="module">
-  try {
-    const ort = await import(
-      "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.webgpu.min.mjs"
-    );
-
-    console.log("✅ ONNX Runtime cargado correctamente");
-    console.log("WebGPU disponible:", !!navigator.gpu);
-    console.log("Biblioteca:", typeof ort.InferenceSession);
-  } catch (error) {
-    console.error("❌ Error al cargar ONNX Runtime:", error);
-  }
+  import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.webgpu.min.mjs";
+  window.ortV19 = ort;
+  window.dispatchEvent(new Event("ort-v19-ready"));
 </script>
 
 </head>
 <body>
 <main>
   <h1>👑 Cruz Sublime · V19 Experimental</h1>
-  <p>Laboratorio independiente de mejora de imágenes.</p>
+  <p>Laboratorio independiente de mejora de imágenes con Real-ESRGAN x4. Primera prueba con imágenes pequeñas (máximo 256 px de entrada).</p>
 
   <section class="panel">
     <label for="archivo">Selecciona una imagen:</label>
     <input id="archivo" type="file" accept="image/*">
 
     <div>
-      <button id="mejorar" disabled>Probar mejora conservadora 2X</button>
+      <button id="mejorar" disabled>Probar mejora IA x4 (experimental)</button>
       <button id="descargar" disabled>Descargar PNG</button>
     </div>
 
@@ -108,94 +100,130 @@ const descargar = document.getElementById("descargar");
 const original = document.getElementById("original");
 const resultado = document.getElementById("resultado");
 const estado = document.getElementById("estado");
-
+const MODEL_URL = "./static/models/model_fp16.onnx";
+const MAX_SIDE = 256; // Prueba segura: limita el uso de memoria.
 let imagen = null;
-  
-async function comprobarWebGPU() {
-  if (!navigator.gpu) {
-    estado.textContent =
-      "WebGPU no está disponible en este navegador.";
-    return;
-  }
+let session = null;
+let trabajando = false;
 
-  try {
-    const adapter = await navigator.gpu.requestAdapter();
+function mensaje(texto) { estado.textContent = texto; }
+function detalle(error) { return error?.message || String(error); }
 
-    if (!adapter) {
-      estado.textContent =
-        "WebGPU existe, pero no se encontró una GPU compatible.";
-      return;
-    }
-
-    const device = await adapter.requestDevice();
-
-    estado.textContent =
-      "✅ WebGPU disponible. GPU lista para pruebas de IA.";
-
-    device.destroy();
-  } catch (error) {
-    estado.textContent =
-      "No se pudo iniciar WebGPU: " + error.message;
-  }
-}
-
-comprobarWebGPU();
-
+window.addEventListener("ort-v19-ready", () => {
+  mensaje("Motor ONNX cargado. Selecciona una imagen para probar IA x4.");
+});
 
 archivo.addEventListener("change", async () => {
   mejorar.disabled = true;
   descargar.disabled = true;
+  if (imagen) imagen.close();
   imagen = null;
-
-  const file = archivo.files[0];
+  const file = archivo.files?.[0];
   if (!file) return;
-
   try {
-    const bitmap = await createImageBitmap(file);
-    imagen = bitmap;
-
-    original.width = bitmap.width;
-    original.height = bitmap.height;
-    original.getContext("2d").drawImage(bitmap, 0, 0);
-
-    resultado.width = 1;
-    resultado.height = 1;
-
+    imagen = await createImageBitmap(file);
+    original.width = imagen.width;
+    original.height = imagen.height;
+    original.getContext("2d").drawImage(imagen, 0, 0);
+    resultado.width = resultado.height = 1;
     mejorar.disabled = false;
-    estado.textContent = "Imagen cargada. Lista para la prueba.";
-  } catch (error) {
-    estado.textContent = "No se pudo abrir la imagen.";
-  }
+    mensaje(`Imagen cargada (${imagen.width} × ${imagen.height}). La prueba IA limitará el lado mayor a ${MAX_SIDE} px.`);
+  } catch (e) { mensaje("No se pudo abrir la imagen: " + detalle(e)); }
 });
 
-mejorar.addEventListener("click", () => {
-  if (!imagen) return;
+async function iniciarModelo() {
+  if (session) return session;
+  if (!window.ortV19) throw new Error("ONNX Runtime todavía no cargó. Comprueba tu conexión y recarga la página.");
+  const ort = window.ortV19;
+  mensaje("Cargando modelo IA (aprox. 34 MB). Puede tardar...");
+  // WebGPU primero; WASM como alternativa cuando sea posible.
+  const proveedores = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"];
+  let ultimoError;
+  for (const proveedor of proveedores) {
+    try {
+      session = await ort.InferenceSession.create(MODEL_URL, {
+        executionProviders: [proveedor],
+        graphOptimizationLevel: "all"
+      });
+      console.info("V19 proveedor:", proveedor, "entradas:", session.inputNames, "salidas:", session.outputNames);
+      return session;
+    } catch (e) {
+      ultimoError = e;
+      console.warn("V19: fallo con", proveedor, e);
+    }
+  }
+  throw new Error("No se pudo abrir el modelo con WebGPU ni WASM: " + detalle(ultimoError));
+}
 
-  resultado.width = imagen.width * 2;
-  resultado.height = imagen.height * 2;
-
-  const ctx = resultado.getContext("2d");
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(
-    imagen, 0, 0,
-    resultado.width, resultado.height
-  );
-
-  descargar.disabled = false;
-  estado.textContent =
-    "Prueba 2X terminada. Escalado convencional, sin IA.";
+mejorar.addEventListener("click", async () => {
+  if (!imagen || trabajando) return;
+  trabajando = true;
+  mejorar.disabled = true;
+  descargar.disabled = true;
+  let inputTensor;
+  try {
+    const ort = window.ortV19;
+    const modelo = await iniciarModelo();
+    const ancho = Math.max(1, Math.round(imagen.width * Math.min(1, MAX_SIDE / Math.max(imagen.width, imagen.height))));
+    const alto = Math.max(1, Math.round(imagen.height * Math.min(1, MAX_SIDE / Math.max(imagen.width, imagen.height))));
+    const temporal = document.createElement("canvas");
+    temporal.width = ancho;
+    temporal.height = alto;
+    const tctx = temporal.getContext("2d", { willReadFrequently: true });
+    tctx.drawImage(imagen, 0, 0, ancho, alto);
+    const rgba = tctx.getImageData(0, 0, ancho, alto).data;
+    const plano = ancho * alto;
+    const rgb = new Float32Array(plano * 3);
+    for (let i = 0; i < plano; i++) {
+      rgb[i] = rgba[i * 4] / 255;
+      rgb[plano + i] = rgba[i * 4 + 1] / 255;
+      rgb[2 * plano + i] = rgba[i * 4 + 2] / 255;
+    }
+    inputTensor = new ort.Tensor("float32", rgb, [1, 3, alto, ancho]);
+    mensaje("Procesando imagen con IA... No cierres esta pestaña.");
+    // Permite que el navegador pinte el mensaje antes de inferencia.
+    await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+    const salida = await modelo.run({ [modelo.inputNames[0]]: inputTensor });
+    const tensor = salida[modelo.outputNames[0]];
+    const dimensiones = tensor.dims;
+    if (dimensiones.length !== 4 || dimensiones[0] !== 1 || dimensiones[1] !== 3) {
+      throw new Error("Salida ONNX inesperada: " + JSON.stringify(dimensiones));
+    }
+    const h = dimensiones[2], w = dimensiones[3];
+    const pixeles = tensor.data;
+    const total = w * h;
+    const datos = new Uint8ClampedArray(total * 4);
+    for (let i = 0; i < total; i++) {
+      datos[4 * i] = Math.round(Math.max(0, Math.min(1, pixeles[i])) * 255);
+      datos[4 * i + 1] = Math.round(Math.max(0, Math.min(1, pixeles[total + i])) * 255);
+      datos[4 * i + 2] = Math.round(Math.max(0, Math.min(1, pixeles[2 * total + i])) * 255);
+      datos[4 * i + 3] = 255;
+    }
+    resultado.width = w;
+    resultado.height = h;
+    resultado.getContext("2d").putImageData(new ImageData(datos, w, h), 0, 0);
+    descargar.disabled = false;
+    mensaje(`✅ IA ejecutada. Resultado: ${w} × ${h} px. Prueba experimental con límite de entrada de ${MAX_SIDE} px.`);
+    tensor.dispose?.();
+  } catch (e) {
+    console.error("Error V19:", e);
+    mensaje("❌ Prueba IA fallida: " + detalle(e));
+  } finally {
+    inputTensor?.dispose?.();
+    trabajando = false;
+    mejorar.disabled = !imagen;
+  }
 });
 
 descargar.addEventListener("click", () => {
   resultado.toBlob(blob => {
-    if (!blob) return;
+    if (!blob) { mensaje("No se pudo crear el PNG."); return; }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "CruzSublime_V19_Prueba.png";
+    a.download = "CruzSublime_V19_IA_x4.png";
     a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   }, "image/png");
 });
 </script>
