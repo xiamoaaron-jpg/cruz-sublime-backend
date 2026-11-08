@@ -1975,6 +1975,18 @@ $('cpDownload').addEventListener('click',async()=>{
     </div>
   </div>
   <div class="panel" id="panel-img">
+    <div class="card cs-cloud-card" id="cloudCard">
+      <h2>☁️ Mejora en la nube · <span id="cloudLeft">50 al mes</span></h2>
+      <p style="color:#c9d1e6;margin:6px 0 12px">Calidad profesional procesada en nuestro servidor, sin depender de tu computadora. Conserva el fondo transparente de tus PNG. Hasta 2000 px por lado.</p>
+      <input type="file" id="cloudFile" accept="image/png,image/jpeg,image/webp">
+      <div class="btns" style="margin-top:12px"><button class="btn" id="cloudGo" disabled>☁️ Mejorar en la nube · 1 mejora</button>
+      <a class="btn ghost" id="cloudDownload" style="display:none;text-decoration:none">⬇ Descargar PNG</a></div>
+      <div class="status" id="cloudStatus" aria-live="polite">Selecciona una imagen.</div>
+      <div class="preview" id="cloudPreview" style="display:none">
+        <div class="pv checker"><h4>Original</h4><img id="cloudBefore" alt="Original" style="max-width:100%;background:transparent!important"></div>
+        <div class="pv checker"><h4>Mejorada</h4><img id="cloudAfter" alt="Mejorada" style="max-width:100%;background:transparent!important"></div>
+      </div>
+    </div>
     <div class="card cs-v18-card">
       <h2>✨ Mejorador IA V18 · Definición fina</h2>
       <p style="color:#c9d1e6;margin-bottom:12px">Laboratorio V18: Real-ESRGAN x4, ajustes de luz, claridad y contraste suave.</p>
@@ -2025,7 +2037,7 @@ $('cpDownload').addEventListener('click',async()=>{
 .v18-loupe{width:155px;height:155px;border:2px solid #eacb88}
 @media(max-width:1000px){.v18-studio{grid-template-columns:1fr!important}.v18-image-viewport{height:min(66vh,650px);min-height:350px}}
 @media(max-width:650px){.v18-previews{grid-template-columns:1fr!important}.v18-image-viewport{height:400px;min-height:300px}}
-&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;div class=&quot;wrap&quot;&gt;&lt;h1&gt;✦ Cruz Sublime · Laboratorio IA V18&lt;/h1&gt;&lt;p&gt;&lt;span class=&quot;badge&quot;&gt;V18 EXPERIMENTAL: Real-ESRGAN x4 · luz y claridad suave&lt;/span&gt; · Procesamiento local en tu navegador · Sin subir fotografías.&lt;/p&gt;&lt;div class=&quot;v18-studio&quot;&gt;&lt;div class=&quot;panel v18-settings&quot;&gt;&lt;div class=&quot;controls&quot;&gt;&lt;label&gt;Fotografía &lt;input accept=&quot;image/*&quot; id=&quot;file&quot; type=&quot;file&quot;/&gt;&lt;/label&gt;&lt;label&gt;Motor &lt;select id=&quot;engine&quot;&gt;&lt;option value=&quot;esrgan&quot;&gt;Real-ESRGAN x4 · estable en tus pruebas&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label&gt;Salida &lt;select id=&quot;scale&quot;&gt;&lt;option value=&quot;2&quot;&gt;2X IA (recomendado)&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;4X IA (más memoria)&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label&gt;&lt;input checked=&quot;&quot; id=&quot;auto&quot; type=&quot;checkbox&quot;/&gt; Ajustes automáticos&lt;/label&gt;&lt;label&gt;Modo &lt;select id=&quot;mode&quot;&gt;&lt;option value=&quot;natural&quot;&gt;📷 Natural · fotografías&lt;/option&gt;&lt;option value=&quot;definition&quot;&gt;✒ Definición · diseños y letras&lt;/option&gt;&lt;option value=&quot;photo&quot;&gt;📸 Fotografía Pro · fidelidad de retratos&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label&gt;Fuerza de IA &lt;input id=&quot;blend&quot; max=&quot;100&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;85&quot;/&gt;&lt;span id=&quot;blendVal&quot;&gt;85%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Protección de bordes &lt;input id=&quot;texture&quot; max=&quot;100&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;35&quot;/&gt;&lt;span id=&quot;textureVal&quot;&gt;35%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Microtextura &lt;input id=&quot;micro&quot; max=&quot;30&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;8&quot;/&gt;&lt;span id=&quot;microVal&quot;&gt;8%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Nitidez natural &lt;input id=&quot;clarity&quot; max=&quot;30&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;14&quot;/&gt;&lt;span id=&quot;clarityVal&quot;&gt;14%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Luminosidad &lt;input id=&quot;light&quot; max=&quot;12&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;5&quot;/&gt;&lt;span id=&quot;lightVal&quot;&gt;5%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Claridad suave &lt;input id=&quot;softClear&quot; max=&quot;12&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;4&quot;/&gt;&lt;span id=&quot;softClearVal&quot;&gt;4%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Detalle de contornos &lt;input id=&quot;edgeDetail&quot; max=&quot;30&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;12&quot;/&gt;&lt;span id=&quot;edgeDetailVal&quot;&gt;12%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Contraste fino &lt;input id=&quot;fineContrast&quot; max=&quot;20&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;6&quot;/&gt;&lt;span id=&quot;fineContrastVal&quot;&gt;6%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Bloques &lt;select id=&quot;tile&quot;&gt;&lt;option value=&quot;64&quot;&gt;64 px (recomendado)&lt;/option&gt;&lt;option value=&quot;48&quot;&gt;48 px (menos memoria)&lt;/option&gt;&lt;option value=&quot;96&quot;&gt;96 px (más rápido)&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;button disabled=&quot;&quot; id=&quot;go&quot;&gt;Mejorar con IA&lt;/button&gt;&lt;/div&gt;&lt;p class=&quot;note&quot;&gt;V18: clasificación automática orientativa según el contenido. Modo Natural: IA 76%, protección 50%. Definición: IA 95%, protección 10%. Fotografía Pro: IA 60%, protección 68% y microtextura 10%. La microtextura recupera contraste del original, no inventa poros ni detalle inexistente. Los modos manuales de Real-ESRGAN usan el mismo modelo; Fotografía Pro NO detecta rostros y puede conservar algo de pixelado. Real-ESRGAN trabaja en 4X y se reduce a 2X cuando se solicita. La IA puede inventar detalles. V18 conserva los límites de color de V11 y agrega un acabado opcional de nitidez y luminosidad. V18 limita algunos cambios de color respecto del original; esto puede reducir artefactos, pero también detalle aparente.&lt;/p&gt;&lt;p class=&quot;note&quot; id=&quot;diagnosis&quot;&gt;La nitidez y luminosidad son ajustes opcionales posteriores a la IA; no recuperan información perdida. La clasificación automática es heurística: analiza bordes y colores; puedes desactivarla y elegir los ajustes de la V9.&lt;/p&gt;&lt;p class=&quot;note&quot; style=&quot;border-left:3px solid #b58af8;padding-left:12px&quot;&gt;PRUEBA V18: contraste fino adicional y limitado en los detalles después de Real-ESRGAN. No se cambió el modelo de IA. Para diseños prueba luminosidad 5% y claridad suave 4%; si aparecen zonas demasiado brillantes, reduce ambos controles. El procesamiento continúa en tu navegador. El nuevo contraste fino inicia en 6% y puedes ponerlo en 0% para comparar con V17.&lt;/p&gt;&lt;div class=&quot;status&quot; id=&quot;status&quot;&gt;Selecciona una fotografía.&lt;/div&gt;&lt;progress id=&quot;progress&quot; max=&quot;100&quot; value=&quot;0&quot;&gt;&lt;/progress&gt;&lt;a class=&quot;download&quot; download=&quot;cruz-sublime-v18.png&quot; id=&quot;download&quot;&gt;⬇ Descargar PNG mejorado&lt;/a&gt;&lt;/div&gt;&lt;div class=&quot;panel views v18-previews&quot;&gt;&lt;div&gt;&lt;h3&gt;Original&lt;/h3&gt;&lt;div aria-label=&quot;Zoom de imagen&quot; class=&quot;v18-zoom-bar&quot;&gt;&lt;button aria-label=&quot;Alejar&quot; data-zoom=&quot;out&quot; type=&quot;button&quot;&gt;−&lt;/button&gt;&lt;button aria-label=&quot;Restablecer zoom&quot; data-zoom=&quot;reset&quot; type=&quot;button&quot;&gt;100%&lt;/button&gt;&lt;button aria-label=&quot;Acercar&quot; data-zoom=&quot;in&quot; type=&quot;button&quot;&gt;+&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;v18-image-viewport&quot; data-view=&quot;before&quot;&gt;&lt;img alt=&quot;Original&quot; id=&quot;before&quot;/&gt;&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&lt;h3&gt;Resultado IA&lt;/h3&gt;&lt;div aria-label=&quot;Zoom de imagen&quot; class=&quot;v18-zoom-bar&quot;&gt;&lt;button aria-label=&quot;Alejar&quot; data-zoom=&quot;out&quot; type=&quot;button&quot;&gt;−&lt;/button&gt;&lt;button aria-label=&quot;Restablecer zoom&quot; data-zoom=&quot;reset&quot; type=&quot;button&quot;&gt;100%&lt;/button&gt;&lt;button aria-label=&quot;Acercar&quot; data-zoom=&quot;in&quot; type=&quot;button&quot;&gt;+&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;v18-image-viewport&quot; data-view=&quot;after&quot;&gt;&lt;img alt=&quot;Resultado de superresolución&quot; id=&quot;after&quot;/&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;p class=&quot;note&quot;&gt;Los modelos y bibliotecas se descargan desde servicios externos al iniciar. Swin2SR no se usa en esta versión por errores de ejecución observados. Necesitas internet en la primera carga. El modelo se obtiene de Hugging Face y su disponibilidad depende del servicio externo. El procesamiento de píxeles se hace localmente. Se recomienda Chrome o Edge actualizado. El resultado es experimental; una IA puede inventar detalles. Fotografía Pro utiliza una estimación de color, no un detector de personas. El nuevo ajuste de microtextura usa contraste local del original y puede enfatizar ruido JPEG; si aparece grano, bájalo a 0%. Modelo Real-ESRGAN © Xintao Wang, BSD-3-Clause. El procesamiento y la exportación requieren memoria RAM; 4X puede ser exigente. &lt;a href=&quot;https://github.com/xinntao/Real-ESRGAN&quot; rel=&quot;noopener&quot; style=&quot;color:#c9aaff&quot; target=&quot;_blank&quot;&gt;Licencia y proyecto&lt;/a&gt;.&lt;/p&gt;&lt;script src=&quot;https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js&quot;&gt;&lt;/script&gt;&lt;script&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;div class=&quot;wrap&quot;&gt;&lt;h1&gt;✦ Cruz Sublime · Laboratorio IA V18&lt;/h1&gt;&lt;p&gt;&lt;span class=&quot;badge&quot;&gt;V18 EXPERIMENTAL: Real-ESRGAN x4 · luz y claridad suave&lt;/span&gt; · Procesamiento local en tu navegador · Sin subir fotografías.&lt;/p&gt;&lt;div class=&quot;v18-studio&quot;&gt;&lt;div class=&quot;panel v18-settings&quot;&gt;&lt;div class=&quot;controls&quot;&gt;&lt;label&gt;Fotografía &lt;input accept=&quot;image/*&quot; id=&quot;file&quot; type=&quot;file&quot;/&gt;&lt;/label&gt;&lt;label&gt;Motor &lt;select id=&quot;engine&quot;&gt;&lt;option value=&quot;esrgan&quot;&gt;Real-ESRGAN x4 · estable en tus pruebas&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label&gt;Salida &lt;select id=&quot;scale&quot;&gt;&lt;option value=&quot;2&quot;&gt;2X IA (recomendado)&lt;/option&gt;&lt;option value=&quot;4&quot;&gt;4X IA (más memoria)&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label&gt;&lt;input checked=&quot;&quot; id=&quot;auto&quot; type=&quot;checkbox&quot;/&gt; Ajustes automáticos&lt;/label&gt;&lt;label&gt;Modo &lt;select id=&quot;mode&quot;&gt;&lt;option value=&quot;natural&quot;&gt;📷 Natural · fotografías&lt;/option&gt;&lt;option value=&quot;definition&quot;&gt;✒ Definición · diseños y letras&lt;/option&gt;&lt;option value=&quot;photo&quot;&gt;📸 Fotografía Pro · fidelidad de retratos&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;label&gt;Fuerza de IA &lt;input id=&quot;blend&quot; max=&quot;100&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;85&quot;/&gt;&lt;span id=&quot;blendVal&quot;&gt;85%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Protección de bordes &lt;input id=&quot;texture&quot; max=&quot;100&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;35&quot;/&gt;&lt;span id=&quot;textureVal&quot;&gt;35%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Microtextura &lt;input id=&quot;micro&quot; max=&quot;30&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;0&quot;/&gt;&lt;span id=&quot;microVal&quot;&gt;0%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Nitidez natural &lt;input id=&quot;clarity&quot; max=&quot;30&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;14&quot;/&gt;&lt;span id=&quot;clarityVal&quot;&gt;14%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Luminosidad &lt;input id=&quot;light&quot; max=&quot;12&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;5&quot;/&gt;&lt;span id=&quot;lightVal&quot;&gt;5%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Claridad suave &lt;input id=&quot;softClear&quot; max=&quot;12&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;4&quot;/&gt;&lt;span id=&quot;softClearVal&quot;&gt;4%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Detalle de contornos &lt;input id=&quot;edgeDetail&quot; max=&quot;30&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;12&quot;/&gt;&lt;span id=&quot;edgeDetailVal&quot;&gt;12%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Contraste fino &lt;input id=&quot;fineContrast&quot; max=&quot;20&quot; min=&quot;0&quot; type=&quot;range&quot; value=&quot;6&quot;/&gt;&lt;span id=&quot;fineContrastVal&quot;&gt;6%&lt;/span&gt;&lt;/label&gt;&lt;label&gt;Bloques &lt;select id=&quot;tile&quot;&gt;&lt;option value=&quot;128&quot;&gt;128 px (recomendado · sin cuadrícula)&lt;/option&gt;&lt;option value=&quot;96&quot;&gt;96 px&lt;/option&gt;&lt;option value=&quot;64&quot;&gt;64 px (menos memoria)&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;button disabled=&quot;&quot; id=&quot;go&quot;&gt;Mejorar con IA&lt;/button&gt;&lt;/div&gt;&lt;p class=&quot;note&quot;&gt;V18: clasificación automática orientativa según el contenido. Modo Natural: IA 76%, protección 50%. Definición: IA 95%, protección 10%. Fotografía Pro: IA 60%, protección 68% y microtextura 10%. La microtextura recupera contraste del original, no inventa poros ni detalle inexistente. Los modos manuales de Real-ESRGAN usan el mismo modelo; Fotografía Pro NO detecta rostros y puede conservar algo de pixelado. Real-ESRGAN trabaja en 4X y se reduce a 2X cuando se solicita. La IA puede inventar detalles. V18 conserva los límites de color de V11 y agrega un acabado opcional de nitidez y luminosidad. V18 limita algunos cambios de color respecto del original; esto puede reducir artefactos, pero también detalle aparente.&lt;/p&gt;&lt;p class=&quot;note&quot; id=&quot;diagnosis&quot;&gt;La nitidez y luminosidad son ajustes opcionales posteriores a la IA; no recuperan información perdida. La clasificación automática es heurística: analiza bordes y colores; puedes desactivarla y elegir los ajustes de la V9.&lt;/p&gt;&lt;p class=&quot;note&quot; style=&quot;border-left:3px solid #b58af8;padding-left:12px&quot;&gt;PRUEBA V18: contraste fino adicional y limitado en los detalles después de Real-ESRGAN. No se cambió el modelo de IA. Para diseños prueba luminosidad 5% y claridad suave 4%; si aparecen zonas demasiado brillantes, reduce ambos controles. El procesamiento continúa en tu navegador. El nuevo contraste fino inicia en 6% y puedes ponerlo en 0% para comparar con V17.&lt;/p&gt;&lt;div class=&quot;status&quot; id=&quot;status&quot;&gt;Selecciona una fotografía.&lt;/div&gt;&lt;progress id=&quot;progress&quot; max=&quot;100&quot; value=&quot;0&quot;&gt;&lt;/progress&gt;&lt;a class=&quot;download&quot; download=&quot;cruz-sublime-v18.png&quot; id=&quot;download&quot;&gt;⬇ Descargar PNG mejorado&lt;/a&gt;&lt;/div&gt;&lt;div class=&quot;panel views v18-previews&quot;&gt;&lt;div&gt;&lt;h3&gt;Original&lt;/h3&gt;&lt;div aria-label=&quot;Zoom de imagen&quot; class=&quot;v18-zoom-bar&quot;&gt;&lt;button aria-label=&quot;Alejar&quot; data-zoom=&quot;out&quot; type=&quot;button&quot;&gt;−&lt;/button&gt;&lt;button aria-label=&quot;Restablecer zoom&quot; data-zoom=&quot;reset&quot; type=&quot;button&quot;&gt;100%&lt;/button&gt;&lt;button aria-label=&quot;Acercar&quot; data-zoom=&quot;in&quot; type=&quot;button&quot;&gt;+&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;v18-image-viewport&quot; data-view=&quot;before&quot;&gt;&lt;img alt=&quot;Original&quot; id=&quot;before&quot;/&gt;&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&lt;h3&gt;Resultado IA&lt;/h3&gt;&lt;div aria-label=&quot;Zoom de imagen&quot; class=&quot;v18-zoom-bar&quot;&gt;&lt;button aria-label=&quot;Alejar&quot; data-zoom=&quot;out&quot; type=&quot;button&quot;&gt;−&lt;/button&gt;&lt;button aria-label=&quot;Restablecer zoom&quot; data-zoom=&quot;reset&quot; type=&quot;button&quot;&gt;100%&lt;/button&gt;&lt;button aria-label=&quot;Acercar&quot; data-zoom=&quot;in&quot; type=&quot;button&quot;&gt;+&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;v18-image-viewport&quot; data-view=&quot;after&quot;&gt;&lt;img alt=&quot;Resultado de superresolución&quot; id=&quot;after&quot;/&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;p class=&quot;note&quot;&gt;Los modelos y bibliotecas se descargan desde servicios externos al iniciar. Swin2SR no se usa en esta versión por errores de ejecución observados. Necesitas internet en la primera carga. El modelo se obtiene de Hugging Face y su disponibilidad depende del servicio externo. El procesamiento de píxeles se hace localmente. Se recomienda Chrome o Edge actualizado. El resultado es experimental; una IA puede inventar detalles. Fotografía Pro utiliza una estimación de color, no un detector de personas. El nuevo ajuste de microtextura usa contraste local del original y puede enfatizar ruido JPEG; si aparece grano, bájalo a 0%. Modelo Real-ESRGAN © Xintao Wang, BSD-3-Clause. El procesamiento y la exportación requieren memoria RAM; 4X puede ser exigente. &lt;a href=&quot;https://github.com/xinntao/Real-ESRGAN&quot; rel=&quot;noopener&quot; style=&quot;color:#c9aaff&quot; target=&quot;_blank&quot;&gt;Licencia y proyecto&lt;/a&gt;.&lt;/p&gt;&lt;script src=&quot;https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js&quot;&gt;&lt;/script&gt;&lt;script&gt;
  &#x27;use strict&#x27;;
 const $=id=&gt;document.getElementById(id);
 const MODEL=&#x27;https://huggingface.co/skillsafe-ai/realesr-general-x4v3/resolve/main/model.onnx&#x27;;
@@ -2033,7 +2045,7 @@ let image=null,session=null,busy=false,downloadURL=null,originalURL=null;
 for(const [id,out] of [[&#x27;blend&#x27;,&#x27;blendVal&#x27;],[&#x27;texture&#x27;,&#x27;textureVal&#x27;],[&#x27;micro&#x27;,&#x27;microVal&#x27;],[&#x27;clarity&#x27;,&#x27;clarityVal&#x27;],[&#x27;light&#x27;,&#x27;lightVal&#x27;],[&#x27;edgeDetail&#x27;,&#x27;edgeDetailVal&#x27;],[&#x27;fineContrast&#x27;,&#x27;fineContrastVal&#x27;]]) $(id).oninput=()=&gt;$(out).textContent=$(id).value+&#x27;%&#x27;;
 $(&#x27;mode&#x27;).onchange=()=&gt;{
  const mode=$(&#x27;mode&#x27;).value;
- const preset={natural:[76,50,7],definition:[95,10,0],photo:[60,68,10]}[mode];
+ const preset={natural:[76,50,0],definition:[95,10,0],photo:[60,68,0]}[mode];
  $(&#x27;blend&#x27;).value=preset[0];$(&#x27;texture&#x27;).value=preset[1];$(&#x27;micro&#x27;).value=preset[2];
  $(&#x27;blend&#x27;).oninput();$(&#x27;texture&#x27;).oninput();$(&#x27;micro&#x27;).oninput();
  status(({natural:&#x27;Modo Natural: equilibrio de detalle y fidelidad.&#x27;,definition:&#x27;Modo Definición: prioriza bordes y líneas.&#x27;,photo:&#x27;Fotografía Pro: protege tonos de piel y limita alteraciones de contraste.&#x27;})[mode]);
@@ -2120,6 +2132,14 @@ function preserveTexture(ai,bi,w,h,strength,protection,photoMode=false,micro=0){
  }}return new ImageData(ans,w,h);
 }
 
+// Cruz Sublime: conserva la transparencia del PNG original (indispensable para DTF).
+function imageHasAlpha(){const w=Math.min(image.width,512),h=Math.max(1,Math.round(image.height*w/image.width));
+ const c=canvas(w,h),x=c.getContext(&#x27;2d&#x27;,{willReadFrequently:true});x.drawImage(image,0,0,w,h);
+ const d=x.getImageData(0,0,w,h).data;for(let i=3;i&lt;d.length;i+=4)if(d[i]&lt;250)return true;return false;}
+function restoreAlpha(final){const a=canvas(final.width,final.height),ac=a.getContext(&#x27;2d&#x27;,{willReadFrequently:true});
+ ac.imageSmoothingEnabled=true;ac.imageSmoothingQuality=&#x27;high&#x27;;ac.drawImage(image,0,0,a.width,a.height);
+ const ad=ac.getImageData(0,0,a.width,a.height).data,fc=final.getContext(&#x27;2d&#x27;,{willReadFrequently:true});
+ const im=fc.getImageData(0,0,final.width,final.height),d=im.data;for(let i=3;i&lt;d.length;i+=4)d[i]=ad[i];fc.putImageData(im,0,0);}
 // V18: realce de contornos basado en luminancia, limitado para evitar halos.
 // No modifica la geometría, no inventa detalle y mantiene el tono relativo de los canales.
 function finishV18(c){
@@ -2172,9 +2192,9 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
  if(targetPixels&gt;18000000)throw Error(&#x27;La salida solicitada requiere demasiada memoria. Selecciona 2X IA.&#x27;);
  if(image.width*4&gt;16384||image.height*4&gt;16384)throw Error(&#x27;Las dimensiones exceden el límite del lienzo de procesamiento.&#x27;);
  status(`Preparando procesamiento local. Memoria temporal estimada: ${estimatedMB} MB o más…`);await pause();
- await load();const t=+$(&#x27;tile&#x27;).value,pad=8,step=t-pad*2,W=image.width,H=image.height;
+ await load();const t=+$(&#x27;tile&#x27;).value,pad=16,step=t-pad*2,W=image.width,H=image.height;
  if(W*4&gt;16000||H*4&gt;16000||W*H&gt;5000000)throw Error(&#x27;Imagen demasiado grande para este laboratorio; prueba una menor.&#x27;);
- const src=canvas(W,H),sc=src.getContext(&#x27;2d&#x27;,{willReadFrequently:true});sc.drawImage(image,0,0);
+ const src=canvas(W,H),sc=src.getContext(&#x27;2d&#x27;,{willReadFrequently:true});const transparent=imageHasAlpha();if(transparent){try{for(const b of [24,12,6,3]){sc.filter=&#x27;blur(&#x27;+b+&#x27;px)&#x27;;sc.drawImage(image,0,0);sc.drawImage(image,0,0);}}catch(e){}sc.filter=&#x27;none&#x27;;}sc.drawImage(image,0,0);
  const pixels=sc.getImageData(0,0,W,H).data;
  const out=canvas(W*4,H*4),oc=out.getContext(&#x27;2d&#x27;);
  const tileOut=canvas(t*4,t*4),toc=tileOut.getContext(&#x27;2d&#x27;);
@@ -2197,8 +2217,9 @@ $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;
  if(strength===1&amp;&amp;protection===0)rc.drawImage(out,0,0);
  else rc.putImageData(preserveTexture(oc.getImageData(0,0,out.width,out.height),bc.getImageData(0,0,base.width,base.height),out.width,out.height,strength,protection,$(&#x27;mode&#x27;).value===&#x27;photo&#x27;,+$(&#x27;micro&#x27;).value/100),0,0);
  let final=result;
- if($(&#x27;scale&#x27;).value===&#x27;2&#x27;){const half=canvas(W*2,H*2);half.getContext(&#x27;2d&#x27;).drawImage(result,0,0,half.width,half.height);final=half;}
+ if($(&#x27;scale&#x27;).value===&#x27;2&#x27;){const half=canvas(W*2,H*2),hc=half.getContext(&#x27;2d&#x27;);hc.imageSmoothingEnabled=true;hc.imageSmoothingQuality=&#x27;high&#x27;;hc.drawImage(result,0,0,half.width,half.height);final=half;}
  finishV18(final);
+ if(transparent)restoreAlpha(final);
  const blob=await new Promise(resolve=&gt;final.toBlob(resolve,&#x27;image/png&#x27;));if(!blob)throw Error(&#x27;No se pudo exportar PNG.&#x27;);
  if(downloadURL)URL.revokeObjectURL(downloadURL);downloadURL=URL.createObjectURL(blob);
  $(&#x27;after&#x27;).src=downloadURL;$(&#x27;download&#x27;).href=downloadURL;$(&#x27;download&#x27;).style.display=&#x27;inline-block&#x27;;
@@ -5804,5 +5825,105 @@ window.csRevisarPrueba = revisarPrueba;
 </script>
 <!-- FIN VENTANA PARA COPIAR CÓDIGO -->
 
+<script>
+/* Cruz Sublime · Mejora en la nube (planes basico, medio y anual) */
+(function(){
+  const API='https://cruz-sublime-api.onrender.com';
+  const $=id=>document.getElementById(id);
+  if(!$('cloudCard'))return;
+  let file=null,originalURL=null,resultURL=null,busy=false;
+  const msg=t=>{$('cloudStatus').textContent=t;};
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  async function token(){
+    let t=null;try{t=sessionStorage.getItem('cruz_member_token');}catch(e){}
+    if(t)return t;
+    let code='',user='';try{code=localStorage.getItem('cruz_sublime_code')||'';user=localStorage.getItem('cruz_sublime_user')||'';}catch(e){}
+    if(!code||!user)return null;
+    try{
+      const r=await fetch(API+'/api/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,user})});
+      const d=await r.json();
+      if(d.valid&&d.token){try{sessionStorage.setItem('cruz_member_token',d.token);}catch(e){}return d.token;}
+    }catch(e){}
+    return null;
+  }
+  function showCredits(c){if(c&&typeof c.left==='number')$('cloudLeft').textContent='te quedan '+c.left+' de '+c.max+' este mes';}
+  async function refresh(){
+    const t=await token();
+    if(!t){$('cloudLeft').textContent='inicia sesión con tu código';return;}
+    try{
+      const r=await fetch(API+'/api/cloud/credits',{headers:{Authorization:'Bearer '+t}});
+      const d=await r.json();
+      if(r.status===403){$('cloudCard').style.display='none';return;}
+      if(r.status===401){try{sessionStorage.removeItem('cruz_member_token');}catch(e){}$('cloudLeft').textContent='vuelve a iniciar sesión';return;}
+      if(r.ok)showCredits(d);
+    }catch(e){}
+  }
+  function readDataURL(f){return new Promise((ok,bad)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>bad(new Error('No se pudo leer la imagen'));r.readAsDataURL(f);});}
+  async function hasAlpha(bmp){
+    const w=Math.min(bmp.width,512),h=Math.max(1,Math.round(bmp.height*w/bmp.width));
+    const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,w,h);
+    const d=x.getImageData(0,0,w,h).data;for(let i=3;i<d.length;i+=4)if(d[i]<250)return true;return false;
+  }
+  // Descarga el resultado y, si el original era transparente, le devuelve esa transparencia.
+  async function finish(url){
+    const res=await fetch(url,{mode:'cors'});if(!res.ok)throw new Error('descarga');
+    const blob=await res.blob();
+    const orig=await createImageBitmap(file);
+    if(!(await hasAlpha(orig)))return blob;
+    const up=await createImageBitmap(blob);
+    const c=document.createElement('canvas');c.width=up.width;c.height=up.height;
+    const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(up,0,0);
+    const a=document.createElement('canvas');a.width=up.width;a.height=up.height;
+    const ax=a.getContext('2d',{willReadFrequently:true});ax.imageSmoothingEnabled=true;ax.imageSmoothingQuality='high';ax.drawImage(orig,0,0,a.width,a.height);
+    const im=x.getImageData(0,0,c.width,c.height),ad=ax.getImageData(0,0,a.width,a.height).data;
+    for(let i=3;i<im.data.length;i+=4)im.data[i]=ad[i];
+    x.putImageData(im,0,0);
+    return await new Promise((ok,bad)=>c.toBlob(b=>b?ok(b):bad(new Error('png')),'image/png'));
+  }
+  $('cloudFile').addEventListener('change',()=>{
+    const f=$('cloudFile').files[0];if(!f)return;
+    if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>8*1024*1024){msg('Usa PNG, JPG o WEBP de máximo 8 MB.');$('cloudFile').value='';return;}
+    file=f;if(originalURL)URL.revokeObjectURL(originalURL);originalURL=URL.createObjectURL(f);
+    $('cloudBefore').src=originalURL;$('cloudAfter').removeAttribute('src');$('cloudPreview').style.display='grid';
+    $('cloudDownload').style.display='none';$('cloudGo').disabled=false;msg('Imagen lista. Presiona «Mejorar en la nube».');
+  });
+  $('cloudGo').addEventListener('click',async()=>{
+    if(busy||!file)return;
+    const t=await token();if(!t){msg('Inicia sesión con tu código y correo para usar la mejora en la nube.');return;}
+    busy=true;$('cloudGo').disabled=true;$('cloudDownload').style.display='none';
+    try{
+      msg('Enviando imagen al servidor…');
+      const image=await readDataURL(file);
+      const r=await fetch(API+'/api/cloud/upscale',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({image})});
+      const d=await r.json();
+      if(d.credits)showCredits(d.credits);
+      if(!r.ok&&r.status!==202)throw new Error(d.error||'No se pudo iniciar la mejora');
+      let url=null;
+      for(let i=0;i<60&&!url;i++){
+        await sleep(3000);
+        msg('Mejorando en la nube… '+((i+1)*3)+' segundos.');
+        const p=await fetch(API+'/api/cloud/job/'+encodeURIComponent(d.job_id),{headers:{Authorization:'Bearer '+t}});
+        const j=await p.json().catch(()=>({}));
+        if(j.credits)showCredits(j.credits);
+        if(j.status==='completed'&&j.image)url=j.image;
+        else if(j.status==='failed')throw new Error(j.error||'La mejora no se completó');
+        else if(!p.ok&&p.status!==202)throw new Error(j.error||'Error al consultar la mejora');
+      }
+      if(!url)throw new Error('Sigue en proceso. Espera un momento antes de volver a intentar.');
+      msg('Preparando tu PNG…');
+      if(resultURL&&resultURL.startsWith('blob:'))URL.revokeObjectURL(resultURL);
+      try{resultURL=URL.createObjectURL(await finish(url));}catch(e){resultURL=url;}
+      $('cloudAfter').src=resultURL;
+      const a=$('cloudDownload');a.href=resultURL;
+      if(resultURL.startsWith('blob:')){a.download='Cruz_Sublime_Nube_'+Date.now()+'.png';a.removeAttribute('target');}
+      else{a.removeAttribute('download');a.target='_blank';}
+      a.style.display='inline-block';
+      msg('¡Listo! Ya puedes descargar tu imagen mejorada.');
+    }catch(e){msg(e.message||'No se pudo completar la mejora.');}
+    finally{busy=false;$('cloudGo').disabled=false;}
+  });
+  refresh();
+})();
+</script>
 </body>
 </html>
