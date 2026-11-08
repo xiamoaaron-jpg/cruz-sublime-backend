@@ -1318,6 +1318,189 @@ def _job_update(job_id, status, result=None, prediction_id=None):
         conn.commit()
     finally: conn.close()
 
+# ===== Mejora en la nube (Real-ESRGAN) para planes basico / medio / anual =====
+# 50 mejoras por correo al mes. Se cobra al iniciar y se devuelve si Replicate falla.
+# Los códigos de prueba gratis no reciben token, así que no gastan Replicate.
+BASIC_CLOUD_LIMIT = int(os.environ.get("BASIC_CLOUD_LIMIT", "50"))
+BASIC_CLOUD_PLANS = ("basico", "medio", "anual")
+_ESRGAN = {"version": os.environ.get("REPLICATE_ESRGAN_VERSION", "").strip()}
+
+def _esrgan_version():
+    """Usa REPLICATE_ESRGAN_VERSION si existe; si no, pide a Replicate la versión más reciente."""
+    if _ESRGAN["version"]:
+        return _ESRGAN["version"]
+    r = requests.get("https://api.replicate.com/v1/models/nightmareai/real-esrgan",
+                     headers={"Authorization": "Bearer " + REPLICATE_TOKEN}, timeout=12)
+    r.raise_for_status()
+    version = (r.json().get("latest_version") or {}).get("id")
+    if version:
+        _ESRGAN["version"] = version
+    return version
+
+def _cloud_db(work):
+    conn = get_conn()
+    if not conn:
+        raise RuntimeError("Base de datos no disponible")
+    try:
+        with conn.cursor() as c:
+            result = work(c)
+        conn.commit()
+        return result
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+def _init_cloud():
+    def work(c):
+        c.execute("""CREATE TABLE IF NOT EXISTS cloud_upscale_monthly (
+            email TEXT NOT NULL, month TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (email, month))""")
+        c.execute("""CREATE TABLE IF NOT EXISTS cloud_upscale_jobs (
+            prediction_id TEXT PRIMARY KEY, email TEXT NOT NULL, month TEXT NOT NULL,
+            status TEXT NOT NULL, created_at TIMESTAMP DEFAULT NOW())""")
+    try:
+        _cloud_db(work)
+    except Exception as e:
+        print("Cloud init:", type(e).__name__)
+_init_cloud()
+
+def _cloud_member():
+    member = _member()
+    if not member:
+        return None, (jsonify(error="Inicia sesión con tu código para usar la mejora en la nube"), 401)
+    if member["plan"] not in BASIC_CLOUD_PLANS:
+        return None, (jsonify(error="Tu plan usa el Estudio Premium VIP"), 403)
+    return member, None
+
+def _cloud_used(email, month):
+    def work(c):
+        c.execute("SELECT used FROM cloud_upscale_monthly WHERE email=%s AND month=%s", (email, month))
+        row = c.fetchone()
+        return row[0] if row else 0
+    return _cloud_db(work)
+
+def _cloud_info(used):
+    return {"max": BASIC_CLOUD_LIMIT, "used": used, "left": max(0, BASIC_CLOUD_LIMIT - used)}
+
+def _cloud_refund(email, month):
+    _cloud_db(lambda c: c.execute(
+        "UPDATE cloud_upscale_monthly SET used = GREATEST(used - 1, 0) WHERE email=%s AND month=%s",
+        (email, month)))
+
+@app.route("/api/cloud/credits", methods=["GET"])
+def cloud_credits():
+    member, error = _cloud_member()
+    if error:
+        return error
+    try:
+        return jsonify(_cloud_info(_cloud_used(member["email"].lower(), datetime.now().strftime("%Y-%m"))))
+    except Exception:
+        return jsonify(error="No se pudo consultar tu saldo"), 503
+
+@app.route("/api/cloud/upscale", methods=["POST"])
+def cloud_upscale():
+    member, error = _cloud_member()
+    if error:
+        return error
+    if not REPLICATE_TOKEN:
+        return jsonify(error="Mejora en la nube no configurada"), 503
+    data = request.get_json(silent=True) or {}
+    img = data.get("image")
+    if not isinstance(img, str) or not img or len(img) > 16_000_000:
+        return jsonify(error="Imagen faltante o demasiado grande (máximo 8 MB)"), 400
+    image_uri = img if img.startswith("data:") else "data:image/png;base64," + img
+    try:
+        w, h = Image.open(io.BytesIO(base64.b64decode(image_uri.split(",", 1)[-1]))).size
+    except Exception:
+        return jsonify(error="No se pudo leer la imagen"), 400
+    if max(w, h) > 2000:
+        return jsonify(error="La imagen mide más de 2000 px por lado; ya tiene buena resolución o usa el mejorador local"), 400
+    scale = 4 if max(w, h) <= 1000 else 2
+    email, month = member["email"].lower(), datetime.now().strftime("%Y-%m")
+
+    def reserve(c):
+        c.execute("""INSERT INTO cloud_upscale_monthly (email, month, used) VALUES (%s, %s, 1)
+                     ON CONFLICT (email, month) DO UPDATE SET used = cloud_upscale_monthly.used + 1
+                     WHERE cloud_upscale_monthly.used < %s RETURNING used""",
+                  (email, month, BASIC_CLOUD_LIMIT))
+        row = c.fetchone()
+        return row[0] if row else None
+    try:
+        used = _cloud_db(reserve)
+    except Exception:
+        return jsonify(error="No se pudo reservar tu mejora; intenta de nuevo"), 503
+    if used is None:
+        return jsonify(error="Ya usaste tus %d mejoras en la nube de este mes" % BASIC_CLOUD_LIMIT,
+                       credits=_cloud_info(BASIC_CLOUD_LIMIT)), 402
+    try:
+        version = _esrgan_version()
+        if not version:
+            raise RuntimeError("Sin versión")
+        r = requests.post("https://api.replicate.com/v1/predictions", timeout=30,
+                          headers={"Authorization": "Bearer " + REPLICATE_TOKEN, "Content-Type": "application/json"},
+                          json={"version": version, "input": {"image": image_uri, "scale": scale, "face_enhance": False}})
+        r.raise_for_status()
+        prediction_id = r.json()["id"]
+        _cloud_db(lambda c: c.execute(
+            "INSERT INTO cloud_upscale_jobs (prediction_id, email, month, status) VALUES (%s, %s, %s, 'running')",
+            (prediction_id, email, month)))
+    except Exception as e:
+        print("Cloud upscale start:", type(e).__name__)
+        try:
+            _cloud_refund(email, month)
+        except Exception:
+            pass
+        return jsonify(error="No se pudo iniciar la mejora; no se descontó"), 502
+    return jsonify(job_id=prediction_id, scale=scale, credits=_cloud_info(used)), 202
+
+@app.route("/api/cloud/job/<prediction_id>", methods=["GET"])
+def cloud_job(prediction_id):
+    member, error = _cloud_member()
+    if error:
+        return error
+    if not re.fullmatch(r"[A-Za-z0-9]{8,64}", prediction_id or ""):
+        return jsonify(error="Trabajo no válido"), 400
+    email = member["email"].lower()
+
+    def find(c):
+        c.execute("SELECT month, status FROM cloud_upscale_jobs WHERE prediction_id=%s AND email=%s",
+                  (prediction_id, email))
+        return c.fetchone()
+    try:
+        job = _cloud_db(find)
+    except Exception:
+        return jsonify(status="processing"), 202
+    if not job:
+        return jsonify(error="Trabajo no encontrado"), 404
+    month = job[0]
+    try:
+        p = requests.get("https://api.replicate.com/v1/predictions/" + prediction_id,
+                         headers={"Authorization": "Bearer " + REPLICATE_TOKEN}, timeout=12).json()
+    except Exception:
+        return jsonify(status="processing"), 202
+    state = p.get("status")
+    if state == "succeeded":
+        out = p.get("output")
+        out = out[0] if isinstance(out, list) and out else out
+        if isinstance(out, str):
+            _cloud_db(lambda c: c.execute(
+                "UPDATE cloud_upscale_jobs SET status='completed' WHERE prediction_id=%s", (prediction_id,)))
+            return jsonify(status="completed", image=out, credits=_cloud_info(_cloud_used(email, month)))
+        state = "failed"
+    if state in ("failed", "canceled"):
+        def mark_failed(c):
+            c.execute("UPDATE cloud_upscale_jobs SET status='failed' WHERE prediction_id=%s AND status='running' RETURNING 1",
+                      (prediction_id,))
+            return c.fetchone()
+        if _cloud_db(mark_failed):
+            _cloud_refund(email, month)
+        return jsonify(status="failed", error="La mejora no se completó; tu mejora se devolvió",
+                       credits=_cloud_info(_cloud_used(email, month)))
+    return jsonify(status="processing"), 202
+
+
 def _process_trial(kind):
     member = _member()
     if not member: return jsonify(error="Inicia sesión con tu código"), 401
@@ -1366,21 +1549,31 @@ def _process_trial(kind):
             return jsonify(error="Falta REPLICATE_UPSCALE_VERSION; crédito liberado"), 503
         inputs = {"image": image_uri}
         if is_topaz:
+            # Fotos pequeñas -> Low Resolution V2; fotos medianas/grandes -> High Fidelity V2
+            # (respeta mejor los rasgos). Creatividad facial en 0 para NO inventar rostros.
+            try:
+                raw = base64.b64decode(image_uri.split(",", 1)[-1])
+                w, h = Image.open(io.BytesIO(raw)).size
+            except Exception:
+                w = h = 0
+            small = 0 < min(w, h) < 700
+            factor = "4x" if max(w, h) <= 1500 else "2x"
             inputs.update({
-                "enhance_model": "Low Resolution V2",
-                "upscale_factor": "4x",
-                "output_format": "jpg",
+                "enhance_model": "Low Resolution V2" if small else "High Fidelity V2",
+                "upscale_factor": factor,
+                "output_format": "png",
                 "face_enhancement": True,
                 "subject_detection": "Foreground",
-                "face_enhancement_strength": 0.8,
-                "face_enhancement_creativity": 0.5,
+                "face_enhancement_strength": 0.45,
+                "face_enhancement_creativity": 0,
             })
         elif kind == "upscale":
             # Ajustes aprobados en la prueba visual de Clarity para diseños y letras.
             inputs.update({
                 "scale_factor": 3,
-                "creativity": 0.05,
-                "resemblance": 1.2,
+                # Creatividad baja = Clarity no "re-dibuja" ojos, bocas ni letras.
+                "creativity": 0.12,
+                "resemblance": 1.5,
                 "num_inference_steps": 18,
             })
         if kind == "halftone": inputs["halftone_only"] = True
