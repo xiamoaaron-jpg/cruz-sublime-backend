@@ -1857,5 +1857,472 @@ def vip_bg_job(job_id):
     except requests.RequestException:
         return jsonify(status='uncertain',error='No se pudo consultar Replicate. Reintenta consultar, no procesar.'),202
 
+
+# ===================== Catálogo WhatsApp (Estudio VIII · Premium VIP) =====================
+# Cada cliente Premium arma su tienda (logo, productos, precios, tallas) y la comparte con un enlace
+# público /c/<enlace>. El pedido llega a su WhatsApp con el total calculado.
+import json as _cat_json
+import html as _cat_html
+from flask import Response as _CatResponse
+
+CAT_MAX_JSON = 250_000           # tamaño máximo del catálogo (sin imágenes)
+CAT_MAX_UPLOAD = 1_400_000       # bytes de la imagen subida (ya comprimida en el navegador)
+CAT_MAX_IMAGES = 160             # fotos guardadas por cliente
+CAT_MAX_PRODUCTS = 80
+CAT_SLUG_RE = re.compile(r'^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$')
+CAT_IMG_RE = re.compile(r'^[0-9a-f]{32}$')
+CAT_RESERVED = {"admin", "api", "www", "img", "cruz", "cruzsublime", "cruz-sublime", "soporte", "ayuda",
+                "login", "catalogo", "catalogos", "tienda", "pedidos", "test", "demo"}
+
+def _init_catalog():
+    def work(c):
+        c.execute("""CREATE TABLE IF NOT EXISTS vip_catalogs (
+            slug TEXT PRIMARY KEY, owner TEXT UNIQUE NOT NULL, data TEXT NOT NULL,
+            views INTEGER NOT NULL DEFAULT 0, orders INTEGER NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT NOW())""")
+        c.execute("""CREATE TABLE IF NOT EXISTS vip_catalog_images (
+            id TEXT PRIMARY KEY, owner TEXT NOT NULL, mime TEXT NOT NULL, data BYTEA NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW())""")
+        c.execute("CREATE INDEX IF NOT EXISTS vip_catalog_images_owner ON vip_catalog_images(owner)")
+    try:
+        _cloud_db(work)
+    except Exception as e:
+        print("Catalog init:", type(e).__name__)
+_init_catalog()
+
+def _cat_member():
+    member = _member()
+    if not member:
+        return None, (jsonify(error="Inicia sesión con tu código Premium VIP"), 401)
+    if member["plan"] != VIP_PLAN:
+        return None, (jsonify(error="El catálogo es exclusivo de Premium VIP"), 403)
+    return member, None
+
+def _cat_owner_active(owner):
+    """El catálogo se ve mientras el dueño tenga algún código Premium VIP vigente (también al renovar)."""
+    rows = _cloud_db(lambda c: (c.execute("SELECT days,created_at FROM codes WHERE LOWER(email)=%s AND plan=%s",
+                                          (owner, VIP_PLAN)), c.fetchall())[1])
+    now = datetime.now()
+    for days, created in rows or []:
+        try:
+            if now < datetime.strptime(str(created), "%Y-%m-%d %H:%M:%S") + timedelta(days=int(days)):
+                return True
+        except Exception:
+            continue
+    return False
+
+def _cat_s(value, limit):
+    return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", str(value if value is not None else ""))[:limit].strip()
+
+def _cat_img(value):
+    value = str(value or "")
+    return value if CAT_IMG_RE.match(value) else ""
+
+def _cat_list(values, limit_items, limit_len):
+    out = []
+    for v in (values if isinstance(values, list) else [])[:limit_items]:
+        v = _cat_s(v, limit_len)
+        if v and v not in out:
+            out.append(v)
+    return out
+
+def _cat_clean(data):
+    biz = data.get("biz") if isinstance(data.get("biz"), dict) else {}
+    accent = str(biz.get("accent") or "")
+    clean = {"biz": {
+        "name": _cat_s(biz.get("name"), 60), "slogan": _cat_s(biz.get("slogan"), 100),
+        "phone": re.sub(r"\D", "", str(biz.get("phone") or ""))[:15],
+        "logo": _cat_img(biz.get("logo")), "accent": accent if re.match(r"^#[0-9a-fA-F]{6}$", accent) else "#c9973f",
+        "note": _cat_s(biz.get("note"), 400), "delivery": _cat_s(biz.get("delivery"), 120)},
+        "products": []}
+    seen = set()
+    for p in (data.get("products") if isinstance(data.get("products"), list) else [])[:CAT_MAX_PRODUCTS]:
+        if not isinstance(p, dict):
+            continue
+        pid = re.sub(r"[^a-zA-Z0-9_-]", "", str(p.get("id") or ""))[:24] or uuid.uuid4().hex[:10]
+        if pid in seen:
+            pid = uuid.uuid4().hex[:10]
+        seen.add(pid)
+        try:
+            price = round(float(p.get("price") or 0), 2)
+        except (TypeError, ValueError):
+            price = 0.0
+        clean["products"].append({
+            "id": pid, "name": _cat_s(p.get("name"), 80), "price": max(0.0, min(price, 1_000_000.0)),
+            "desc": _cat_s(p.get("desc"), 500), "cat": _cat_s(p.get("cat"), 40),
+            "sizes": _cat_list(p.get("sizes"), 20, 16), "colors": _cat_list(p.get("colors"), 20, 24),
+            "img": _cat_img(p.get("img")), "on": p.get("on") is not False, "star": bool(p.get("star"))})
+    return clean
+
+def _cat_refs(clean):
+    refs = {clean["biz"]["logo"]} | {p["img"] for p in clean["products"]}
+    refs.discard("")
+    return refs
+
+@app.route("/api/vip/catalog", methods=["GET"])
+def cat_get_mine():
+    member, error = _cat_member()
+    if error:
+        return error
+    owner = member["email"].lower()
+    try:
+        row = _cloud_db(lambda c: (c.execute("SELECT slug,data,views,orders FROM vip_catalogs WHERE owner=%s", (owner,)),
+                                   c.fetchone())[1])
+    except Exception:
+        return jsonify(error="Base de datos no disponible"), 503
+    if not row:
+        return jsonify(catalog=None)
+    return jsonify(catalog={"slug": row[0], "data": _cat_json.loads(row[1]), "views": row[2], "orders": row[3]})
+
+@app.route("/api/vip/catalog", methods=["POST"])
+def cat_save_mine():
+    member, error = _cat_member()
+    if error:
+        return error
+    owner = member["email"].lower()
+    body = request.get_json(silent=True) or {}
+    slug = str(body.get("slug") or "").strip().lower()
+    if not CAT_SLUG_RE.match(slug) or "--" in slug:
+        return jsonify(error="El enlace debe tener de 3 a 40 letras, números o guiones"), 400
+    if slug in CAT_RESERVED:
+        return jsonify(error="Ese enlace está reservado, elige otro"), 400
+    if not isinstance(body.get("data"), dict):
+        return jsonify(error="Catálogo inválido"), 400
+    clean = _cat_clean(body["data"])
+    payload = _cat_json.dumps(clean, ensure_ascii=False)
+    if len(payload.encode("utf-8")) > CAT_MAX_JSON:
+        return jsonify(error="El catálogo es demasiado grande"), 413
+    refs = _cat_refs(clean)
+    cutoff = datetime.now() - timedelta(hours=2)
+    def work(c):
+        c.execute("SELECT owner FROM vip_catalogs WHERE slug=%s", (slug,))
+        taken = c.fetchone()
+        if taken and taken[0] != owner:
+            return "taken"
+        c.execute("SELECT slug FROM vip_catalogs WHERE owner=%s", (owner,))
+        mine = c.fetchone()
+        if mine:
+            c.execute("UPDATE vip_catalogs SET slug=%s,data=%s,updated_at=%s WHERE owner=%s",
+                      (slug, payload, datetime.now(), owner))
+        else:
+            c.execute("INSERT INTO vip_catalogs (slug,owner,data) VALUES (%s,%s,%s)", (slug, owner, payload))
+        # Fotos que ya no usa ningún producto (con margen para subidas recientes aún sin guardar)
+        c.execute("SELECT id,created_at FROM vip_catalog_images WHERE owner=%s", (owner,))
+        for img_id, created in c.fetchall():
+            try:
+                old = created < cutoff if isinstance(created, datetime) else \
+                      datetime.strptime(str(created)[:19], "%Y-%m-%d %H:%M:%S") < cutoff
+            except Exception:
+                old = False
+            if img_id not in refs and old:
+                c.execute("DELETE FROM vip_catalog_images WHERE id=%s AND owner=%s", (img_id, owner))
+        c.execute("SELECT views,orders FROM vip_catalogs WHERE owner=%s", (owner,))
+        return c.fetchone()
+    try:
+        result = _cloud_db(work)
+    except Exception:
+        return jsonify(error="No se pudo guardar. Si el enlace es nuevo, prueba con otro."), 409
+    if result == "taken":
+        return jsonify(error="Ese enlace ya lo usa otro negocio, elige otro"), 409
+    return jsonify(ok=True, slug=slug, path="/c/" + slug, views=result[0], orders=result[1], data=clean)
+
+@app.route("/api/vip/catalog/image", methods=["POST"])
+def cat_upload_image():
+    member, error = _cat_member()
+    if error:
+        return error
+    owner = member["email"].lower()
+    body = request.get_json(silent=True) or {}
+    match = re.match(r"^data:image/(png|jpeg|jpg|webp);base64,([A-Za-z0-9+/=]+)$", str(body.get("data") or ""))
+    if not match:
+        return jsonify(error="Formato de imagen no válido"), 400
+    try:
+        raw = base64.b64decode(match.group(2))
+    except Exception:
+        return jsonify(error="Imagen dañada"), 400
+    if len(raw) > CAT_MAX_UPLOAD:
+        return jsonify(error="La imagen pesa demasiado"), 413
+    try:
+        im = Image.open(io.BytesIO(raw))
+        if im.width * im.height > 30_000_000:
+            raise ValueError("demasiado grande")
+        im.load()
+        side = 520 if body.get("kind") == "logo" else 1100
+        im.thumbnail((side, side))
+        alpha = im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info)
+        out = io.BytesIO()
+        if alpha:
+            im.convert("RGBA").save(out, "PNG", optimize=True)
+            mime = "image/png"
+        else:
+            im.convert("RGB").save(out, "JPEG", quality=82, optimize=True, progressive=True)
+            mime = "image/jpeg"
+        blob = out.getvalue()
+    except Exception:
+        return jsonify(error="No se pudo leer la imagen"), 400
+    img_id = uuid.uuid4().hex
+    def work(c):
+        c.execute("SELECT COUNT(*) FROM vip_catalog_images WHERE owner=%s", (owner,))
+        if c.fetchone()[0] >= CAT_MAX_IMAGES:
+            return False
+        c.execute("INSERT INTO vip_catalog_images (id,owner,mime,data) VALUES (%s,%s,%s,%s)", (img_id, owner, mime, blob))
+        return True
+    try:
+        ok = _cloud_db(work)
+    except Exception:
+        return jsonify(error="Base de datos no disponible"), 503
+    if not ok:
+        return jsonify(error="Llegaste al límite de fotos. Guarda tu catálogo para liberar las que ya no usas."), 409
+    return jsonify(id=img_id)
+
+def _cat_public_row(slug):
+    slug = str(slug or "").lower()
+    if not CAT_SLUG_RE.match(slug):
+        return None
+    row = _cloud_db(lambda c: (c.execute("SELECT owner,data FROM vip_catalogs WHERE slug=%s", (slug,)), c.fetchone())[1])
+    if not row or not _cat_owner_active(row[0]):
+        return None
+    return row
+
+@app.route("/api/catalog/<slug>", methods=["GET"])
+def cat_public_data(slug):
+    try:
+        row = _cat_public_row(slug)
+    except Exception:
+        return jsonify(error="No disponible por ahora"), 503
+    if not row:
+        return jsonify(error="Este catálogo no está disponible"), 404
+    try:
+        _cloud_db(lambda c: c.execute("UPDATE vip_catalogs SET views=views+1 WHERE slug=%s", (slug.lower(),)))
+    except Exception:
+        pass
+    resp = jsonify(slug=slug.lower(), data=_cat_json.loads(row[1]))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+@app.route("/api/catalog/<slug>/order", methods=["POST"])
+def cat_public_order(slug):
+    slug = str(slug or "").lower()
+    if CAT_SLUG_RE.match(slug):
+        try:
+            _cloud_db(lambda c: c.execute("UPDATE vip_catalogs SET orders=orders+1 WHERE slug=%s", (slug,)))
+        except Exception:
+            pass
+    return jsonify(ok=True)
+
+@app.route("/c/img/<img_id>", methods=["GET"])
+def cat_image(img_id):
+    if not CAT_IMG_RE.match(img_id or ""):
+        return "", 404
+    try:
+        row = _cloud_db(lambda c: (c.execute("SELECT mime,data FROM vip_catalog_images WHERE id=%s", (img_id,)), c.fetchone())[1])
+    except Exception:
+        return "", 503
+    if not row:
+        return "", 404
+    resp = _CatResponse(bytes(row[1]), mimetype=row[0])
+    resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    return resp
+
+@app.route("/c/<slug>", methods=["GET"])
+def cat_page(slug):
+    slug = str(slug or "").lower()
+    title, desc, image, accent = "Catálogo", "Haz tu pedido por WhatsApp.", "", "#c9973f"
+    try:
+        row = _cat_public_row(slug)
+    except Exception:
+        row = None
+    if row:
+        biz = (_cat_json.loads(row[1]).get("biz") or {})
+        title = (biz.get("name") or "Catálogo") + " · Catálogo"
+        desc = biz.get("slogan") or "Mira nuestros productos y haz tu pedido por WhatsApp."
+        if biz.get("logo"):
+            image = "https://" + request.host + "/c/img/" + biz["logo"]
+        accent = biz.get("accent") or accent
+    boot = "window.__CAT__=" + _cat_json.dumps({"slug": slug, "base": ""}).replace("</", "<\\/") + ";"
+    page = (CAT_PAGE_HTML.replace("__TITLE__", _cat_html.escape(title)).replace("__DESC__", _cat_html.escape(desc))
+            .replace("__IMAGE__", _cat_html.escape(image)).replace("__ACCENT__", _cat_html.escape(accent))
+            .replace("__BOOT__", boot))
+    resp = _CatResponse(page, mimetype="text/html")
+    resp.headers["Cache-Control"] = "no-cache"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    return resp
+
+CAT_PAGE_HTML = r"""<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>__TITLE__</title>
+<meta name="description" content="__DESC__">
+<meta property="og:type" content="website">
+<meta property="og:title" content="__TITLE__">
+<meta property="og:description" content="__DESC__">
+<meta property="og:image" content="__IMAGE__">
+<meta name="theme-color" content="__ACCENT__">
+<style>
+:root{--ac:#c9973f;--act:#fff;--bg:#f6f4f0;--card:#fff;--tx:#1d1a16;--mu:#6f675b;--ln:#e7e1d6;--ok:#1fa855}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+img{display:block;max-width:100%}
+.wrap{max-width:980px;margin:0 auto;padding:0 14px 120px}
+.ld,.na{min-height:70vh;display:grid;place-items:center;text-align:center;color:var(--mu);padding:30px}
+.na b{display:block;font-size:20px;color:var(--tx);margin-bottom:6px}
+.hero{position:relative;margin:0;padding:26px 18px 22px;background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 65%,#000));color:var(--act);overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.12)}
+.hero-in{position:relative;z-index:1;display:flex;gap:14px;align-items:center;max-width:952px;margin:0 auto}
+.logo{flex:none;width:74px;height:74px;border-radius:50%;background:#fff;border:3px solid rgba(255,255,255,.7);overflow:hidden;display:grid;place-items:center;font-weight:800;font-size:28px;color:var(--ac);box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.logo img{width:100%;height:100%;object-fit:cover}
+.hero h1{margin:0;font-size:24px;line-height:1.15;letter-spacing:-.01em}
+.hero p{margin:4px 0 0;font-size:14px;opacity:.9}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3)}
+.note{margin:14px 0 0;background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5;color:var(--mu);white-space:pre-line}
+.tools{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 0 8px;margin-top:4px}
+.search{width:100%;border:1px solid var(--ln);background:var(--card);border-radius:12px;padding:12px 14px;font-size:15px;outline:none}
+.search:focus{border-color:var(--ac)}
+.cats{display:flex;gap:6px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cats button{flex:none;border:1px solid var(--ln);background:var(--card);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--mu)}
+.cats button.on{background:var(--ac);border-color:var(--ac);color:var(--act)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:6px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.card{position:relative;background:var(--card);border:1px solid var(--ln);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;padding:0}
+.ph{position:relative;aspect-ratio:1/1;background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 25%,#fff),color-mix(in srgb,var(--ac) 8%,#fff));display:grid;place-items:center;font-size:34px;font-weight:800;color:color-mix(in srgb,var(--ac) 70%,#000)}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.badge{position:absolute;left:8px;top:8px;z-index:1;font-size:11px;font-weight:800;padding:4px 8px;border-radius:20px;background:var(--ac);color:var(--act)}
+.out{position:absolute;inset:0;z-index:2;background:rgba(255,255,255,.6);display:grid;place-items:center;font-weight:800;font-size:13px;color:#7a2a2a;letter-spacing:.06em}
+.ci{padding:10px 11px 12px;display:grid;gap:3px}
+.ci b{font-size:14px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ci span{font-size:15px;font-weight:800;color:color-mix(in srgb,var(--ac) 80%,#000)}
+.add{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;border:0;background:var(--ac);color:var(--act);font-size:20px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.empty{grid-column:1/-1;text-align:center;color:var(--mu);padding:30px 10px;font-size:14px}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.08) 30%)}
+.bar button{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:560px;margin:0 auto;border:0;border-radius:16px;padding:15px 18px;background:var(--ok);color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 10px 26px rgba(31,168,85,.35)}
+.ov{position:fixed;inset:0;z-index:30;background:rgba(10,8,6,.5);display:flex;align-items:flex-end;justify-content:center;animation:fd .2s}
+@keyframes fd{from{opacity:0}}
+.sheet{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:var(--card);border-radius:22px 22px 0 0;padding:0 0 calc(18px + env(safe-area-inset-bottom));animation:up .25s}
+@keyframes up{from{transform:translateY(40px);opacity:.5}}
+@media(min-width:640px){.ov{align-items:center}.sheet{border-radius:22px}}
+.sh-img{position:relative;aspect-ratio:4/3;background:var(--bg)}
+.sh-img img{width:100%;height:100%;object-fit:contain;background:#fff}
+.x{position:absolute;right:10px;top:10px;z-index:2;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.sh-b{padding:16px 18px;display:grid;gap:12px}
+.sh-b h2{margin:0;font-size:20px}
+.price{font-size:20px;font-weight:800;color:color-mix(in srgb,var(--ac) 80%,#000)}
+.desc{margin:0;color:var(--mu);font-size:14px;line-height:1.5;white-space:pre-line}
+.lbl{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts button{min-width:44px;border:1.5px solid var(--ln);background:#fff;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
+.opts button.on{border-color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,#fff)}
+.need{color:#b3261e;font-size:12px;font-weight:700}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.qty{display:flex;align-items:center;border:1px solid var(--ln);border-radius:12px;overflow:hidden}
+.qty button{width:40px;height:40px;border:0;background:#fff;font-size:20px;cursor:pointer}
+.qty span{min-width:34px;text-align:center;font-weight:800}
+.cta{width:100%;border:0;border-radius:14px;padding:15px;background:var(--ac);color:var(--act);font-size:16px;font-weight:800;cursor:pointer}
+.cta.wa{background:var(--ok);color:#fff}
+.cta:disabled{opacity:.5;cursor:not-allowed}
+.it{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--ln)}
+.it .ph{border-radius:10px;font-size:18px;aspect-ratio:1/1;overflow:hidden}
+.it b{font-size:14px;display:block}.it small{color:var(--mu);font-size:12px}
+.it .qty button{width:32px;height:32px;font-size:16px}
+.fld{display:grid;gap:5px;font-size:13px;font-weight:700;color:var(--mu)}
+.fld input,.fld textarea{border:1px solid var(--ln);border-radius:11px;padding:11px 12px;font-size:15px;font-weight:400;color:var(--tx);outline:none;resize:vertical}
+.fld input:focus,.fld textarea:focus{border-color:var(--ac)}
+.tot{display:flex;justify-content:space-between;font-size:18px;font-weight:800}
+.msg{white-space:pre-wrap;background:#e9f9ef;border:1px solid #bfe8cf;border-radius:12px;padding:12px;font-size:13px;line-height:1.45}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:40;background:#1d1a16;color:#fff;padding:10px 16px;border-radius:30px;font-size:14px;font-weight:700;animation:fd .2s}
+.foot{text-align:center;margin:30px 0 0;font-size:12px;color:var(--mu)}
+.foot a{color:inherit;font-weight:700}
+</style>
+</head>
+<body>
+<div id="app"><div class="ld">Cargando catálogo…</div></div>
+<script>__BOOT__</script>
+<script>
+(function(){
+"use strict";
+var C=window.__CAT__||{},base=C.base||"",slug=C.slug||"",app=document.getElementById("app");
+var D=null,cart=[],cat="Todos",q="";
+function esc(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function money(v){try{return Number(v||0).toLocaleString("es-MX",{style:"currency",currency:"MXN",maximumFractionDigits:2});}catch(e){return "$"+(Math.round(v*100)/100);}}
+function img(v){if(!v)return"";if(/^data:image\//.test(v))return v;if(/^[0-9a-f]{32}$/.test(v))return base+"/c/img/"+v;return"";}
+function initial(t){return esc((String(t||"?").trim()[0]||"?").toUpperCase());}
+function key(){return "cz_cart_"+slug;}
+function load(){if(C.preview)return;try{var a=JSON.parse(localStorage.getItem(key())||"[]");if(Array.isArray(a))cart=a;}catch(e){}}
+function save(){if(C.preview)return;try{localStorage.setItem(key(),JSON.stringify(cart));}catch(e){}}
+function lum(h){var n=parseInt(String(h).slice(1),16);if(isNaN(n))return 0;return((n>>16)*.299+(n>>8&255)*.587+(n&255)*.114)/255;}
+function toast(t){var d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(function(){d.remove();},1500);}
+function prod(id){for(var i=0;i<D.products.length;i++)if(D.products[i].id===id)return D.products[i];return null;}
+function render(){var b=D.biz||{},ps=(D.products||[]).filter(function(p){return p.name;});
+ var ac=/^#[0-9a-fA-F]{6}$/.test(b.accent||"")?b.accent:"#c9973f";document.documentElement.style.setProperty("--ac",ac);document.documentElement.style.setProperty("--act",lum(ac)>.62?"#1d1a16":"#fff");
+ if(!C.preview&&b.name)document.title=b.name+" · Catálogo";
+ var cats=["Todos"];ps.forEach(function(p){if(p.cat&&cats.indexOf(p.cat)<0)cats.push(p.cat);});if(cats.indexOf(cat)<0)cat="Todos";
+ var list=ps.filter(function(p){return(cat==="Todos"||p.cat===cat)&&(!q||(p.name+" "+(p.desc||"")+" "+(p.cat||"")).toLowerCase().indexOf(q)>=0);});
+ list.sort(function(a,c){return(c.star?1:0)-(a.star?1:0)||(c.on===false?0:1)-(a.on===false?0:1);});
+ var lg=img(b.logo);
+ app.innerHTML='<header class="hero"><div class="hero-in"><div class="logo">'+(lg?'<img src="'+esc(lg)+'" alt="">':initial(b.name))+'</div><div><h1>'+esc(b.name||"Mi negocio")+'</h1>'+(b.slogan?'<p>'+esc(b.slogan)+'</p>':'')+'<div class="chips"><span class="chip">💬 Pedidos por WhatsApp</span>'+(b.delivery?'<span class="chip">🚚 '+esc(b.delivery)+'</span>':'')+'</div></div></div></header>'+
+ '<div class="wrap">'+(b.note?'<div class="note">'+esc(b.note)+'</div>':'')+
+ '<div class="tools"><input class="search" id="czQ" placeholder="Buscar producto…" value="'+esc(q)+'" aria-label="Buscar producto">'+(cats.length>2?'<div class="cats">'+cats.map(function(c){return'<button type="button" data-cat="'+esc(c)+'" class="'+(c===cat?"on":"")+'">'+esc(c)+'</button>';}).join("")+'</div>':'')+'</div>'+
+ '<div class="grid">'+(list.length?list.map(function(p){var u=img(p.img),off=p.on===false;return'<div class="card" role="button" tabindex="0" data-p="'+esc(p.id)+'"><div class="ph">'+(u?'<img loading="lazy" src="'+esc(u)+'" alt="">':initial(p.name))+(p.star?'<span class="badge">⭐ Destacado</span>':'')+(off?'<span class="out">AGOTADO</span>':'')+'</div><div class="ci"><b>'+esc(p.name)+'</b><span>'+money(p.price)+'</span></div>'+(off?'':'<button type="button" class="add" data-add="'+esc(p.id)+'" aria-label="Agregar '+esc(p.name)+'">+</button>')+'</div>';}).join(""):'<div class="empty">'+(ps.length?'No hay productos con esa búsqueda.':'Aún no hay productos en este catálogo.')+'</div>')+'</div>'+
+ '<p class="foot">Catálogo creado con <a href="https://cruzsublim.com" target="_blank" rel="noopener">Cruz Sublime</a></p></div>'+bar();
+ var s=document.getElementById("czQ");s.addEventListener("input",function(){q=s.value.trim().toLowerCase();var pos=s.selectionStart;render();var n=document.getElementById("czQ");n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}});}
+function count(){return cart.reduce(function(a,i){return a+i.qty;},0);}
+function total(){return cart.reduce(function(a,i){return a+i.qty*i.price;},0);}
+function bar(){var n=count();return n?'<div class="bar"><button type="button" id="czCart"><span>🛒 '+n+' producto'+(n>1?'s':'')+' · '+money(total())+'</span><span>Ver pedido →</span></button></div>':'';}
+function close(){var o=document.querySelector(".ov");if(o)o.remove();document.body.style.overflow="";}
+function sheet(html){close();var o=document.createElement("div");o.className="ov";o.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+html+'</div>';o.addEventListener("click",function(e){if(e.target===o)close();});document.body.appendChild(o);document.body.style.overflow="hidden";return o;}
+function openProduct(id){var p=prod(id);if(!p)return;var st={size:"",color:"",qty:1},u=img(p.img);
+ var o=sheet('<div class="sh-img">'+(u?'<img src="'+esc(u)+'" alt="">':'<div class="ph" style="height:100%;aspect-ratio:auto">'+initial(p.name)+'</div>')+'<button type="button" class="x" data-x aria-label="Cerrar">✕</button></div><div class="sh-b"><div><h2>'+esc(p.name)+'</h2><div class="price">'+money(p.price)+'</div></div>'+(p.desc?'<p class="desc">'+esc(p.desc)+'</p>':'')+
+  (p.sizes&&p.sizes.length?'<div><div class="lbl">Talla <span class="need" data-need="size" hidden>· elige una</span></div><div class="opts" data-o="size">'+p.sizes.map(function(s){return'<button type="button" data-v="'+esc(s)+'">'+esc(s)+'</button>';}).join("")+'</div></div>':'')+
+  (p.colors&&p.colors.length?'<div><div class="lbl">Color <span class="need" data-need="color" hidden>· elige uno</span></div><div class="opts" data-o="color">'+p.colors.map(function(s){return'<button type="button" data-v="'+esc(s)+'">'+esc(s)+'</button>';}).join("")+'</div></div>':'')+
+  '<div class="row"><div class="lbl" style="margin:0">Cantidad</div><div class="qty"><button type="button" data-q="-1" aria-label="Menos">−</button><span data-qv>1</span><button type="button" data-q="1" aria-label="Más">+</button></div></div>'+
+  (p.on===false?'<button type="button" class="cta" disabled>Agotado</button>':'<button type="button" class="cta" data-addc>Agregar · '+money(p.price)+'</button>')+'</div>');
+ o.addEventListener("click",function(e){var t=e.target.closest("button");if(!t)return;
+  if(t.hasAttribute("data-x")){close();return;}
+  var grp=t.parentElement&&t.parentElement.getAttribute("data-o");if(grp){st[grp]=t.getAttribute("data-v");t.parentElement.querySelectorAll("button").forEach(function(b){b.classList.toggle("on",b===t);});var nd=o.querySelector('[data-need="'+grp+'"]');if(nd)nd.hidden=true;return;}
+  if(t.hasAttribute("data-q")){st.qty=Math.max(1,Math.min(999,st.qty+parseInt(t.getAttribute("data-q"),10)));o.querySelector("[data-qv]").textContent=st.qty;var c=o.querySelector("[data-addc]");if(c)c.textContent="Agregar · "+money(p.price*st.qty);return;}
+  if(t.hasAttribute("data-addc")){var miss=false;if(p.sizes&&p.sizes.length&&!st.size){o.querySelector('[data-need="size"]').hidden=false;miss=true;}if(p.colors&&p.colors.length&&!st.color){o.querySelector('[data-need="color"]').hidden=false;miss=true;}if(miss)return;
+   addItem(p,st.size,st.color,st.qty);close();toast("Agregado al pedido ✓");}});}
+function addItem(p,size,color,qty){var k=p.id+"|"+size+"|"+color;for(var i=0;i<cart.length;i++)if(cart[i].k===k){cart[i].qty+=qty;save();render();return;}
+ cart.push({k:k,id:p.id,name:p.name,price:Number(p.price)||0,size:size,color:color,qty:qty,img:p.img||""});save();render();}
+function message(name,notes){var b=D.biz||{},L=["¡Hola"+(b.name?" "+b.name:"")+"! 👋 Quiero hacer este pedido:",""];
+ cart.forEach(function(i){var ex=[i.size?"Talla "+i.size:"",i.color||""].filter(Boolean).join(", ");L.push("• "+i.qty+" × "+i.name+(ex?" ("+ex+")":"")+" — "+money(i.qty*i.price));});
+ L.push("","*Total: "+money(total())+" MXN*");if(name)L.push("Nombre: "+name);if(notes)L.push("Notas: "+notes);
+ if(!C.preview&&slug)L.push("","Pedido desde el catálogo: "+location.origin+"/c/"+slug);return L.join("\n");}
+function openCart(){var b=D.biz||{},phone=String(b.phone||"").replace(/\D/g,"");
+ function body(){return'<div class="sh-b" style="padding-top:20px"><div class="row"><h2>Tu pedido</h2><button type="button" class="x" style="position:static" data-x aria-label="Cerrar">✕</button></div><div>'+cart.map(function(i,ix){var u=img(i.img),ex=[i.size?"Talla "+i.size:"",i.color||""].filter(Boolean).join(" · ");return'<div class="it"><div class="ph">'+(u?'<img src="'+esc(u)+'" alt="">':initial(i.name))+'</div><div><b>'+esc(i.name)+'</b><small>'+esc(ex)+(ex?" · ":"")+money(i.price)+'</small></div><div class="qty"><button type="button" data-ci="'+ix+'" data-d="-1" aria-label="Menos">−</button><span>'+i.qty+'</span><button type="button" data-ci="'+ix+'" data-d="1" aria-label="Más">+</button></div></div>';}).join("")+'</div>'+
+  '<div class="tot"><span>Total</span><span>'+money(total())+'</span></div><label class="fld">Tu nombre<input id="czName" maxlength="60" autocomplete="name" placeholder="Opcional"></label><label class="fld">Notas para el pedido<textarea id="czNotes" rows="2" maxlength="300" placeholder="Ej. para el viernes, entrega en el centro"></textarea></label>'+
+  (phone?'<button type="button" class="cta wa" data-send>💬 Pedir por WhatsApp</button>':'<button type="button" class="cta wa" disabled>El negocio aún no configuró su WhatsApp</button>')+'<div data-prev></div></div>';}
+ var o=sheet(body()),nm="",nt="";
+ o.addEventListener("input",function(e){if(e.target.id==="czName")nm=e.target.value;if(e.target.id==="czNotes")nt=e.target.value;});
+ o.addEventListener("click",function(e){var t=e.target.closest("button");if(!t)return;if(t.hasAttribute("data-x")){close();return;}
+  if(t.hasAttribute("data-ci")){var i=parseInt(t.getAttribute("data-ci"),10),d=parseInt(t.getAttribute("data-d"),10);cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);save();render();if(!cart.length){close();return;}o.querySelector(".sheet").innerHTML=body();var a=o.querySelector("#czName"),n2=o.querySelector("#czNotes");a.value=nm;n2.value=nt;return;}
+  if(t.hasAttribute("data-send")){var msg=message(nm.trim(),nt.trim());
+   if(C.preview){o.querySelector("[data-prev]").innerHTML='<div class="lbl">Vista previa del mensaje</div><div class="msg">'+esc(msg)+'</div>';return;}
+   try{fetch(base+"/api/catalog/"+encodeURIComponent(slug)+"/order",{method:"POST",keepalive:true});}catch(err){}
+   location.href="https://wa.me/"+phone+"?text="+encodeURIComponent(msg);}});}
+app.addEventListener("click",function(e){var a=e.target.closest("[data-add]");if(a){var p=prod(a.getAttribute("data-add"));if(p&&!(p.sizes&&p.sizes.length)&&!(p.colors&&p.colors.length)){addItem(p,"","",1);toast("Agregado al pedido ✓");}else openProduct(a.getAttribute("data-add"));return;}
+ var c=e.target.closest("[data-p]");if(c){openProduct(c.getAttribute("data-p"));return;}
+ var k=e.target.closest("[data-cat]");if(k){cat=k.getAttribute("data-cat");render();return;}
+ if(e.target.closest("#czCart"))openCart();});
+app.addEventListener("keydown",function(e){if(e.key==="Enter"){var c=e.target.closest("[data-p]");if(c)openProduct(c.getAttribute("data-p"));}});
+document.addEventListener("keydown",function(e){if(e.key==="Escape")close();});
+function start(d){D=d||{biz:{},products:[]};D.products=D.products||[];load();cart=cart.filter(function(i){return prod(i.id);});render();}
+window.addEventListener("message",function(e){if(C.preview&&e.data&&e.data.type==="cz-data"){D=e.data.data;D.products=D.products||[];render();}});
+if(C.data)start(C.data);
+else if(slug)fetch(base+"/api/catalog/"+encodeURIComponent(slug)).then(function(r){if(!r.ok)throw 0;return r.json();}).then(function(j){start(j.data);}).catch(function(){app.innerHTML='<div class="na"><div><b>Este catálogo no está disponible</b>Pídele al negocio su enlace actualizado.</div></div>';});
+else app.innerHTML='<div class="na"><div><b>Catálogo no encontrado</b></div></div>';
+})();
+</script>
+</body>
+</html>
+"""
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
