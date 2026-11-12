@@ -4281,7 +4281,7 @@ details.adv[open] summary::after{content:&quot;−&quot;}
 &lt;aside class=&quot;side&quot;&gt;
  &lt;div class=&quot;box&quot;&gt;
   &lt;p class=&quot;step&quot;&gt;&lt;b&gt;1&lt;/b&gt;Imagen&lt;/p&gt;
-  &lt;label class=&quot;drop&quot;&gt;&lt;input accept=&quot;image/*&quot; id=&quot;file&quot; type=&quot;file&quot;/&gt;&lt;div class=&quot;ic&quot;&gt;&lt;svg width=&quot;20&quot; height=&quot;20&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;&lt;path d=&quot;M12 16V4M6 10l6-6 6 6&quot;/&gt;&lt;path d=&quot;M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3&quot;/&gt;&lt;/svg&gt;&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;t&quot; id=&quot;fileName&quot;&gt;Subir imagen&lt;/div&gt;&lt;div class=&quot;s&quot; id=&quot;fileInfo&quot;&gt;PNG, JPG o WEBP · hasta 2.5 MP&lt;/div&gt;&lt;/div&gt;&lt;/label&gt;
+  &lt;label class=&quot;drop&quot;&gt;&lt;input accept=&quot;image/*&quot; id=&quot;file&quot; type=&quot;file&quot;/&gt;&lt;div class=&quot;ic&quot;&gt;&lt;svg width=&quot;20&quot; height=&quot;20&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;&lt;path d=&quot;M12 16V4M6 10l6-6 6 6&quot;/&gt;&lt;path d=&quot;M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3&quot;/&gt;&lt;/svg&gt;&lt;/div&gt;&lt;div&gt;&lt;div class=&quot;t&quot; id=&quot;fileName&quot;&gt;Subir imagen&lt;/div&gt;&lt;div class=&quot;s&quot; id=&quot;fileInfo&quot;&gt;PNG, JPG o WEBP · si es muy grande se ajusta sola&lt;/div&gt;&lt;/div&gt;&lt;/label&gt;
  &lt;/div&gt;
  &lt;div class=&quot;box&quot;&gt;
   &lt;p class=&quot;step&quot;&gt;&lt;b&gt;2&lt;/b&gt;Tipo de imagen&lt;/p&gt;
@@ -4338,7 +4338,7 @@ details.adv[open] summary::after{content:&quot;−&quot;}
  &#x27;use strict&#x27;;
 const $=id=&gt;document.getElementById(id);
 const MODEL=&#x27;https://huggingface.co/skillsafe-ai/realesr-general-x4v3/resolve/main/model.onnx&#x27;;
-let image=null,session=null,busy=false,downloadURL=null,originalURL=null;
+let image=null,srcBitmap=null,session=null,busy=false,downloadURL=null,originalURL=null;
 for(const [id,out] of [[&#x27;blend&#x27;,&#x27;blendVal&#x27;],[&#x27;texture&#x27;,&#x27;textureVal&#x27;],[&#x27;micro&#x27;,&#x27;microVal&#x27;],[&#x27;clarity&#x27;,&#x27;clarityVal&#x27;],[&#x27;light&#x27;,&#x27;lightVal&#x27;],[&#x27;edgeDetail&#x27;,&#x27;edgeDetailVal&#x27;],[&#x27;fineContrast&#x27;,&#x27;fineContrastVal&#x27;]]) $(id).oninput=()=&gt;$(out).textContent=$(id).value+&#x27;%&#x27;;
 $(&#x27;mode&#x27;).onchange=()=&gt;{
  const mode=$(&#x27;mode&#x27;).value;
@@ -4373,7 +4373,7 @@ $(&#x27;auto&#x27;).onchange=()=&gt;{if($(&#x27;auto&#x27;).checked)choosePreset
 $(&#x27;mode&#x27;).addEventListener(&#x27;change&#x27;,()=&gt;{if($(&#x27;auto&#x27;).checked){$(&#x27;auto&#x27;).checked=false;$(&#x27;diagnosis&#x27;).textContent=&#x27;Modo manual activado al elegir un modo.&#x27;}});
 
 $(&#x27;file&#x27;).onchange=async()=&gt;{const f=$(&#x27;file&#x27;).files[0];if(!f)return;try{
- if(image?.close)image.close();image=await createImageBitmap(f);
+ if(image&amp;&amp;image!==srcBitmap&amp;&amp;image.close)image.close();if(srcBitmap?.close)srcBitmap.close();image=srcBitmap=await createImageBitmap(f);
  if(originalURL)URL.revokeObjectURL(originalURL);originalURL=URL.createObjectURL(f);$(&#x27;before&#x27;).src=originalURL;
  $(&#x27;go&#x27;).disabled=false;$(&#x27;after&#x27;).removeAttribute(&#x27;src&#x27;);$(&#x27;download&#x27;).style.display=&#x27;none&#x27;;$(&#x27;progress&#x27;).value=0;choosePreset();status(`Lista: ${image.width} × ${image.height} píxeles.`);
 }catch(e){status(&#x27;No se pudo abrir la imagen: &#x27;+e.message)}};
@@ -4480,9 +4480,19 @@ function finishV18(c){
 $(&#x27;softClear&#x27;).addEventListener(&#x27;input&#x27;,()=&gt;{$(&#x27;softClearVal&#x27;).textContent=$(&#x27;softClear&#x27;).value+&#x27;%&#x27;;});
 $(&#x27;go&#x27;).onclick=async()=&gt;{if(!image||busy)return;busy=true;$(&#x27;go&#x27;).disabled=true;$(&#x27;progress&#x27;).value=0;
  try{
+ // Ajuste automático: si la imagen es muy grande, se reduce para que quepa en memoria.
+ const scale=Number($(&#x27;scale&#x27;).value);
+ {const sw=srcBitmap.width,sh=srcBitmap.height,maxIn=Math.min(2500000,18000000/(scale*scale));
+  const r=Math.min(1,Math.sqrt(maxIn/(sw*sh)),16384/(sw*4),16384/(sh*4));
+  if(r&lt;1){const tw=Math.max(1,Math.floor(sw*r)),th=Math.max(1,Math.floor(sh*r));
+   let src=srcBitmap,cw=sw,ch=sh;
+   while(cw/2&gt;tw&amp;&amp;ch/2&gt;th){cw=Math.round(cw/2);ch=Math.round(ch/2);const c=canvas(cw,ch),x=c.getContext(&#x27;2d&#x27;);x.imageSmoothingQuality=&#x27;high&#x27;;x.drawImage(src,0,0,cw,ch);src=c;}
+   const c=canvas(tw,th),x=c.getContext(&#x27;2d&#x27;);x.imageSmoothingQuality=&#x27;high&#x27;;x.drawImage(src,0,0,tw,th);
+   if(image!==srcBitmap&amp;&amp;image?.close)image.close();image=await createImageBitmap(c);
+   status(`Tu imagen (${sw} × ${sh}) era muy grande; se ajustó a ${tw} × ${th} para procesarla.`);await pause();
+  }else if(image!==srcBitmap){if(image?.close)image.close();image=srcBitmap;}}
  // Prevalidación antes de descargar modelos y reservar memoria.
  const inputPixels=image.width*image.height;
- const scale=Number($(&#x27;scale&#x27;).value);
  const targetPixels=inputPixels*scale*scale;
  const estimatedMB=Math.round((inputPixels*16+inputPixels*16*4+targetPixels*16)/1048576);
  if(inputPixels&gt;2500000)throw Error(&#x27;Esta imagen es muy grande para la prueba V17 (máximo 2.5 MP). Reduce el original antes de subirlo.&#x27;);
