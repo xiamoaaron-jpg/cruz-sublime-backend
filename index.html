@@ -3828,8 +3828,8 @@ $('cpDownload').addEventListener('click',async()=>{
               <label>Merma estimada (%)<input id="dtfpWaste" type="number" min="0" max="90" step=".5" value="5"></label>
             </div><div class="dtfp-actions"><button type="button" id="dtfpAutoLayout">✨ Optimizar distribución</button><button type="button" class="dtfp-alt" id="dtfpRotateLayout">⤾ Rotar seleccionado</button><button type="button" class="dtfp-alt" id="dtfpResetLayout">↺ Restablecer vista</button></div><p class="dtfp-note">Puedes arrastrar estampados dentro del pliego actual sin superponerlos. El precio se calcula con el acomodo automático; los movimientos manuales son una vista de preparación.</p></div>
             <div class="dtfp-card"><h3>📊 Aprovechamiento del material</h3><div id="dtfpLayoutStats" class="dtfp-stats"></div><div id="dtfpMaterialSummary"></div><details class="dtfp-details"><summary>Comparación orientativa (otras modalidades)</summary><div id="dtfpMaterialDetails"></div></details></div></div>
-            <div><div class="dtfp-card"><h3>🖼️ Vista del pliego</h3><div class="dtfp-sheetnav"><button type="button" class="dtfp-alt" id="dtfpPrev">←</button><span id="dtfpPageLabel">Pliego 1 de 1</span><button type="button" class="dtfp-alt" id="dtfpNext">→</button></div><canvas id="dtfpCanvas" class="dtfp-canvas" width="700" height="660" aria-label="Acomodo visual de estampados en un pliego"></canvas><p class="dtfp-note" id="dtfpSheetHint">Vista rectangular aproximada. Se permiten giros de 90° y separación entre diseños.</p></div></div>
-          </div><div class="dtfp-actions dtfp-next"><button type="button" class="dtfp-alt" data-next="0">← Diseños</button><button type="button" data-next="2">Continuar a cotización →</button></div>
+            <div><div class="dtfp-card"><h3>🖼️ Vista del pliego</h3><div class="dtfp-sheetnav"><button type="button" class="dtfp-alt" id="dtfpPrev">←</button><span id="dtfpPageLabel">Pliego 1 de 1</span><button type="button" class="dtfp-alt" id="dtfpNext">→</button></div><canvas id="dtfpCanvas" class="dtfp-canvas" width="700" height="660" aria-label="Acomodo visual de estampados en un pliego"></canvas><p class="dtfp-note" id="dtfpSheetHint">Vista rectangular aproximada. Se permiten giros de 90° y separación entre diseños.</p></div><div class="dtfp-actions dtfp-next"><button type="button" class="dtfp-alt" data-next="0">← Diseños</button><button type="button" data-next="2">Continuar a cotización →</button></div></div>
+          </div>
         </div>
         <div class="dtfp-step" data-panel="2" hidden>
           <div class="dtfp-grid"><div><div class="dtfp-card"><h3>💰 Precio y utilidad</h3><div class="dtfp-fields"><label>Recargo sobre costo (%)<input id="dtfpMarkup" type="number" min="0" max="1000" step="1" value="60"></label><label>Descuento por volumen (%)<input id="dtfpDiscount" type="number" min="0" max="99" step=".5" value="0"></label></div><p class="dtfp-note">El recargo es sobre costo; el margen real es sobre el precio de venta. Los importes son estimaciones y no incluyen impuestos, comisiones ni envíos salvo que los agregues a tus costos.</p><div class="dtfp-actions"><button type="button" id="dtfpCalc">✨ Actualizar cotización</button><button type="button" class="dtfp-alt" id="dtfpSave">💾 Guardar</button><button type="button" class="dtfp-alt" id="dtfpPrint">🖨️ Imprimir / PDF</button><button type="button" class="dtfp-alt" id="dtfpCsv">⬇️ CSV</button></div></div><div class="dtfp-card"><h3>🗂️ Historial local</h3><div id="dtfpHistory" class="dtfp-history"></div><p class="dtfp-note">Hasta 15 proyectos guardados en este navegador. No se sincronizan entre dispositivos.</p></div></div>
@@ -4595,7 +4595,99 @@ new MutationObserver(()=&gt;{if(timer&amp;&amp;!$(&#x27;go&#x27;).disabled)stop(
 /* Ajusta la altura del marco en la página principal */
 function report(){try{parent.postMessage({csV18Height:Math.ceil(document.body.getBoundingClientRect().height)},&#x27;*&#x27;);}catch(e){}}
 new ResizeObserver(report).observe(document.body);window.addEventListener(&#x27;load&#x27;,report);report();
-})();&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe>
+})();&lt;/script&gt;&lt;script&gt;(function(){var CSS=&quot;.cs-dl.cs-dl{position:relative!important;align-items:center!important;justify-content:center!important;gap:0!important;min-height:52px!important;padding:13px 24px!important;border:0!important;border-radius:14px!important;background:linear-gradient(110deg,#3fc3ee 0%,#7fa6f2 48%,#e66bc0 100%)!important;color:#0a1022!important;font-weight:800!important;font-size:16px!important;line-height:1.2!important;letter-spacing:.2px!important;text-decoration:none!important;text-shadow:none!important;text-align:center!important;cursor:pointer!important;overflow:hidden!important;isolation:isolate;opacity:1!important;box-shadow:0 10px 24px -10px rgba(63,195,238,.65),0 8px 22px -12px rgba(230,107,192,.7),inset 0 1px 0 rgba(255,255,255,.5)!important;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important;-webkit-tap-highlight-color:transparent}\n.cs-dl.cs-dl[hidden]{display:none!important}\n.cs-dl.cs-dl:hover{transform:translateY(-2px)!important;filter:brightness(1.06) saturate(1.08)!important;box-shadow:0 16px 30px -12px rgba(63,195,238,.8),0 12px 28px -14px rgba(230,107,192,.85),inset 0 1px 0 rgba(255,255,255,.55)!important}\n.cs-dl.cs-dl:active{transform:translateY(0) scale(.98)!important}\n.cs-dl.cs-dl:focus-visible{outline:3px solid #fff!important;outline-offset:3px!important}\n.cs-dl.cs-dl::before{content:\&quot;\&quot;!important;position:absolute!important;top:0!important;bottom:0!important;left:0!important;right:auto!important;width:60%!important;height:auto!important;border:0!important;border-radius:0!important;background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.5) 50%,transparent 100%)!important;transform:translateX(-130%) skewX(-12deg);animation:csDlShine 4.2s ease-in-out infinite!important;pointer-events:none!important;z-index:0!important;opacity:1!important}\n@keyframes csDlShine{0%,62%{transform:translateX(-130%) skewX(-12deg)}86%,100%{transform:translateX(230%) skewX(-12deg)}}\n.cs-dl .cs-dl-ico{width:21px!important;height:21px!important;flex:none!important;display:inline-block!important;vertical-align:-4px!important;margin:0 9px 0 0!important;position:relative;z-index:1}\n.cs-dl.cs-dl:hover .cs-dl-arrow{animation:csDlBob .7s ease-in-out infinite}\n@keyframes csDlBob{0%,100%{transform:translateY(0)}50%{transform:translateY(2.5px)}}\n.cs-dl.cs-dl-ib{display:inline-block}\n.cs-dl .cs-dl-row{display:inline-flex!important;align-items:center!important;justify-content:center!important;white-space:normal}\n.cs-dl.cs-dl:disabled,.cs-dl.cs-dl[disabled],.cs-dl.cs-dl[aria-disabled=\&quot;true\&quot;]{filter:grayscale(.75) brightness(.62)!important;cursor:not-allowed!important;box-shadow:none!important;transform:none!important}\n.cs-dl.cs-dl:disabled::before,.cs-dl.cs-dl[disabled]::before{animation:none!important;opacity:0!important}\n.cs-dl.cs-dl-vip.cs-dl-vip{background:linear-gradient(110deg,#a8782f 0%,#e9cd88 45%,#f4dfa6 55%,#c99a4b 100%)!important;color:#1b1307!important;box-shadow:0 10px 26px -12px rgba(214,174,98,.85),inset 0 1px 0 rgba(255,250,230,.65),inset 0 -1px 0 rgba(90,60,20,.35)!important}\n.cs-dl.cs-dl-vip.cs-dl-vip:hover{box-shadow:0 16px 32px -12px rgba(214,174,98,.95),inset 0 1px 0 rgba(255,250,230,.7)!important}\n.cs-dl.cs-dl::after{content:\&quot;\\2713\\00a0\\00a0\\00a1Listo!\&quot;!important;position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:linear-gradient(110deg,#2fd6a0,#3fc3ee)!important;color:#05261c!important;font-weight:800!important;font-size:16px!important;border:0!important;border-radius:inherit!important;opacity:0;transform:scale(.92);transition:opacity .2s ease,transform .25s cubic-bezier(.2,1.4,.4,1)!important;pointer-events:none!important;z-index:2!important;width:auto!important;height:auto!important}\n.cs-dl.cs-dl-vip::after{background:linear-gradient(110deg,#f4dfa6,#d6ae62)!important;color:#1b1307!important}\n.cs-dl.cs-dl.cs-dl-done::after{opacity:1;transform:scale(1)}\n@media (max-width:600px){.cs-dl.cs-dl{font-size:15px!important;min-height:50px!important;padding:12px 18px!important}}\n@media (prefers-reduced-motion:reduce){.cs-dl.cs-dl::before{animation:none!important;opacity:0!important}.cs-dl.cs-dl:hover .cs-dl-arrow{animation:none}}\n&quot;;
+/* Cruz Sublime · botón de descarga unificado (núcleo compartido) */
+function csDlInstall(win, opts){
+  var doc = win.document;
+  if (!doc || doc.__csDl) return; doc.__csDl = true;
+  var RX = /descarg|exportar|⬇|guardar (pdf|png|imagen)|plantilla (svg|dxf|pdf)|mockup png|imprimir \/ (guardar )?pdf/i;
+  var LEAD = /^[\s⬇↓✂️\u{1F5A8}]+/u;
+  var ICO_DL = &#x27;&lt;svg class=&quot;cs-dl-ico&quot; viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.4&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;&lt;path class=&quot;cs-dl-arrow&quot; d=&quot;M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5&quot;/&gt;&lt;path d=&quot;M5 19.5h14&quot;/&gt;&lt;/svg&gt;&#x27;;
+  var ICO_PR = &#x27;&lt;svg class=&quot;cs-dl-ico&quot; viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2.2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;&lt;path d=&quot;M7 8V4h10v4&quot;/&gt;&lt;rect x=&quot;4&quot; y=&quot;8&quot; width=&quot;16&quot; height=&quot;8&quot; rx=&quot;2&quot;/&gt;&lt;path d=&quot;M7 14h10v6H7z&quot;/&gt;&lt;/svg&gt;&#x27;;
+  var CSS = opts.css;
+  function addStyle(){
+    if (doc.getElementById(&#x27;cs-dl-style&#x27;) || !doc.head) return;
+    var st = doc.createElement(&#x27;style&#x27;); st.id = &#x27;cs-dl-style&#x27;; st.textContent = CSS; doc.head.appendChild(st);
+  }
+  function isTarget(el){
+    if (!el || el.nodeType !== 1) return false;
+    var tag = el.tagName; if (tag !== &#x27;BUTTON&#x27; &amp;&amp; tag !== &#x27;A&#x27;) return false;
+    if (opts.scope &amp;&amp; !opts.scope(el)) return false;
+    var tx = (el.textContent || &#x27;&#x27;).replace(/\s+/g, &#x27; &#x27;).trim();
+    if (tx.length &gt; 70) return false;
+    if (/^\W*bajar\b/i.test(tx)) return false;
+    return el.hasAttribute(&#x27;download&#x27;) || RX.test(tx);
+  }
+  function firstText(el){
+    var w = doc.createTreeWalker(el, 4, null), n;
+    while ((n = w.nextNode())) { if (n.nodeValue.trim()) return n; }
+    return null;
+  }
+  function decorate(el){
+    if (!el.classList.contains(&#x27;cs-dl&#x27;)) {
+      el.classList.add(&#x27;cs-dl&#x27;);
+      if (opts.vip &amp;&amp; opts.vip(el)) el.classList.add(&#x27;cs-dl-vip&#x27;);
+      var cd = win.getComputedStyle(el).display;
+      if (cd === &#x27;inline&#x27;) el.classList.add(&#x27;cs-dl-ib&#x27;);
+    }
+    if (el.querySelector(&#x27;.cs-dl-ico&#x27;)) return;
+    var t = firstText(el), print = /imprimir/i.test(el.textContent || &#x27;&#x27;);
+    var row = doc.createElement(&#x27;span&#x27;); row.className = &#x27;cs-dl-row&#x27;; row.innerHTML = print ? ICO_PR : ICO_DL;
+    if (t) { t.nodeValue = t.nodeValue.replace(LEAD, &#x27;&#x27;); t.parentNode.insertBefore(row, t); row.appendChild(t); }
+    else el.insertBefore(row, el.firstChild);
+  }
+  function scan(root){
+    if (!root || !root.querySelectorAll) return;
+    if (isTarget(root)) decorate(root);
+    var list = root.querySelectorAll(&#x27;button,a&#x27;);
+    for (var i = 0; i &lt; list.length; i++) if (isTarget(list[i])) decorate(list[i]);
+  }
+  var last = null, lastAt = 0, lastFire = 0;
+  function markDone(el){
+    if (!el) return;
+    el.classList.remove(&#x27;cs-dl-done&#x27;); void el.offsetWidth; el.classList.add(&#x27;cs-dl-done&#x27;);
+    clearTimeout(el.__csDlT); el.__csDlT = setTimeout(function(){ el.classList.remove(&#x27;cs-dl-done&#x27;); }, 1900);
+  }
+  function fire(src){
+    var now = Date.now(); if (now - lastFire &lt; 900) return; lastFire = now;
+    var el = (src &amp;&amp; src.classList &amp;&amp; src.classList.contains(&#x27;cs-dl&#x27;)) ? src : ((now - lastAt &lt; 25000) ? last : null);
+    markDone(el);
+    try { opts.onDownload(el); } catch (e) {}
+  }
+  doc.addEventListener(&#x27;pointerdown&#x27;, function(e){
+    var el = e.target &amp;&amp; e.target.closest ? e.target.closest(&#x27;.cs-dl&#x27;) : null;
+    if (el) { last = el; lastAt = Date.now(); if (opts.warm) opts.warm(); }
+  }, true);
+  doc.addEventListener(&#x27;click&#x27;, function(e){
+    var el = e.target &amp;&amp; e.target.closest ? e.target.closest(&#x27;a[download],.cs-dl&#x27;) : null;
+    if (!el) return;
+    if (el.classList.contains(&#x27;cs-dl&#x27;)) { last = el; lastAt = Date.now(); }
+    if (el.disabled) return;
+    if (el.tagName === &#x27;A&#x27; &amp;&amp; el.hasAttribute(&#x27;download&#x27;) &amp;&amp; el.getAttribute(&#x27;href&#x27;)) fire(el);
+    else if (/imprimir/i.test(el.textContent || &#x27;&#x27;)) setTimeout(function(){ fire(el); }, 60);
+  }, true);
+  try {
+    var P = win.HTMLAnchorElement.prototype, orig = P.click;
+    if (!P.__csDl) { P.__csDl = true; P.click = function(){ try { if (this.hasAttribute(&#x27;download&#x27;)) fire(this); } catch (e) {} return orig.apply(this, arguments); }; }
+  } catch (e) {}
+  function start(){
+    addStyle(); scan(doc.body);
+    new win.MutationObserver(function(ms){
+      for (var i = 0; i &lt; ms.length; i++) {
+        var m = ms[i];
+        if (m.type === &#x27;attributes&#x27;) { scan(m.target); continue; }
+        var tgt = m.target.closest ? m.target.closest(&#x27;button,a&#x27;) : null;
+        if (tgt &amp;&amp; isTarget(tgt)) decorate(tgt);
+        for (var j = 0; j &lt; m.addedNodes.length; j++) { var n = m.addedNodes[j]; if (n.nodeType === 1) scan(n); }
+      }
+    }).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: [&#x27;download&#x27;] });
+  }
+  if (doc.body) start(); else doc.addEventListener(&#x27;DOMContentLoaded&#x27;, start);
+  return { scan: scan };
+}
+
+csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDing:1},&quot;*&quot;)}catch(e){}}});})();&lt;/script&gt;
+&lt;/body&gt;&lt;/html&gt;"></iframe>
     </div>
     <details class="cs-legacy-details"><summary>Mostrar mejorador anterior</summary>
 
@@ -5538,6 +5630,8 @@ new ResizeObserver(report).observe(document.body);window.addEventListener(&#x27;
                 font-weight:bold; box-shadow:0 0 18px #d9a83e33;">
       “De pie ante el mundo, de rodillas ante Dios”
     </div>
+    <div class="cs-never" style="margin:26px auto 16px; font-size:clamp(16px,4.3vw,26px); font-weight:800; letter-spacing:clamp(.8px,.45vw,4px); white-space:nowrap; line-height:1.25; background:linear-gradient(90deg,#3fc3ee,#f4dfa6 50%,#e66bc0); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 12px rgba(244,223,166,.25));">RENDIRSE NO ES UNA OPCIÓN</div>
+
 
     <div style="color:#ffd66b; letter-spacing:5px; font-weight:bold;">
       GRACIAS
@@ -11735,6 +11829,222 @@ window.csBudget={st,calc,render,textVersion};
 #panel-plans .canva-counter.canva-agotado{border-color:rgba(255,77,109,.55)!important;background:rgba(255,77,109,.12)!important}
 @media(max-width:420px){#panel-plans .cs-pay-brands{display:none}#panel-plans .cs-ph-steps li{font-size:11px}}
 @media(prefers-reduced-motion:reduce){#panel-plans .cs-pay-card::before,#panel-plans .cc-live i{animation:none}}
+</style>
+
+<!-- Cruz Sublime: botón de descarga unificado + sonido -->
+<style id="cs-dl-toggle-style">
+#csDlSoundToggle{position:fixed;left:18px;bottom:18px;z-index:99990;width:46px;height:46px;border-radius:50%;border:1px solid rgba(63,195,238,.45);background:rgba(18,26,46,.92);color:#3fc3ee;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.45),0 0 0 4px rgba(63,195,238,.08);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;transition:opacity .25s ease,transform .25s ease,color .2s,border-color .2s}
+#csDlSoundToggle.show{opacity:1;transform:none;pointer-events:auto}
+#csDlSoundToggle:hover{border-color:#e66bc0;color:#fff}
+#csDlSoundToggle.is-muted{color:#8b95b3;border-color:rgba(139,149,179,.4)}
+#csDlSoundToggle svg{width:22px;height:22px}
+#csDlSoundToggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
+#csDlSoundTip{position:fixed;left:74px;bottom:27px;z-index:99990;background:rgba(18,26,46,.95);color:#eef3ff;font:600 13px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;padding:8px 12px;border-radius:10px;border:1px solid rgba(63,195,238,.3);opacity:0;transform:translateX(-6px);pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap}
+#csDlSoundTip.show{opacity:1;transform:none}
+@media (max-width:600px){#csDlSoundToggle{left:12px;bottom:12px;width:42px;height:42px}#csDlSoundTip{left:62px;bottom:20px}}
+</style>
+<script>
+window.__CS_DL_CSS__=".cs-dl.cs-dl{position:relative!important;align-items:center!important;justify-content:center!important;gap:0!important;min-height:52px!important;padding:13px 24px!important;border:0!important;border-radius:14px!important;background:linear-gradient(110deg,#3fc3ee 0%,#7fa6f2 48%,#e66bc0 100%)!important;color:#0a1022!important;font-weight:800!important;font-size:16px!important;line-height:1.2!important;letter-spacing:.2px!important;text-decoration:none!important;text-shadow:none!important;text-align:center!important;cursor:pointer!important;overflow:hidden!important;isolation:isolate;opacity:1!important;box-shadow:0 10px 24px -10px rgba(63,195,238,.65),0 8px 22px -12px rgba(230,107,192,.7),inset 0 1px 0 rgba(255,255,255,.5)!important;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important;-webkit-tap-highlight-color:transparent}\n.cs-dl.cs-dl[hidden]{display:none!important}\n.cs-dl.cs-dl:hover{transform:translateY(-2px)!important;filter:brightness(1.06) saturate(1.08)!important;box-shadow:0 16px 30px -12px rgba(63,195,238,.8),0 12px 28px -14px rgba(230,107,192,.85),inset 0 1px 0 rgba(255,255,255,.55)!important}\n.cs-dl.cs-dl:active{transform:translateY(0) scale(.98)!important}\n.cs-dl.cs-dl:focus-visible{outline:3px solid #fff!important;outline-offset:3px!important}\n.cs-dl.cs-dl::before{content:\"\"!important;position:absolute!important;top:0!important;bottom:0!important;left:0!important;right:auto!important;width:60%!important;height:auto!important;border:0!important;border-radius:0!important;background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.5) 50%,transparent 100%)!important;transform:translateX(-130%) skewX(-12deg);animation:csDlShine 4.2s ease-in-out infinite!important;pointer-events:none!important;z-index:0!important;opacity:1!important}\n@keyframes csDlShine{0%,62%{transform:translateX(-130%) skewX(-12deg)}86%,100%{transform:translateX(230%) skewX(-12deg)}}\n.cs-dl .cs-dl-ico{width:21px!important;height:21px!important;flex:none!important;display:inline-block!important;vertical-align:-4px!important;margin:0 9px 0 0!important;position:relative;z-index:1}\n.cs-dl.cs-dl:hover .cs-dl-arrow{animation:csDlBob .7s ease-in-out infinite}\n@keyframes csDlBob{0%,100%{transform:translateY(0)}50%{transform:translateY(2.5px)}}\n.cs-dl.cs-dl-ib{display:inline-block}\n.cs-dl .cs-dl-row{display:inline-flex!important;align-items:center!important;justify-content:center!important;white-space:normal}\n.cs-dl.cs-dl:disabled,.cs-dl.cs-dl[disabled],.cs-dl.cs-dl[aria-disabled=\"true\"]{filter:grayscale(.75) brightness(.62)!important;cursor:not-allowed!important;box-shadow:none!important;transform:none!important}\n.cs-dl.cs-dl:disabled::before,.cs-dl.cs-dl[disabled]::before{animation:none!important;opacity:0!important}\n.cs-dl.cs-dl-vip.cs-dl-vip{background:linear-gradient(110deg,#a8782f 0%,#e9cd88 45%,#f4dfa6 55%,#c99a4b 100%)!important;color:#1b1307!important;box-shadow:0 10px 26px -12px rgba(214,174,98,.85),inset 0 1px 0 rgba(255,250,230,.65),inset 0 -1px 0 rgba(90,60,20,.35)!important}\n.cs-dl.cs-dl-vip.cs-dl-vip:hover{box-shadow:0 16px 32px -12px rgba(214,174,98,.95),inset 0 1px 0 rgba(255,250,230,.7)!important}\n.cs-dl.cs-dl::after{content:\"\\2713\\00a0\\00a0\\00a1Listo!\"!important;position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:linear-gradient(110deg,#2fd6a0,#3fc3ee)!important;color:#05261c!important;font-weight:800!important;font-size:16px!important;border:0!important;border-radius:inherit!important;opacity:0;transform:scale(.92);transition:opacity .2s ease,transform .25s cubic-bezier(.2,1.4,.4,1)!important;pointer-events:none!important;z-index:2!important;width:auto!important;height:auto!important}\n.cs-dl.cs-dl-vip::after{background:linear-gradient(110deg,#f4dfa6,#d6ae62)!important;color:#1b1307!important}\n.cs-dl.cs-dl.cs-dl-done::after{opacity:1;transform:scale(1)}\n@media (max-width:600px){.cs-dl.cs-dl{font-size:15px!important;min-height:50px!important;padding:12px 18px!important}}\n@media (prefers-reduced-motion:reduce){.cs-dl.cs-dl::before{animation:none!important;opacity:0!important}.cs-dl.cs-dl:hover .cs-dl-arrow{animation:none}}\n";
+/* Cruz Sublime · botón de descarga unificado (núcleo compartido) */
+function csDlInstall(win, opts){
+  var doc = win.document;
+  if (!doc || doc.__csDl) return; doc.__csDl = true;
+  var RX = /descarg|exportar|⬇|guardar (pdf|png|imagen)|plantilla (svg|dxf|pdf)|mockup png|imprimir \/ (guardar )?pdf/i;
+  var LEAD = /^[\s⬇↓✂️\u{1F5A8}]+/u;
+  var ICO_DL = '<svg class="cs-dl-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path class="cs-dl-arrow" d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>';
+  var ICO_PR = '<svg class="cs-dl-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8V4h10v4"/><rect x="4" y="8" width="16" height="8" rx="2"/><path d="M7 14h10v6H7z"/></svg>';
+  var CSS = opts.css;
+  function addStyle(){
+    if (doc.getElementById('cs-dl-style') || !doc.head) return;
+    var st = doc.createElement('style'); st.id = 'cs-dl-style'; st.textContent = CSS; doc.head.appendChild(st);
+  }
+  function isTarget(el){
+    if (!el || el.nodeType !== 1) return false;
+    var tag = el.tagName; if (tag !== 'BUTTON' && tag !== 'A') return false;
+    if (opts.scope && !opts.scope(el)) return false;
+    var tx = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (tx.length > 70) return false;
+    if (/^\W*bajar\b/i.test(tx)) return false;
+    return el.hasAttribute('download') || RX.test(tx);
+  }
+  function firstText(el){
+    var w = doc.createTreeWalker(el, 4, null), n;
+    while ((n = w.nextNode())) { if (n.nodeValue.trim()) return n; }
+    return null;
+  }
+  function decorate(el){
+    if (!el.classList.contains('cs-dl')) {
+      el.classList.add('cs-dl');
+      if (opts.vip && opts.vip(el)) el.classList.add('cs-dl-vip');
+      var cd = win.getComputedStyle(el).display;
+      if (cd === 'inline') el.classList.add('cs-dl-ib');
+    }
+    if (el.querySelector('.cs-dl-ico')) return;
+    var t = firstText(el), print = /imprimir/i.test(el.textContent || '');
+    var row = doc.createElement('span'); row.className = 'cs-dl-row'; row.innerHTML = print ? ICO_PR : ICO_DL;
+    if (t) { t.nodeValue = t.nodeValue.replace(LEAD, ''); t.parentNode.insertBefore(row, t); row.appendChild(t); }
+    else el.insertBefore(row, el.firstChild);
+  }
+  function scan(root){
+    if (!root || !root.querySelectorAll) return;
+    if (isTarget(root)) decorate(root);
+    var list = root.querySelectorAll('button,a');
+    for (var i = 0; i < list.length; i++) if (isTarget(list[i])) decorate(list[i]);
+  }
+  var last = null, lastAt = 0, lastFire = 0;
+  function markDone(el){
+    if (!el) return;
+    el.classList.remove('cs-dl-done'); void el.offsetWidth; el.classList.add('cs-dl-done');
+    clearTimeout(el.__csDlT); el.__csDlT = setTimeout(function(){ el.classList.remove('cs-dl-done'); }, 1900);
+  }
+  function fire(src){
+    var now = Date.now(); if (now - lastFire < 900) return; lastFire = now;
+    var el = (src && src.classList && src.classList.contains('cs-dl')) ? src : ((now - lastAt < 25000) ? last : null);
+    markDone(el);
+    try { opts.onDownload(el); } catch (e) {}
+  }
+  doc.addEventListener('pointerdown', function(e){
+    var el = e.target && e.target.closest ? e.target.closest('.cs-dl') : null;
+    if (el) { last = el; lastAt = Date.now(); if (opts.warm) opts.warm(); }
+  }, true);
+  doc.addEventListener('click', function(e){
+    var el = e.target && e.target.closest ? e.target.closest('a[download],.cs-dl') : null;
+    if (!el) return;
+    if (el.classList.contains('cs-dl')) { last = el; lastAt = Date.now(); }
+    if (el.disabled) return;
+    if (el.tagName === 'A' && el.hasAttribute('download') && el.getAttribute('href')) fire(el);
+    else if (/imprimir/i.test(el.textContent || '')) setTimeout(function(){ fire(el); }, 60);
+  }, true);
+  try {
+    var P = win.HTMLAnchorElement.prototype, orig = P.click;
+    if (!P.__csDl) { P.__csDl = true; P.click = function(){ try { if (this.hasAttribute('download')) fire(this); } catch (e) {} return orig.apply(this, arguments); }; }
+  } catch (e) {}
+  function start(){
+    addStyle(); scan(doc.body);
+    new win.MutationObserver(function(ms){
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.type === 'attributes') { scan(m.target); continue; }
+        var tgt = m.target.closest ? m.target.closest('button,a') : null;
+        if (tgt && isTarget(tgt)) decorate(tgt);
+        for (var j = 0; j < m.addedNodes.length; j++) { var n = m.addedNodes[j]; if (n.nodeType === 1) scan(n); }
+      }
+    }).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['download'] });
+  }
+  if (doc.body) start(); else doc.addEventListener('DOMContentLoaded', start);
+  return { scan: scan };
+}
+
+/* Cruz Sublime · sonido de descarga y control de silencio */
+(function(){
+  if (window.__csDlParent) return; window.__csDlParent = true;
+  var KEY = 'cs_dl_sound_muted';
+  function muted(){ try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; } }
+  function setMuted(v){ try { localStorage.setItem(KEY, v ? '1' : '0'); } catch (e) {} }
+  var AC = null;
+  function warm(){
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      if (AC.state === 'suspended') AC.resume();
+    } catch (e) {}
+  }
+  function ding(force){
+    if (!force && muted()) return;
+    warm(); if (!AC) return;
+    try {
+      var t0 = AC.currentTime + 0.01, out = AC.createGain();
+      out.gain.value = 0.22; out.connect(AC.destination);
+      function tone(at, f, dur, vol, type){
+        var o = AC.createOscillator(), g = AC.createGain();
+        o.type = type || 'sine'; o.frequency.setValueAtTime(f, t0 + at);
+        g.gain.setValueAtTime(0.0001, t0 + at);
+        g.gain.exponentialRampToValueAtTime(vol, t0 + at + 0.006);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+        o.connect(g); g.connect(out); o.start(t0 + at); o.stop(t0 + at + dur + 0.05);
+      }
+      tone(0, 1318.5, 0.32, 0.9);            /* Mi6 */
+      tone(0, 2637, 0.16, 0.18, 'triangle');
+      tone(0.075, 1975.5, 0.55, 0.85);       /* Si6 */
+      tone(0.075, 3951, 0.28, 0.12, 'triangle');
+      tone(0.075, 5274, 0.18, 0.05);         /* brillo */
+    } catch (e) {}
+  }
+  window.csDownloadDing = ding;
+
+  var CSS = window.__CS_DL_CSS__;
+  var inTools = function(el){ return !!(el.closest && el.closest('.panel,[id^="panel-"]')) && !el.closest('nav,header'); };
+  var isVip = function(el){ return !!(el.closest && el.closest('#panel-premium')); };
+  csDlInstall(window, { css: CSS, scope: inTools, vip: isVip, warm: warm, onDownload: function(){ ding(); } });
+
+  /* Herramientas incrustadas del mismo origen (Playera Studio PRO, QR neón) */
+  function hookFrames(){
+    var fr = document.querySelectorAll('iframe');
+    for (var i = 0; i < fr.length; i++) {
+      var f = fr[i], d = null;
+      try { d = f.contentDocument; } catch (e) { d = null; }
+      if (!d || !d.body || d.__csDl || !f.contentWindow) continue;
+      if (d.location && d.location.href === 'about:blank' && !d.body.children.length) continue;
+      (function(f){
+        var vip = !!f.closest('#panel-premium');
+        csDlInstall(f.contentWindow, { css: CSS, vip: function(){ return vip; }, warm: warm, onDownload: function(){ ding(); } });
+      })(f);
+    }
+  }
+  setInterval(hookFrames, 1500); hookFrames();
+
+  /* Mejorador IA V18 (iframe aislado): avisa por mensaje */
+  window.addEventListener('message', function(e){
+    if (!e.data || e.data.csDlDing !== 1) return;
+    var fr = document.querySelectorAll('iframe');
+    for (var i = 0; i < fr.length; i++) if (fr[i].contentWindow === e.source) { ding(); return; }
+  });
+
+  /* Botón de bocina: aparece cuando hay un botón de descarga a la vista */
+  var ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
+  var OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.id = 'csDlSoundToggle';
+  var tip = document.createElement('span'); tip.id = 'csDlSoundTip';
+  function paint(){
+    var m = muted();
+    btn.innerHTML = m ? OFF : ON;
+    btn.classList.toggle('is-muted', m);
+    var label = m ? 'Activar sonido de descarga' : 'Silenciar sonido de descarga';
+    btn.setAttribute('aria-label', label); btn.title = label; btn.setAttribute('aria-pressed', m ? 'true' : 'false');
+  }
+  btn.addEventListener('click', function(){
+    var m = !muted(); setMuted(m); paint();
+    tip.textContent = m ? 'Sonido de descarga apagado' : 'Sonido de descarga encendido';
+    tip.classList.add('show'); clearTimeout(tip.__t); tip.__t = setTimeout(function(){ tip.classList.remove('show'); }, 1800);
+    if (!m) ding(true);
+  });
+  window.addEventListener('storage', function(e){ if (e.key === KEY) paint(); });
+  function mount(){ document.body.appendChild(btn); document.body.appendChild(tip); paint(); }
+  if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
+
+  var vis = new Set(), io = null;
+  try {
+    io = new IntersectionObserver(function(es){
+      es.forEach(function(en){ if (en.isIntersecting && en.target.offsetParent !== null) vis.add(en.target); else vis.delete(en.target); });
+      btn.classList.toggle('show', vis.size > 0);
+    }, { threshold: 0.01 });
+  } catch (e) {}
+  function watch(){
+    if (!io) { btn.classList.add('show'); return; }
+    var els = document.querySelectorAll('.cs-dl, #cs-v18-frame, #csQrNeonFrame, #csPlayeraVipFrame');
+    for (var i = 0; i < els.length; i++) if (!els[i].__csDlIO) { els[i].__csDlIO = true; io.observe(els[i]); }
+  }
+  setInterval(watch, 1500); setTimeout(watch, 300);
+})();
+</script>
+
+<style id="cs-back-style">
+/* Botón "Volver" más grande y visible en todos los estudios */
+.vip-back.vip-back:not([hidden]){display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;min-height:50px!important;padding:12px 26px 12px 20px!important;font-size:16px!important;font-weight:700!important;letter-spacing:.2px!important;line-height:1.2!important;border-radius:999px!important;border:1.5px solid rgba(214,174,98,.75)!important;background:linear-gradient(180deg,rgba(214,174,98,.2),rgba(214,174,98,.07))!important;color:#f4dfa6!important;box-shadow:0 8px 22px -10px rgba(214,174,98,.6),inset 0 1px 0 rgba(255,244,214,.18)!important;cursor:pointer!important;transition:transform .18s ease,background .18s ease,color .18s ease,box-shadow .18s ease!important}
+.vip-back.vip-back:hover{background:linear-gradient(110deg,#c99a4b,#f4dfa6)!important;color:#1b1307!important;transform:translateX(-3px)!important;box-shadow:0 12px 26px -10px rgba(214,174,98,.85)!important}
+.vip-back.vip-back:focus-visible{outline:3px solid #f4dfa6!important;outline-offset:3px!important}
+#csPacksBack{min-height:50px!important;padding:12px 26px 12px 20px!important;font-size:16px!important;font-weight:700!important;border-radius:999px!important}
+@media (max-width:600px){.vip-back.vip-back:not([hidden]),#csPacksBack{min-height:48px!important;font-size:15px!important;padding:11px 20px 11px 16px!important}}
 </style>
 </body>
 </html>
