@@ -5276,7 +5276,7 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
           </ul>
           <div class="cs-pay"><div class="cs-pay-head"><span>Elige cómo pagar</span><span class="cs-pay-secure"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>Pago seguro</span></div><button class="btn big cs-pay-card" id="btnMedio"><span class="cs-pay-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19M6 15h4"/></svg></span><span class="cs-pay-tx"><b class="cs-pay-t">Pagar con tarjeta</b><small>Visa · Mastercard · débito o crédito</small></span><span class="cs-pay-brands" aria-hidden="true"><i>VISA</i><i>MC</i></span><span class="cs-pay-arrow" aria-hidden="true">→</span></button><button class="btn big cs-pay-mp" id="btnMedioMP"><span class="cs-pay-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5c3-2.5 6-3.5 9-3.5s6 1 9 3.5"/><path d="M3 8.5v7c3 2.5 6 3.5 9 3.5s6-1 9-3.5v-7"/><path d="m8 11 2.5 2a1.5 1.5 0 0 0 2 0l1-.8 2.5 2.3"/><path d="M8 11c1-1 2.3-1.4 3.4-.9L12 10.4"/></svg></span><span class="cs-pay-tx"><b class="cs-pay-t">Pagar con Mercado Pago</b><small>Con tu cuenta o tarjeta</small></span><span class="cs-pay-arrow" aria-hidden="true">→</span></button></div>
 <div class="cs-payment-help"><div class="cs-ph-top"><strong>¿Ya realizaste tu pago?</strong><span>Actívalo en 3 pasos</span></div><ol class="cs-ph-steps"><li><i>1</i><span>Paga tu plan</span></li><li><i>2</i><span>Manda tu comprobante con nombre y correo</span></li><li><i>3</i><span>Recibe tu código de acceso</span></li></ol><a class="cs-wa-button" href="https://wa.me/527201520366?text=Hola%2C%20ya%20realic%C3%A9%20mi%20pago%20del%20plan%20Medio%20de%20Cruz%20Sublime.%20Quiero%20enviar%20mi%20comprobante." target="_blank" rel="noopener noreferrer"><svg class="cs-wa-icon" viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg> <span>Enviar comprobante por WhatsApp</span></a></div>
-          <div class="canva-counter" id="canvaCounter"><span class="cc-row"><span class="cc-live"><i></i>En vivo</span><span class="cc-txt">Cuentas Canva disponibles hoy</span><span class="cc-num"><b id="canvaLeft">15</b>/15</span></span><span class="cc-bar"><i id="canvaBar"></i></span></div>
+          
         </div>
         <!-- NUEVA MEMBRESÍA PREMIUM VIP: versión de prueba -->
         <div class="plan featured cs-gold-vip" id="planPremiumVIP">
@@ -5676,6 +5676,8 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({code: code, user: user})
       });
+      // Solo cerramos sesión si el servidor responde que el código ya no es válido.
+      if(!r.ok) return;
       var d = await r.json();
       if(d.valid){
         if(d.token) sessionStorage.setItem("cruz_member_token",d.token);
@@ -5692,7 +5694,7 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
         document.getElementById("gate").style.display = "flex";
       }
     } catch(e) {
-      localStorage.removeItem("cruz_sublime_unlocked");
+      // Error de red o servidor despertando: se conserva la sesión y se vuelve a revisar después.
     }
   }
   checkStoredAccess();
@@ -6299,68 +6301,80 @@ document.addEventListener("DOMContentLoaded", function(){
   function sharpen(data, w, h, amount){
     return convolve(data, w, h, [0,-amount,0,-amount,1+4*amount,-amount,0,-amount,0]);
   }
+  async function csCloudToken(){
+    var t = sessionStorage.getItem("cruz_member_token");
+    if(t) return t;
+    var code = localStorage.getItem("cruz_sublime_code"), user = localStorage.getItem("cruz_sublime_user");
+    if(!code || !user) return null;
+    try {
+      var r = await fetch("https://cruz-sublime-api.onrender.com/api/verify", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({code: code, user: user})
+      });
+      var d = await r.json();
+      if(d.valid && d.token){ sessionStorage.setItem("cruz_member_token", d.token); return d.token; }
+    } catch(e){}
+    return null;
+  }
   async function improveImage(){
     if(!imgOriginal) return;
-    var email = localStorage.getItem("cruz_sublime_user") || "";
-    var plan = localStorage.getItem("cruz_sublime_plan") || "basico";
-    if(!email){ document.getElementById("imgStatus").textContent = "Inicia sesión para usar el mejorador."; return; }
-    document.getElementById("imgStatus").textContent = "Verificando límite...";
-    try {
-      var st = await fetch("https://cruz-sublime-api.onrender.com/api/upscale/status", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ email: email, plan: plan })
-      });
-      var sdata = await st.json();
-      if(sdata.left <= 0){
-        document.getElementById("imgStatus").textContent = "Límite mensual alcanzado (" + sdata.max + " mejoras).";
-        return;
-      }
-    } catch(e){
-      console.log("Error verificando límite", e);
-    }
+    var status = document.getElementById("imgStatus");
+    var token = await csCloudToken();
+    if(!token){ status.textContent = "Inicia sesión con tu código y correo para usar el mejorador en la nube."; return; }
     document.getElementById("aiNote").style.display = "block";
     document.getElementById("aiProgress").style.display = "block";
-    document.getElementById("imgStatus").textContent = "Enviando a IA profesional...";
+    status.textContent = "Enviando a IA profesional...";
     document.getElementById("btnImprove").disabled = true;
     var bar = document.getElementById("aiBar");
     var pctEl = document.getElementById("aiPct");
     var fake = 0;
     var timer = setInterval(function(){
-      fake = Math.min(fake + Math.random()*6, 85);
+      fake = Math.min(fake + Math.random()*4, 90);
       bar.style.width = fake + "%";
       pctEl.textContent = Math.round(fake) + "%";
-    }, 800);
+    }, 1000);
+    function fail(msg){
+      clearInterval(timer);
+      status.textContent = msg;
+      document.getElementById("aiProgress").style.display = "none";
+    }
     try {
-      var res = await fetch("https://cruz-sublime-api.onrender.com/api/upscale", {
+      var API = "https://cruz-sublime-api.onrender.com";
+      var auth = {Authorization: "Bearer " + token};
+      var res = await fetch(API + "/api/cloud/upscale", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: {"Content-Type": "application/json", Authorization: "Bearer " + token},
         body: JSON.stringify({ image: imgOriginal })
       });
-      var data = await res.json();
-      clearInterval(timer);
-      if(data.image){
+      var data = await res.json().catch(function(){ return {}; });
+      if(res.status === 401) sessionStorage.removeItem("cruz_member_token");
+      if(!res.ok && res.status !== 202 || !data.job_id){
+        fail("Error: " + (data.error || data.message || "No se pudo iniciar la mejora"));
+      } else {
+        var url = null;
+        for(var i = 0; i < 60 && !url; i++){
+          await new Promise(function(r){ setTimeout(r, 3000); });
+          status.textContent = "Mejorando en la nube… " + ((i+1)*3) + " segundos.";
+          var p = await fetch(API + "/api/cloud/job/" + encodeURIComponent(data.job_id), {headers: auth});
+          var j = await p.json().catch(function(){ return {}; });
+          if(j.status === "completed" && j.image) url = j.image;
+          else if(j.status === "failed") throw new Error(j.error || "La mejora no se completó; tu mejora se devolvió.");
+          else if(!p.ok && p.status !== 202) throw new Error(j.error || "Error al consultar la mejora.");
+        }
+        if(!url) throw new Error("Sigue en proceso. Espera un momento antes de volver a intentar.");
+        clearInterval(timer);
         bar.style.width = "100%";
         pctEl.textContent = "100%";
-        imgImproved = data.image;
+        imgImproved = url;
         document.getElementById("imgAfter").src = imgImproved;
         document.getElementById("infoAfter").innerHTML = "<b>Mejorada con IA</b> · PNG";
         document.getElementById("btnDlImp").disabled = false;
-        document.getElementById("imgStatus").textContent = "Listo. Imagen mejorada.";
-        fetch("https://cruz-sublime-api.onrender.com/api/upscale/use", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({ email: email, plan: plan })
-        }).catch(function(){});
+        var left = data.credits && typeof data.credits.left === "number" ? " Te quedan " + data.credits.left + " de " + data.credits.max + " este mes." : "";
+        status.textContent = "Listo. Imagen mejorada." + left;
         setTimeout(function(){ document.getElementById("aiProgress").style.display = "none"; }, 1200);
-      } else {
-        document.getElementById("imgStatus").textContent = "Error: " + (data.error || "No se pudo mejorar");
-        document.getElementById("aiProgress").style.display = "none";
       }
     } catch(e) {
-      clearInterval(timer);
-      document.getElementById("imgStatus").textContent = "Error de conexión. Intenta de nuevo.";
-      document.getElementById("aiProgress").style.display = "none";
+      fail(e && e.message ? e.message : "Error de conexión. Intenta de nuevo.");
     }
     document.getElementById("btnImprove").disabled = false;
   }
@@ -6494,33 +6508,6 @@ document.addEventListener("DOMContentLoaded", function(){
     showColor();
   })();
 
-  // ===== CONTADOR CANVA DIARIO (REAL - RENDER) =====
-  var API_BASE = "https://cruz-sublime-api.onrender.com";
-  async function updateCanvaUI(){
-    try {
-      var res = await fetch(API_BASE + "/api/canva/status");
-      var data = await res.json();
-      var left = data.left || 0;
-      var el = document.getElementById("canvaLeft");
-      var box = document.getElementById("canvaCounter");
-      var btn = document.getElementById("btnMedio");
-      if(el) el.textContent = left;
-      var bar=document.getElementById("canvaBar"); if(bar) bar.style.width=Math.max(0,Math.min(100,left/15*100))+"%";
-      if(left <= 0){
-        if(box){
-          box.classList.add("canva-agotado");
-          box.innerHTML = "<span class=\"cc-row\"><span class=\"cc-txt\">Cuentas Canva <b>AGOTADAS</b> hasta mañana</span></span>";
-        }
-        if(btn){ btn.disabled = true; var bt=btn.querySelector(".cs-pay-t"); if(bt) bt.textContent="Agotado hasta mañana"; else btn.textContent = "Agotado hasta mañana"; }
-      } else {
-        if(box) box.classList.remove("canva-agotado");
-        if(btn){ btn.disabled = false; var bt=btn.querySelector(".cs-pay-t"); if(bt) bt.textContent="Pagar con tarjeta"; else btn.textContent = "Pagar con tarjeta"; }
-      }
-    } catch(e){
-      console.log("Error cargando contador Canva", e);
-    }
-  }
-  updateCanvaUI();
 
 
 
