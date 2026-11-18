@@ -6,3 +6,4 @@ stripe
 Pillow
 numpy
 gunicorn
+Flask-Limiter
