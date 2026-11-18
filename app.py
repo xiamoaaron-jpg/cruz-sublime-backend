@@ -17,6 +17,34 @@ import re
 
 app = Flask(__name__)
 
+# ===== Límites de intentos (Flask-Limiter) =====
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from html import escape
+
+def _ip():
+    """IP real del visitante detrás del proxy de Render."""
+    for header in ("True-Client-IP", "CF-Connecting-IP"):
+        value = request.headers.get(header, "").strip()
+        if value:
+            return value
+    fwd = request.headers.get("X-Forwarded-For", "")
+    return fwd.split(",")[0].strip() if fwd else get_remote_address()
+
+limiter = Limiter(_ip, app=app, default_limits=[], storage_uri="memory://")
+
+def normalizar_correo(email):
+    """Evita pruebas repetidas con alias: quita +etiqueta y, en Gmail, los puntos."""
+    email = str(email or "").strip().lower()
+    if "@" not in email:
+        return email
+    usuario, dominio = email.split("@", 1)
+    usuario = usuario.split("+", 1)[0]
+    if dominio in ("gmail.com", "googlemail.com"):
+        usuario = usuario.replace(".", "")
+        dominio = "gmail.com"
+    return usuario + "@" + dominio
+
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=False)
 
 @app.after_request
@@ -30,9 +58,17 @@ def add_cors_headers(response):
 
 @app.errorhandler(500)
 def handle_500(e):
-    response = jsonify({"error": str(e)})
+    app.logger.exception("Error 500")
+    response = jsonify({"error": "Error interno"})
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response, 500
+
+@app.errorhandler(429)
+def handle_429(e):
+    response = jsonify({"valid": False, "success": False, "error": "Demasiados intentos",
+                        "message": "Demasiados intentos. Espera unos minutos y vuelve a intentarlo."})
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response, 429
 
 @app.route('/api/<path:path>', methods=['OPTIONS'])
 def handle_options(path):
@@ -157,11 +193,14 @@ init_db()
 
 
 @app.route("/api/free-trial/request-code", methods=["POST"])
+@limiter.limit("3/hour;10/day")
 def solicitar_codigo_prueba():
     import re
 
     data = request.get_json(silent=True) or {}
-    email = str(data.get("email", "")).strip().lower()
+    # El correo se envía a la dirección escrita; se guarda normalizado.
+    correo_destino = str(data.get("email", "")).strip().lower()
+    email = normalizar_correo(correo_destino)
 
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
         return jsonify({
@@ -209,7 +248,7 @@ def solicitar_codigo_prueba():
                 VALUES (%s, %s, %s, %s, 0, FALSE)
             """, (email, codigo_hash, ahora, vence))
 
-            if not enviar_codigo_verificacion(email, codigo):
+            if not enviar_codigo_verificacion(correo_destino, codigo):
                 conn.rollback()
                 return jsonify({
                     "success": False,
@@ -236,6 +275,7 @@ def solicitar_codigo_prueba():
 
 
 @app.route("/api/free-trial/verify-code", methods=["POST"])
+@limiter.limit("10/hour")
 def verificar_codigo_prueba():
     import re
     import hashlib
@@ -243,7 +283,7 @@ def verificar_codigo_prueba():
     from datetime import datetime, timezone
 
     data = request.get_json(silent=True) or {}
-    email = str(data.get("email", "")).strip().lower()
+    email = normalizar_correo(data.get("email", ""))
     codigo = str(data.get("code", "")).strip()
 
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
@@ -350,7 +390,7 @@ def register_free_trial():
     from datetime import datetime, timedelta, timezone
 
     data = request.get_json(silent=True) or {}
-    email = str(data.get("email", "")).strip().lower()
+    email = normalizar_correo(data.get("email", ""))
 
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
         return jsonify({
@@ -441,8 +481,8 @@ def register_free_trial():
 def home():
     return "Cruz Sublime API OK"
 
-@app.route("/api/verify", methods=["POST"])
 def verify():
+    """Lógica de verificación. La ruta /api/verify se registra más abajo (_secure_verify)."""
     data = request.get_json() or {}
     code = data.get("code", "").strip().upper()
     user = data.get("user", "").strip()
@@ -461,7 +501,7 @@ def verify():
                 if not trial:
                     return jsonify({"valid": False, "message": "Código de prueba inválido"})
                 trial_email, expires_at, status = trial
-                if trial_email.strip().lower() != user.lower():
+                if normalizar_correo(trial_email) != normalizar_correo(user):
                     return jsonify({"valid": False, "message": "El código pertenece a otro correo"})
                 # created_at y expires_at se almacenan en UTC en columnas TIMESTAMP.
                 expiry = expires_at if isinstance(expires_at, datetime) else datetime.fromisoformat(str(expires_at))
@@ -502,240 +542,6 @@ def verify():
         return jsonify({"valid": False, "message": "Error interno"})
     finally:
         conn.close()
-
-@app.route("/api/canva/status", methods=["GET"])
-def canva_status():
-    today = datetime.now().strftime("%Y-%m-%d")
-    conn = get_conn()
-    if not conn:
-        return jsonify({"day": today, "used": 0, "left": 15, "max": 15})
-    try:
-        c = conn.cursor()
-        c.execute("SELECT used FROM canva_daily WHERE day = %s", (today,))
-        row = c.fetchone()
-        used = row[0] if row else 0
-        return jsonify({"day": today, "used": used, "left": max(0, 15-used), "max": 15})
-    except:
-        return jsonify({"day": today, "used": 0, "left": 15, "max": 15})
-    finally:
-        conn.close()
-
-@app.route("/api/canva/use", methods=["POST"])
-def canva_use():
-    today = datetime.now().strftime("%Y-%m-%d")
-    conn = get_conn()
-    if not conn:
-        return jsonify({"ok": False, "left": 0, "message": "DB no disponible"})
-    try:
-        c = conn.cursor()
-        c.execute("SELECT used FROM canva_daily WHERE day = %s", (today,))
-        row = c.fetchone()
-        used = row[0] if row else 0
-        if used >= 15:
-            return jsonify({"ok": False, "left": 0, "message": "Agotado"})
-        new_used = used + 1
-        c.execute("""
-            INSERT INTO canva_daily (day, used) VALUES (%s, %s)
-            ON CONFLICT (day) DO UPDATE SET used = %s
-        """, (today, new_used, new_used))
-        conn.commit()
-        return jsonify({"ok": True, "left": 15 - new_used, "used": new_used})
-    except Exception as e:
-        print("Canva error:", e)
-        return jsonify({"ok": False, "left": 0, "message": "Error"})
-    finally:
-        conn.close()
-
-
-def fix_color(original_b64, upscaled_url, saturation=1.0):
-    """Match channel statistics; retain original alpha where available.
-
-    If color adjustment fails, return the Replicate image URL unchanged.
-    """
-    try:
-        import numpy as np
-        from PIL import ImageEnhance
-        from urllib.parse import urlparse
-        parsed = urlparse(upscaled_url)
-        if parsed.scheme != "https" or parsed.hostname not in ("replicate.delivery", "pbxt.replicate.delivery") and not (parsed.hostname or "").endswith(".replicate.delivery"):
-            raise ValueError("URL de imagen no permitida")
-        r = requests.get(upscaled_url, timeout=25, stream=True)
-        r.raise_for_status()
-        if int(r.headers.get("content-length", "0")) > 30_000_000:
-            raise ValueError("Resultado demasiado grande")
-        content = r.raw.read(30_000_001)
-        if len(content) > 30_000_000:
-            raise ValueError("Resultado demasiado grande")
-        upscaled = Image.open(io.BytesIO(content)).convert("RGB")
-        source = original_b64.split(",", 1)[-1]
-        original = Image.open(io.BytesIO(base64.b64decode(source, validate=True)))
-        alpha = original.getchannel("A").resize(upscaled.size, Image.Resampling.LANCZOS) if "A" in original.getbands() else None
-        original_rgb = original.convert("RGB").resize(upscaled.size, Image.Resampling.LANCZOS)
-        arr = np.asarray(upscaled, dtype=np.float32)
-        ref = np.asarray(original_rgb, dtype=np.float32)
-        for channel in range(3):
-            mean, std = arr[:, :, channel].mean(), arr[:, :, channel].std()
-            target_mean, target_std = ref[:, :, channel].mean(), ref[:, :, channel].std()
-            if std > 1e-4:
-                arr[:, :, channel] = (arr[:, :, channel] - mean) * (target_std / std) + target_mean
-        corrected = Image.fromarray(np.clip(arr, 0, 255).astype("uint8"), "RGB")
-        corrected = ImageEnhance.Color(corrected).enhance(float(saturation))
-        if alpha is not None:
-            corrected.putalpha(alpha)
-        buffer = io.BytesIO()
-        corrected.save(buffer, format="PNG")
-        return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
-    except Exception as exc:
-        print("Color correction unavailable:", type(exc).__name__)
-        return upscaled_url
-
-@app.route("/api/upscale", methods=["POST"])
-def upscale():
-    if not REPLICATE_TOKEN:
-        return jsonify({"error": "API no configurada"}), 500
-    data = request.get_json() or {}
-    image_b64 = data.get("image", "")
-    if not image_b64:
-        return jsonify({"error": "Falta imagen"}), 400
-    headers = {
-        "Authorization": f"Token {REPLICATE_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    # Convert base64 to a data URI that Replicate accepts
-    if not image_b64.startswith("data:"):
-        image_b64 = "data:image/png;base64," + image_b64
-    payload = {
-        "version": "philz1337x/crystal-upscaler",
-        "input": {
-            "image": image_b64,
-            "scale_factor": 3,
-            "creativity": 0
-        }
-    }
-    try:
-        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=20)
-        if r.status_code != 201:
-            return jsonify({"error": "Error al iniciar", "detail": r.text[:200]}), 500
-        pred = r.json()
-        pred_id = pred.get("id")
-        for _ in range(30):
-            r2 = requests.get(f"https://api.replicate.com/v1/predictions/{pred_id}", headers=headers, timeout=15)
-            result = r2.json()
-            status = result.get("status")
-            if status == "succeeded":
-                return jsonify({"image": result["output"]})
-            if status == "failed":
-                return jsonify({"error": "Falló", "detail": str(result.get("error", ""))[:100]}), 500
-            time.sleep(2)
-        return jsonify({"error": "Tiempo agotado"}), 500
-    except Exception as e:
-        return jsonify({"error": str(e)[:100]}), 500
-
-
-
-@app.route("/api/checkout", methods=["POST"])
-def checkout():
-    if not STRIPE_SECRET:
-        return jsonify({"error": "Stripe no configurado"}), 500
-    data = request.get_json() or {}
-    plan = data.get("plan", "basico")
-    prices = {"basico": 5000, "medio": 9900, "anual": 49900}
-    if plan not in prices:
-        return jsonify({"error": "Plan invalido"}), 400
-    try:
-        session = stripe.checkout.Session.create(
-            line_items=[{
-                "price_data": {
-                    "currency": "mxn",
-                    "product_data": {"name": f"Cruz Sublime - Plan {plan}"},
-                    "unit_amount": prices[plan],
-                },
-                "quantity": 1,
-            }],
-            mode="payment",
-            success_url="https://cruz-sublime-page.onrender.com/?pago=ok",
-            cancel_url="https://cruz-sublime-page.onrender.com/?pago=cancel",
-        )
-        return jsonify({"url": session.url})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# ===== CONTADOR MENSUAL DE MEJORAS =====
-LIMITS = {"basico": 20, "medio": 50, "anual": 200}
-
-@app.route("/api/upscale/status", methods=["POST"])
-def upscale_status():
-    data = request.get_json() or {}
-    email = data.get("email", "").strip().lower()
-    plan = data.get("plan", "basico")
-    if not email:
-        return jsonify({"error": "Falta email"}), 400
-    month = datetime.now().strftime("%Y-%m")
-    conn = get_conn()
-    if not conn:
-        return jsonify({"used": 0, "left": LIMITS.get(plan, 20), "max": LIMITS.get(plan, 20)})
-    try:
-        c = conn.cursor()
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS upscale_monthly (
-                email TEXT,
-                month TEXT,
-                used INTEGER DEFAULT 0,
-                PRIMARY KEY (email, month)
-            )
-        """)
-        c.execute("SELECT used FROM upscale_monthly WHERE email = %s AND month = %s", (email, month))
-        row = c.fetchone()
-        used = row[0] if row else 0
-        max_ = LIMITS.get(plan, 20)
-        return jsonify({"used": used, "left": max(0, max_ - used), "max": max_})
-    except Exception as e:
-        print("Status error:", e)
-        return jsonify({"used": 0, "left": LIMITS.get(plan, 20), "max": LIMITS.get(plan, 20)})
-    finally:
-        conn.close()
-
-@app.route("/api/upscale/use", methods=["POST"])
-def upscale_use():
-    data = request.get_json() or {}
-    email = data.get("email", "").strip().lower()
-    plan = data.get("plan", "basico")
-    if not email:
-        return jsonify({"ok": False, "message": "Falta email"}), 400
-    month = datetime.now().strftime("%Y-%m")
-    max_ = LIMITS.get(plan, 20)
-    conn = get_conn()
-    if not conn:
-        return jsonify({"ok": False, "message": "DB no disponible"})
-    try:
-        c = conn.cursor()
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS upscale_monthly (
-                email TEXT,
-                month TEXT,
-                used INTEGER DEFAULT 0,
-                PRIMARY KEY (email, month)
-            )
-        """)
-        c.execute("SELECT used FROM upscale_monthly WHERE email = %s AND month = %s", (email, month))
-        row = c.fetchone()
-        used = row[0] if row else 0
-        if used >= max_:
-            return jsonify({"ok": False, "left": 0, "message": "Límite mensual alcanzado"})
-        new_used = used + 1
-        c.execute("""
-            INSERT INTO upscale_monthly (email, month, used) VALUES (%s, %s, %s)
-            ON CONFLICT (email, month) DO UPDATE SET used = %s
-        """, (email, month, new_used, new_used))
-        conn.commit()
-        return jsonify({"ok": True, "used": new_used, "left": max_ - new_used, "max": max_})
-    except Exception as e:
-        print("Use error:", e)
-        return jsonify({"ok": False, "message": "Error interno"})
-    finally:
-        conn.close()
-
-
 
 
 @app.route("/admin/clear-usages", methods=["POST"])
@@ -794,7 +600,7 @@ def admin_delete():
         print("Delete error:", e)
     finally:
         conn.close()
-    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{code}</p><a href="/admin" style="color:#3b82f6">Volver al panel</a></body></html>'
+    return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{escape(code)}</p><a href="/admin" style="color:#3b82f6">Volver al panel</a></body></html>'
 
 
 @app.route("/admin/delete-trial", methods=["POST"])
@@ -822,45 +628,6 @@ def admin_delete_trial():
         return "La prueba ya no existe", 404
     return redirect(url_for("admin"))
 
-
-@app.route("/api/halftone", methods=["POST"])
-def halftone():
-    if not REPLICATE_TOKEN:
-        return jsonify({"error": "Token no configurado"}), 500
-    data = request.get_json() or {}
-    image_b64 = data.get("image", "")
-    if not image_b64:
-        return jsonify({"error": "Falta imagen"}), 400
-    if not image_b64.startswith("data:"):
-        image_b64 = "data:image/png;base64," + image_b64
-    headers = {"Authorization": f"Bearer {REPLICATE_TOKEN}", "Content-Type": "application/json"}
-    payload = {
-        "version": "aa0216c7968dd050f73f3f3d5eee023c07bc5d265cb06b44c6dd94fb31ce973b",
-        "input": {"image": image_b64, "halftone_only": True}
-    }
-    for attempt in range(3):
-        r = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=30)
-        if r.status_code == 201:
-            break
-        if r.status_code == 429:
-            time.sleep(5)
-            continue
-        return jsonify({"error": f"Replicate: {r.status_code}"}), 500
-    if r.status_code != 201:
-        return jsonify({"error": "Replicate ocupado, intenta en un momento"}), 500
-    pred = r.json()
-    poll_url = pred["urls"]["get"]
-    for _ in range(60):
-        time.sleep(2)
-        pr = requests.get(poll_url, headers=headers, timeout=30)
-        if pr.status_code != 200:
-            continue
-        result = pr.json()
-        if result["status"] == "succeeded":
-            return jsonify({"image": result["output"]})
-        if result["status"] == "failed":
-            return jsonify({"error": "Falló el procesamiento"}), 500
-    return jsonify({"error": "Timeout"}), 500
 
 @app.route("/admin")
 def admin():
@@ -1088,7 +855,7 @@ def admin_generate():
     except (ValueError, TypeError):
         return "Los días deben estar entre 1 y 3650", 400
     email = request.form.get("email", "").strip()
-    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    code = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
     code = f"{code[:4]}-{code[4:]}"
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_conn()
@@ -1151,6 +918,7 @@ def _admin_post_guard():
     return None
 
 @app.route("/admin/login", methods=["GET", "POST"])
+@limiter.limit("5/minute;20/hour", methods=["POST"])
 def admin_login():
     if not ADMIN_PASSWORD or not SESSION_SECRET or len(SESSION_SECRET) < 32:
         return "Panel no configurado: revisa ADMIN_PASSWORD y SESSION_SECRET.", 503
@@ -1221,7 +989,12 @@ def _member():
     finally:
         conn.close()
 
-_original_verify = app.view_functions["verify"]
+_original_verify = verify
+
+# La página revisa la sesión desde varias herramientas en cada carga (hasta ~7 llamadas),
+# así que el límite deja margen para el uso normal y frena a quien intente adivinar códigos.
+@app.route("/api/verify", methods=["POST"], endpoint="verify")
+@limiter.limit("30/minute;300/hour")
 def _secure_verify():
     result = _original_verify()
     if not hasattr(result, "get_json"):
@@ -1247,7 +1020,6 @@ def _secure_verify():
             finally:
                 conn.close()
     return jsonify(data)
-app.view_functions["verify"] = _secure_verify
 
 def _init_vip():
     conn = get_conn()
@@ -1587,31 +1359,9 @@ def _process_trial(kind):
             _job_update(job_id, "uncertain")
             return jsonify(error="No se pudo verificar el identificador del trabajo"), 502
         _job_update(job_id, "reserved", prediction_id=prediction["id"])
-        # Short polling here; clients can continue polling /api/vip/jobs/<job_id>.
-        # Avoid a 3-minute HTTP request on Render's synchronous web workers.
-        for _ in range(18):
-            poll = requests.get(url,headers=headers,timeout=12)
-            poll.raise_for_status()
-            p = poll.json()
-            if p.get("status") == "succeeded":
-                output = p.get("output")
-                if isinstance(output,list): output = output[0] if output else None
-                if not isinstance(output,str): raise RuntimeError("Salida no compatible")
-                if kind == "upscale" and data.get("correct_color", False):
-                    try:
-                        saturation = float(data.get("saturation", 1.0))
-                        saturation = max(0.8, min(1.25, saturation))
-                    except (TypeError, ValueError):
-                        saturation = 1.0
-                    output = fix_color(image_uri, output, saturation=saturation)
-                _job_update(job_id,"completed",output)
-                return jsonify(image=output,credits=_vip_status(member),processor="replicate")
-            if p.get("status") in ("failed","canceled"):
-                _job_update(job_id,"failed")
-                return jsonify(error="Replicate no completó el trabajo; crédito liberado"),502
-            time.sleep(2)
-        _job_update(job_id,"uncertain")
-        return jsonify(status="pending", message="Trabajo pendiente; consulta el estado con el mismo job_id", job_id=job_id),202
+        # No esperamos aquí: Render queda libre y la página consulta /api/vip/jobs/<job_id>.
+        return jsonify(status="processing", job_id=job_id,
+                       credits=_vip_status(member)), 202
     except Exception:
         _job_update(job_id,"uncertain")
         return jsonify(error="No se pudo confirmar el resultado; crédito reservado para conciliación"),502
@@ -1675,17 +1425,6 @@ def vip_job_status(job_id):
         return jsonify(status="processing", credits=_vip_status(member)), 202
     except requests.RequestException:
         return jsonify(status="uncertain", message="Replicate no respondió; vuelve a consultar"), 202
-
-app.view_functions["upscale"] = lambda: _process_trial("upscale")
-app.view_functions["halftone"] = lambda: _process_trial("halftone")
-# Existing checkout supports fourth plan. Payment confirmation and credit renewals are manual in this test.
-_original_checkout = app.view_functions["checkout"]
-def _checkout_trial():
-    if (request.get_json(silent=True) or {}).get("plan") == VIP_PLAN:
-        return jsonify(url="https://buy.stripe.com/00wfZj0JY3QL5rr57DaEE03")
-    return _original_checkout()
-app.view_functions["checkout"] = _checkout_trial
-
 
 
 # ===== REMOVEDOR VIP: 50 créditos INDEPENDIENTES del Mejorador =====
