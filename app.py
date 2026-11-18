@@ -600,6 +600,10 @@ def admin_delete():
         print("Delete error:", e)
     finally:
         conn.close()
+    try:
+        _canva_release(code)
+    except Exception:
+        app.logger.exception("Error al liberar lugar de Canva")
     return f'<html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center"><h2>Código eliminado</h2><p>{escape(code)}</p><a href="/admin" style="color:#3b82f6">Volver al panel</a></body></html>'
 
 
@@ -749,6 +753,7 @@ def admin():
       <span>Total de códigos: <b>{{ codes|length }}</b></span>
       <span>Ya utilizados: <b>{{ codes|selectattr('used')|list|length }}</b></span>
       <span>Sin utilizar: <b>{{ codes|rejectattr('used')|list|length }}</b></span>
+      {% if canva %}<span>Canva Pro este periodo: <b>{{ canva.left }} de {{ canva.total }}</b> libres · se renueva el {{ canva.resets_at[:10] }}</span>{% endif %}
     </div>
     <h3>Membresías y vencimientos</h3>
     <div class="table-wrap"><table>
@@ -840,7 +845,11 @@ def admin():
     </script>
     </body></html>
     """
-    return render_template_string(html, codes=codes, usages=usages, trials=trials, csrf=session["admin_csrf"])
+    try:
+        canva = _canva_status()
+    except Exception:
+        canva = None
+    return render_template_string(html, codes=codes, usages=usages, trials=trials, csrf=session["admin_csrf"], canva=canva)
 
 @app.route("/admin/generate", methods=["POST"])
 def admin_generate():
@@ -873,12 +882,25 @@ def admin_generate():
             conn.close()
     else:
         error_msg = "No hay conexión a la base de datos"
+    canva_msg = ""
+    if not error_msg and plan in CANVA_PLANS:
+        try:
+            taken = _canva_take(code, plan)
+            st = _canva_status()
+            if taken:
+                canva_msg = f"<p style='color:#c4b5fd'>Canva Pro: se descontó 1 lugar. Quedan {st['left']} de {st['total']} en este periodo.</p>"
+            else:
+                canva_msg = "<p style='color:#fbbf24'>Canva Pro: ya no quedan lugares en este periodo; no se descontó. Se renueva el " + escape(st['resets_at'][:10]) + ".</p>"
+        except Exception:
+            app.logger.exception("Error en contador Canva")
+            canva_msg = "<p style='color:#fbbf24'>Canva Pro: no se pudo actualizar el contador. El código sí se guardó.</p>"
     return f"""
     <html><body style="font-family:Arial;background:#111;color:#eee;padding:40px;text-align:center">
     <h2>{"No se pudo guardar el código" if error_msg else "Código generado"}</h2>
     {"<p style='font-size:28px;font-weight:bold;color:#ec4899'>" + code + "</p>" if not error_msg else ""}
     <p>Plan: {plan} · Días: {days}</p>
     {"<p style='color:#e63946'>No se pudo guardar el código. Revisa los logs.</p>" if error_msg else "<p style='color:#10b981'>Guardado correctamente</p>"}
+    {canva_msg}
     <a href="/admin" style="color:#3b82f6">Volver al panel</a>
     </body></html>
     """
@@ -2061,6 +2083,95 @@ else app.innerHTML='<div class="na"><div><b>Catálogo no encontrado</b></div></d
 </body>
 </html>
 """
+
+
+# ===================== Contador de Canva Pro (lugares reales por periodo) =====================
+# 15 lugares cada 3 días. Solo baja cuando el administrador genera un código de plan
+# Medio, Premium VIP o Anual (es decir, después de verificar el pago). Nunca baja solo.
+from datetime import timezone as _tz
+
+CANVA_SLOTS_TOTAL = int(os.environ.get("CANVA_SLOTS_TOTAL", "15"))
+CANVA_PERIOD_DAYS = int(os.environ.get("CANVA_PERIOD_DAYS", "3"))
+CANVA_PLANS = ("medio", "premium_vip", "anual")
+_MX = _tz(timedelta(hours=-6))  # Ciudad de México (sin horario de verano desde 2022)
+# Inicio del primer periodo: 18 nov 2026, 00:00 hora de CDMX. Se puede cambiar con CANVA_PERIOD_ANCHOR (AAAA-MM-DD).
+_anchor_txt = os.environ.get("CANVA_PERIOD_ANCHOR", "2026-11-18").strip()
+try:
+    CANVA_ANCHOR = datetime.strptime(_anchor_txt, "%Y-%m-%d").replace(tzinfo=_MX)
+except ValueError:
+    CANVA_ANCHOR = datetime(2026, 11, 18, tzinfo=_MX)
+
+def _canva_period(now=None):
+    now = now or datetime.now(_tz.utc)
+    span = timedelta(days=CANVA_PERIOD_DAYS)
+    idx = int((now - CANVA_ANCHOR) // span)
+    start = CANVA_ANCHOR + idx * span
+    return start.strftime("%Y-%m-%d"), start, start + span
+
+def _init_canva():
+    def work(c):
+        c.execute("""CREATE TABLE IF NOT EXISTS canva_slot_periods (
+            period TEXT PRIMARY KEY, used INTEGER NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT NOW())""")
+        c.execute("""CREATE TABLE IF NOT EXISTS canva_slot_log (
+            code TEXT PRIMARY KEY, period TEXT NOT NULL, plan TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW())""")
+    try:
+        _cloud_db(work)
+    except Exception as e:
+        print("Canva init:", type(e).__name__)
+_init_canva()
+
+def _canva_status():
+    period, start, end = _canva_period()
+    def work(c):
+        c.execute("SELECT used FROM canva_slot_periods WHERE period=%s", (period,))
+        row = c.fetchone()
+        return row[0] if row else 0
+    used = min(_cloud_db(work), CANVA_SLOTS_TOTAL)
+    return {"total": CANVA_SLOTS_TOTAL, "used": used, "left": max(0, CANVA_SLOTS_TOTAL - used),
+            "period_days": CANVA_PERIOD_DAYS, "period_start": start.isoformat(),
+            "resets_at": end.isoformat()}
+
+def _canva_take(code, plan):
+    """Descuenta un lugar al generar un código de plan con Canva. Devuelve True si se descontó."""
+    if plan not in CANVA_PLANS:
+        return False
+    period = _canva_period()[0]
+    def work(c):
+        c.execute("""INSERT INTO canva_slot_periods (period, used) VALUES (%s, 1)
+                     ON CONFLICT (period) DO UPDATE SET used = canva_slot_periods.used + 1, updated_at = NOW()
+                     WHERE canva_slot_periods.used < %s RETURNING used""", (period, CANVA_SLOTS_TOTAL))
+        if not c.fetchone():
+            return False
+        c.execute("INSERT INTO canva_slot_log (code, period, plan) VALUES (%s, %s, %s) ON CONFLICT (code) DO NOTHING",
+                  (code, period, plan))
+        return True
+    return _cloud_db(work)
+
+def _canva_release(code):
+    """Si se elimina un código del periodo actual, su lugar vuelve a quedar libre."""
+    period = _canva_period()[0]
+    def work(c):
+        c.execute("DELETE FROM canva_slot_log WHERE code=%s AND period=%s RETURNING 1", (code, period))
+        if c.fetchone():
+            c.execute("UPDATE canva_slot_periods SET used = GREATEST(used - 1, 0), updated_at = NOW() WHERE period=%s",
+                      (period,))
+            return True
+        c.execute("DELETE FROM canva_slot_log WHERE code=%s", (code,))
+        return False
+    return _cloud_db(work)
+
+@app.route("/api/canva/slots", methods=["GET"])
+@limiter.limit("60/minute")
+def canva_slots():
+    try:
+        info = _canva_status()
+    except Exception:
+        return jsonify(error="Contador no disponible"), 503
+    resp = jsonify(info)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 if __name__ == "__main__":
