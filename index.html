@@ -1,7 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- Google tag (gtag.js) -->
+  <script>
+/* Tus propias visitas no cuentan: abre una vez cruzsublim.com/?yo=1 en cada navegador tuyo (?yo=0 para deshacer). */
+(function(){try{var q=new URLSearchParams(location.search);if(q.get('yo')==='1')localStorage.setItem('cs_no_ga','1');if(q.get('yo')==='0')localStorage.removeItem('cs_no_ga');
+if(localStorage.getItem('cs_no_ga')==='1')window['ga-disable-G-YQ6GL5T9SS']=true;}catch(e){}})();
+/* Registro de clics en Google Analytics */
+window.csTrack=function(nombre,datos){try{if(typeof gtag==='function')gtag('event',nombre,Object.assign({transport_type:'beacon'},datos||{}));}catch(e){}};
+</script>
+<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-YQ6GL5T9SS"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -1408,6 +1415,7 @@ header h1.cs-brand-title {
 </button>
 
   </div>
+  <button type="button" class="cs-free-calc-link" onclick="document.querySelector('.tabs .tab[data-tab=calc]').click()">🧮 Prueba gratis la Calculadora DTF, sin registro <span aria-hidden="true">→</span></button>
 </header>
 
 <div class="wrap">
@@ -1491,7 +1499,7 @@ header h1.cs-brand-title {
       <div class="cs-tools-filter" role="group" aria-label="Filtrar herramientas"><button type="button" data-f="all" class="on">Todas</button><button type="button" data-f="a">Cotiza y calcula</button><button type="button" data-f="b">Prepara archivos</button><button type="button" data-f="c">Crea y vende</button></div>
       <button type="button" class="cs-tools-x" id="csToolsX" aria-label="Cerrar herramientas">×</button></div>
     <div class="cs-tools-grid">
-            <button data-grp="a" style="--c:#3fe0ff;--c2:#a78bfa" class="tab cs-tool" data-tab="calc"><span class="cs-tool-art" aria-hidden="true"><svg viewBox="0 0 200 120"><rect x="58" y="16" width="56" height="88" rx="9"/><rect x="66" y="25" width="40" height="18" rx="3" class="s2"/><path d="M96 30v9M92 32.5c0-1.5 1.5-2.5 4-2.5s4 .8 4 2.4-1.6 2-4 2.6-4 1-4 2.6 1.6 2.4 4 2.4 4-1 4-2.5" class="s2" stroke-width="1.6"/><rect x="66" y="51" width="12" height="10" rx="2.5"/><rect x="66" y="65" width="12" height="10" rx="2.5"/><rect x="66" y="79" width="12" height="10" rx="2.5"/><rect x="80" y="51" width="12" height="10" rx="2.5"/><rect x="80" y="65" width="12" height="10" rx="2.5"/><rect x="80" y="79" width="12" height="10" rx="2.5"/><rect x="94" y="51" width="12" height="10" rx="2.5"/><rect x="94" y="65" width="12" height="10" rx="2.5"/><rect x="94" y="79" width="12" height="10" rx="2.5"/><circle cx="146" cy="58" r="17"/><circle cx="146" cy="58" r="5" class="s2"/><path d="M146 75h30v26h-30"/><path d="M152 79v18M160 79v18M168 79v18" class="s2" stroke-dasharray="3 3"/></svg><span class="cs-lock" aria-hidden="true">🔒</span></span><span class="cs-tool-body"><span class="cs-tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5" class="f"/><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><rect x="8" y="5.5" width="8" height="4" rx="1"/><path d="M8.5 13h.01M12 13h.01M15.5 13h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01"/></svg></span><span class="cs-tool-tx"><b>Calculadora DTF</b><small>Sabe cuánto cobrar por cada prenda en segundos.</small></span><span class="cs-tool-go" aria-hidden="true">→</span></span></button>
+            <button data-grp="a" style="--c:#3fe0ff;--c2:#a78bfa" class="tab cs-tool" data-tab="calc"><span class="cs-tool-art" aria-hidden="true"><svg viewBox="0 0 200 120"><rect x="58" y="16" width="56" height="88" rx="9"/><rect x="66" y="25" width="40" height="18" rx="3" class="s2"/><path d="M96 30v9M92 32.5c0-1.5 1.5-2.5 4-2.5s4 .8 4 2.4-1.6 2-4 2.6-4 1-4 2.6 1.6 2.4 4 2.4 4-1 4-2.5" class="s2" stroke-width="1.6"/><rect x="66" y="51" width="12" height="10" rx="2.5"/><rect x="66" y="65" width="12" height="10" rx="2.5"/><rect x="66" y="79" width="12" height="10" rx="2.5"/><rect x="80" y="51" width="12" height="10" rx="2.5"/><rect x="80" y="65" width="12" height="10" rx="2.5"/><rect x="80" y="79" width="12" height="10" rx="2.5"/><rect x="94" y="51" width="12" height="10" rx="2.5"/><rect x="94" y="65" width="12" height="10" rx="2.5"/><rect x="94" y="79" width="12" height="10" rx="2.5"/><circle cx="146" cy="58" r="17"/><circle cx="146" cy="58" r="5" class="s2"/><path d="M146 75h30v26h-30"/><path d="M152 79v18M160 79v18M168 79v18" class="s2" stroke-dasharray="3 3"/></svg><em class="cs-tool-new cs-tool-free">GRATIS</em><span class="cs-lock" aria-hidden="true">🔒</span></span><span class="cs-tool-body"><span class="cs-tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5" class="f"/><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><rect x="8" y="5.5" width="8" height="4" rx="1"/><path d="M8.5 13h.01M12 13h.01M15.5 13h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01"/></svg></span><span class="cs-tool-tx"><b>Calculadora DTF</b><small>Sabe cuánto cobrar por cada prenda en segundos.</small></span><span class="cs-tool-go" aria-hidden="true">→</span></span></button>
       <button data-grp="a" style="--c:#ffd23d;--c2:#fb923c" class="tab cs-tool" data-tab="quote"><span class="cs-tool-art" aria-hidden="true"><svg viewBox="0 0 200 120"><path d="M64 14h52v90l-6.5-5-6.5 5-6.5-5-6.5 5-6.5-5-6.5 5-6.5-5-6.5 5z"/><path d="M74 32h32M74 46h32M74 60h20" class="s2"/><path d="m75 76 5 5 9-10" /><path d="M96 80h10"/><ellipse cx="152" cy="96" rx="18" ry="6"/><ellipse cx="152" cy="88" rx="18" ry="6"/><ellipse cx="152" cy="80" rx="18" ry="6"/><ellipse cx="152" cy="72" rx="18" ry="6"/><path d="M134 72v24M170 72v24"/><path d="M148 66h8" class="s2"/></svg><span class="cs-lock" aria-hidden="true">🔒</span></span><span class="cs-tool-body"><span class="cs-tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2.5h12v19l-2.2-1.6-1.9 1.6-1.9-1.6-1.9 1.6-1.9-1.6L6 21.5z" class="f"/><path d="M6 2.5h12v19l-2.2-1.6-1.9 1.6-1.9-1.6-1.9 1.6-1.9-1.6L6 21.5z"/><path d="M9 7.5h6M9 11h6M9 14.5h3.5"/></svg></span><span class="cs-tool-tx"><b>Cotizador</b><small>Cotizaciones en PDF con tu marca, listas para enviar.</small></span><span class="cs-tool-go" aria-hidden="true">→</span></span></button>
       <button data-grp="a" style="--c:#b294ff;--c2:#3fe0ff" class="tab cs-tool" data-tab="budget" title="Incluido en todos los paquetes"><span class="cs-tool-art" aria-hidden="true"><svg viewBox="0 0 200 120"><rect x="40" y="26" width="56" height="76" rx="8"/><rect x="104" y="26" width="56" height="76" rx="8" class="s2"/><path d="M50 50h36M50 60h36M50 70h36M50 80h36M114 50h36M114 60h36M114 70h36M114 80h36" stroke-width="1.6"/><path d="M50 40h20" class="s2"/><path d="M114 40h20"/><path d="m52 18 6 5 6-9 6 9 6-5-2 10H54z" class="s2"/><path d="M60 92h16M124 92h16"/></svg><em class="cs-tool-new">NUEVO</em><span class="cs-lock" aria-hidden="true">🔒</span></span><span class="cs-tool-body"><span class="cs-tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 2.5h10l4 4v15H5z" class="f"/><path d="M5 2.5h10l4 4v15H5z"/><path d="M15 2.5v4h4M8 11h8M8 14.5h8M8 18h8M11.5 11v7"/></svg></span><span class="cs-tool-tx"><b>Presupuesto</b><small>Una imagen profesional para cerrar la venta.</small></span><span class="cs-tool-go" aria-hidden="true">→</span></span></button>
       <button data-grp="a" style="--c:#2ee6a8;--c2:#3fe0ff" class="tab cs-tool" data-tab="medidas" title="Incluido en todos los paquetes"><span class="cs-tool-art" aria-hidden="true"><svg viewBox="0 0 200 120"><path d="M78 24 58 34l7 17 8-4v53h54V47l8 4 7-17-20-10c-2 7-9 11-17 11s-15-4-17-11z"/><rect x="88" y="54" width="24" height="18" rx="3" class="s2"/><path d="M58 14h84M58 10v8M142 10v8M152 34v66M148 34h8M148 100h8" class="s2" stroke-width="1.6"/><path d="m64 14 4-3M64 14l4 3M136 14l-4-3M136 14l-4 3" class="s2" stroke-width="1.6"/></svg><em class="cs-tool-new">NUEVO</em><span class="cs-lock" aria-hidden="true">🔒</span></span><span class="cs-tool-body"><span class="cs-tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3 3 5.5l1.8 4.5L7 9v11.5h10V9l2.2 1 1.8-4.5L16 3c-.5 1.6-2 2.7-4 2.7S8.5 4.6 8 3z" class="f"/><path d="M8 3 3 5.5l1.8 4.5L7 9v11.5h10V9l2.2 1 1.8-4.5L16 3c-.5 1.6-2 2.7-4 2.7S8.5 4.6 8 3z"/><path d="M9.5 13.5h5M9.5 13.5l1 -1M9.5 13.5l1 1M14.5 13.5l-1-1M14.5 13.5l-1 1"/></svg></span><span class="cs-tool-tx"><b>Medidas DTF</b><small>El tamaño exacto del diseño para cada talla.</small></span><span class="cs-tool-go" aria-hidden="true">→</span></span></button>
@@ -2517,6 +2525,14 @@ header h1.cs-brand-title {
   <!-- CALCULADORA DTF (3 pasos, inspirada en el Studio VIP) -->
   <div class="panel" id="panel-calc">
     <div class="pz-head"><div><span class="pz-eyebrow">DTF · COSTOS, ACOMODO Y PRECIO</span><h2>Calculadora DTF</h2><p>Arma tu pedido en 3 pasos: diseños, material y precio. Ve el acomodo real en el rollo y descubre cuánto cobrar por prenda.</p></div></div>
+    <div class="cs-free-banner" id="csFreeBanner">
+      <div class="cs-free-banner-tx"><b>Esta calculadora es gratis, úsala las veces que quieras.</b>
+        <span>Con tu membresía desbloqueas el Cotizador en PDF, Medidas DTF, Temperaturas, el Mejorador con IA, el Removedor de fondo y más herramientas para tu taller.</span></div>
+      <div class="cs-free-banner-cta">
+        <button type="button" class="cs-free-btn" data-cs-go="plans">Ver planes</button>
+        <button type="button" class="cs-free-btn ghost" data-cs-go="trial">Probar todo 24 h gratis</button>
+      </div>
+    </div>
     <div class="dk-app">
       <div class="dk-left">
         <nav class="dk-steps" id="dkSteps" aria-label="Pasos"><button type="button" data-step="0" class="on"><b>01</b>Pedido</button><button type="button" data-step="1"><b>02</b>Material</button><button type="button" data-step="2"><b>03</b>Precio</button></nav>
@@ -5737,6 +5753,7 @@ document.addEventListener("DOMContentLoaded", function(){
       localStorage.setItem("cruz_sublime_code", code);
       localStorage.setItem("cruz_sublime_user", user);
       localStorage.setItem("cruz_sublime_plan", r.plan || "basico");
+      if(window.csTrack) csTrack("login", {method: "codigo", plan: r.trial ? "prueba" : (r.plan || "basico")});
       if(r.token) sessionStorage.setItem("cruz_member_token",r.token);
       else sessionStorage.removeItem("cruz_member_token");
       updateCanvaVisibility();
@@ -5752,7 +5769,7 @@ document.addEventListener("DOMContentLoaded", function(){
   function updateCanvaVisibility() {
     document.querySelectorAll('.tabs .tab[data-tab]').forEach(function(tab){
       var kind=tab.getAttribute('data-tab');
-      var allowed=localStorage.getItem('cruz_sublime_unlocked')==='1' &&
+      var allowed=kind==='calc'||localStorage.getItem('cruz_sublime_unlocked')==='1' &&
         (kind==='plans'||(kind==='canva'?csHasCanva():(kind==='premium'?csHasPremium():true)));
       var lock=tab.querySelector('.cs-lock');
       if(lock) lock.style.display=allowed?'none':'inline';
@@ -5767,7 +5784,8 @@ document.addEventListener("DOMContentLoaded", function(){
   tabs.forEach(function(t){
     t.addEventListener("click", function(){
       var tabName = t.getAttribute("data-tab");
-      if (tabName !== "plans" && localStorage.getItem("cruz_sublime_unlocked") !== "1") {
+      // La Calculadora DTF es gratis para todos; el resto pide membresía.
+      if (tabName !== "plans" && tabName !== "calc" && localStorage.getItem("cruz_sublime_unlocked") !== "1") {
         document.getElementById("gate").style.display = "flex";
         return;
       }
@@ -12210,6 +12228,101 @@ header p.desc{color:#cfd5e6!important;text-shadow:0 1px 8px rgba(5,5,16,.95)}
       if(top>window.innerHeight*0.45||top<0)panel.scrollIntoView({behavior:'smooth',block:'start'});
     },80);
   });
+})();
+</script>
+
+<!-- ===== CRUZ SUBLIME: CALCULADORA GRATIS + REGISTRO DE CLICS ===== -->
+<style id="cs-free-calc-css">
+header .cs-free-calc-link{display:inline-flex;align-items:center;gap:8px;margin:18px auto 0;padding:9px 18px;border-radius:999px;border:1px solid rgba(63,224,255,.45);background:rgba(10,20,40,.55);color:#bff4ff;font:600 14.5px system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}
+header .cs-free-calc-link:hover{background:rgba(63,224,255,.14);border-color:#3fe0ff;transform:translateY(-1px)}
+header .cs-free-calc-link:focus-visible{outline:2px solid #3fe0ff;outline-offset:3px}
+#csNav .cs-tool .cs-tool-free{background:linear-gradient(90deg,#22c55e,#86efac)!important;color:#05210f!important}
+#csNav .cs-tool[data-tab="calc"] .cs-lock{display:none!important}
+.cs-free-banner{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:0 0 18px;padding:16px 18px;border-radius:16px;background:linear-gradient(100deg,rgba(34,197,94,.12),rgba(63,224,255,.08));border:1px solid rgba(34,197,94,.35)}
+.cs-free-banner-tx{flex:1;min-width:240px;display:grid;gap:4px;color:#d7e3f4;font-size:14.5px;line-height:1.5}
+.cs-free-banner-tx b{color:#fff;font-size:15.5px}
+.cs-free-banner-cta{display:flex;gap:10px;flex-wrap:wrap}
+.cs-free-btn{border:0;border-radius:12px;padding:11px 18px;font:700 14.5px system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;cursor:pointer;background:linear-gradient(90deg,#00d4ff,#ff2d95);color:#fff}
+.cs-free-btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff}
+.cs-free-btn:hover{filter:brightness(1.1)}
+body.cs-member .cs-free-banner,body.cs-member header .cs-free-calc-link{display:none!important}
+</style>
+<script id="cs-free-calc-js">
+(function(){
+  var T=function(n,d){if(window.csTrack)window.csTrack(n,d);};
+  function member(){try{return localStorage.getItem('cruz_sublime_unlocked')==='1';}catch(e){return false;}}
+  function sync(){document.body.classList.toggle('cs-member',member());}
+  sync();window.addEventListener('storage',sync);
+  /* La invitación va al final de la calculadora, después de ver el precio */
+  var fb=document.getElementById('csFreeBanner'),pc=document.getElementById('panel-calc');
+  if(fb&&pc){pc.appendChild(fb);fb.style.margin='22px 0 0';}
+
+  function where(el){
+    if(el.closest('header'))return 'inicio';
+    if(el.closest('#csNav'))return 'menu';
+    if(el.closest('.cs-free-banner'))return 'calculadora';
+    if(el.closest('.cs-fab'))return 'boton_flotante';
+    if(el.closest('footer'))return 'pie';
+    var p=el.closest('.panel');return p?p.id.replace('panel-',''):'otro';
+  }
+  var STRIPE={'7sYfZj78mbjd7zzbw1aEE00':'basico','28E14p8cq9b57zzcA5aEE01':'medio','14A5kFgIW4UPaLL57DaEE02':'anual','00wfZj0JY3QL5rr57DaEE03':'premium_vip'};
+  function planFromStripe(href){for(var k in STRIPE)if(href.indexOf(k)>=0)return STRIPE[k];return 'otro';}
+
+  /* Botones de la invitación dentro de la calculadora */
+  document.addEventListener('click',function(e){
+    var go=e.target.closest('[data-cs-go]');if(!go)return;
+    var plans=document.querySelector('.tabs .tab[data-tab="plans"]');
+    if(plans)plans.click();
+    if(go.dataset.csGo==='trial'){var b=document.getElementById('btnPruebaGratis');if(b)setTimeout(function(){b.click();},150);}
+    else setTimeout(function(){var p=document.getElementById('panel-plans');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});},120);
+  });
+
+  /* Registro de clics (se ve en Analytics > Informes > Interacción > Eventos) */
+  document.addEventListener('click',function(e){
+    if(!e.isTrusted)return; /* solo clics reales, no los que hace la página por su cuenta */
+    var el=e.target.closest('a,button');if(!el)return;
+    var href=el.getAttribute('href')||'',id=el.id||'',oc=el.getAttribute('onclick')||'';
+    try{
+      if(href.indexOf('buy.stripe.com')>=0)return T('clic_pagar',{metodo:'tarjeta',plan:planFromStripe(href),ubicacion:where(el)});
+      if(/^btn(Basico|Medio|Anual)$/.test(id))return T('clic_pagar',{metodo:'tarjeta',plan:id.slice(3).toLowerCase(),ubicacion:where(el)});
+      if(/^btn(Basico|Medio|Anual)MP$/.test(id)||href.indexOf('mpago.li')>=0)return T('clic_pagar',{metodo:'mercado_pago',plan:(id.match(/Basico|Medio|Anual/)||['otro'])[0].toLowerCase(),ubicacion:where(el)});
+      if(id==='btnCopyClabe')return T('clic_pagar',{metodo:'transferencia',ubicacion:where(el)});
+      if(href.indexOf('wa.me')>=0)return T('clic_whatsapp',{ubicacion:where(el)});
+      if(el.classList.contains('cs-btn-codigo-dorado'))return T('abrir_acceso',{ubicacion:where(el)});
+      if(id==='btnPruebaGratis')return T('prueba_iniciar',{ubicacion:where(el)});
+      if(el.classList.contains('cs-free-calc-link'))return T('calculadora_abrir',{ubicacion:'inicio',visitante:member()?'miembro':'visitante'});
+      if(el.dataset&&el.dataset.csGo)return T(el.dataset.csGo==='trial'?'prueba_iniciar':'ver_planes',{ubicacion:'calculadora'});
+      if(el.matches('[data-tab="plans"]')||oc.indexOf('data-tab=plans')>=0)return T('ver_planes',{ubicacion:where(el)});
+      if(el.classList.contains('cs-tool')){
+        var name=(el.querySelector('.cs-tool-tx b')||{}).textContent||el.dataset.tab||id;
+        var libre=el.dataset.tab==='calc';
+        return T(libre?'calculadora_abrir':'abrir_herramienta',{herramienta:name,ubicacion:'menu',visitante:member()?'miembro':'visitante',bloqueada:(!libre&&!member())?'si':'no'});
+      }
+      if(el.matches('[data-tab="premium"]'))return T('abrir_premium',{visitante:member()?'miembro':'visitante'});
+    }catch(err){}
+  },true);
+
+  /* Uso real de la calculadora */
+  var usada=false;
+  document.addEventListener('input',function(e){
+    if(usada||!e.target.closest('#panel-calc'))return;usada=true;
+    T('calculadora_uso',{visitante:member()?'miembro':'visitante'});
+  },true);
+  var steps=document.getElementById('dkSteps'),vioPrecio=false;
+  if(steps&&window.MutationObserver){
+    new MutationObserver(function(){
+      var on=steps.querySelector('button.on');
+      if(on&&on.dataset.step==='2'&&!vioPrecio){vioPrecio=true;T('calculadora_precio',{visitante:member()?'miembro':'visitante'});}
+    }).observe(steps,{subtree:true,attributes:true,attributeFilter:['class']});
+  }
+
+  /* Prueba gratuita activada */
+  var original=window.csMostrarCodigoPrueba;
+  if(typeof original==='function'){
+    window.csMostrarCodigoPrueba=function(){T('prueba_activada',{});T('sign_up',{method:'prueba_gratis'});return original.apply(this,arguments);};
+  }
+  /* Al iniciar sesión, ocultar la invitación */
+  document.addEventListener('click',function(e){if(e.target.closest('#btnUnlock'))setTimeout(sync,2500);});
 })();
 </script>
 </body>
