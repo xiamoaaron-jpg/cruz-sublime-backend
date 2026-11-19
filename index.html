@@ -1370,15 +1370,28 @@ html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(div.mp-imgbo
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]),select,textarea){background:#FFFFFF!important;border-color:#D9C7A3!important;color:#2E2516!important}
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(input,textarea)::placeholder{color:#9A8A6E!important}
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(input,select,textarea):focus{border-color:#B8893A!important;box-shadow:0 0 0 3px rgba(184,137,58,.22)!important}
-html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(button:not(.vx-cta):not(.vx-open):not(.mv-gold):not(.ct-gold):not(.cso-primary):not(.mp-go):not(.mp-dl):not(#dtfpAdd):not(#dtfpAutoLayout):not(#dtfpCalc):not(.cso-wa):not(.cso-danger):not(.cp-btn:not(.cp-btn-alt)),label.cso-import,.vip-back):not(.rv-bgs button){background:#FFF8EC!important;border-color:#CDB68A!important;color:#5A4214!important;box-shadow:none!important}
-html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(button:not(.vx-cta):not(.vx-open):not(.mv-gold):not(.ct-gold):not(.cso-primary):not(.mp-go):not(.mp-dl):not(#dtfpAdd):not(#dtfpAutoLayout):not(#dtfpCalc):not(.cso-wa):not(.cso-danger):not(.cp-btn:not(.cp-btn-alt)),.vip-back) *{color:inherit!important}
-html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(button.on,button.active,button[aria-pressed="true"],button[aria-selected="true"]):not(.vx-cta):not(.vx-open):not(.mv-gold):not(.ct-gold):not(.cso-primary):not(.mp-go):not(.mp-dl):not(#dtfpAdd):not(#dtfpAutoLayout):not(#dtfpCalc):not(.cso-wa):not(.cso-danger){background:linear-gradient(120deg,rgba(184,137,58,.26),rgba(184,137,58,.10))!important;border-color:#B8893A!important;color:#5A4214!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(button:not(.vx-cta):not(.vx-open):not(.mv-gold):not(.ct-gold):not(.cso-primary):not(.mp-go):not(.mp-dl):not(#dtfpAdd):not(#dtfpAutoLayout):not(#dtfpCalc):not(.cso-wa):not(.cso-danger):not(.cp-btn:not(.cp-btn-alt)),label.cso-import,.vip-back):not(.rv-bgs button):not([style*="background"]){background:#FFF8EC!important;border-color:#CDB68A!important;color:#5A4214!important;box-shadow:none!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(button:not(.vx-cta):not(.vx-open):not(.mv-gold):not(.ct-gold):not(.cso-primary):not(.mp-go):not(.mp-dl):not(#dtfpAdd):not(#dtfpAutoLayout):not(#dtfpCalc):not(.cso-wa):not(.cso-danger):not(.cp-btn:not(.cp-btn-alt)),.vip-back):not([style*="background"]) *{color:inherit!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(button.on,button.active,button[aria-pressed="true"],button[aria-selected="true"]):not(.vx-cta):not(.vx-open):not(.mv-gold):not(.ct-gold):not(.cso-primary):not(.mp-go):not(.mp-dl):not(#dtfpAdd):not(#dtfpAutoLayout):not(#dtfpCalc):not(.cso-wa):not(.cso-danger):not([style*="background"]){background:linear-gradient(120deg,rgba(184,137,58,.26),rgba(184,137,58,.10))!important;border-color:#B8893A!important;color:#5A4214!important}
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(button,a,label):not(.vx-cta):not(.vx-open):not(.mv-gold):not(.ct-gold):not(.cso-primary):not(.mp-go):not(.mp-dl):not(#dtfpAdd):not(#dtfpAutoLayout):not(#dtfpCalc):not(.cso-wa):not(.cso-danger):not(.cp-btn:not(.cp-btn-alt)):hover{border-color:#B8893A!important}
 html body #panel-premium :is(header.vx-hero,header.mv-head,header.ct-head,header.lx-head,header.pls-head,header.mp-head)::before{background:radial-gradient(closest-side,rgba(212,170,90,.14),rgba(212,170,90,.04) 60%,rgba(212,170,90,0))!important;height:min(62%,420px)!important;max-height:420px!important;pointer-events:none!important}
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) .vx-stats,html body #panel-premium :is(section.vip-lobby,#vipStudioInner) [class*="stat"]{border-color:#E2D2B4!important}
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is([class*="eyebrow"],[class*="kicker"]) *{color:#8A6420!important}
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(div.mp-imgbox,div.cs-vip-viewport,div.mp-cmp-stage,div.rv-img,div.mp-cmp-before){background-image:repeating-conic-gradient(#E9E0CF 0 25%,#FBF7EF 0 50%)!important;background-size:22px 22px!important}
 html body #panel-premium #csPlayeraVipStudio.pls #csPlayeraVipFrame{background:#F6EFE3!important;border-color:#E2D2B4!important}
+
+/* --- Medidas VIP: 36 colores Eurocotton visibles, con abreviatura y nombre --- */
+html body #csMedVip .mv-row:has(#mvColors){display:flex!important;flex-wrap:wrap;gap:14px 24px;align-items:flex-start}
+html body #csMedVip .mv-row > div:has(> #mvColors){flex:1 1 100%;order:2;min-width:0}
+html body #csMedVip .mv-colorname{font-weight:800;letter-spacing:.04em;color:#7A5518!important;text-transform:none}
+html body #csMedVip .mv-colors{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;margin-top:6px}
+html body #csMedVip .mv-colors button{width:auto!important;height:auto!important;aspect-ratio:1;border-radius:8px!important;border:1.5px solid rgba(60,45,20,.22)!important;position:relative;overflow:hidden;padding:0;cursor:pointer;box-shadow:none!important;transition:transform .12s ease}
+html body #csMedVip .mv-colors button:hover{transform:translateY(-1px)}
+html body #csMedVip .mv-colors button span{position:absolute;left:2px;right:2px;bottom:2px;font:800 8.5px/1.35 system-ui,sans-serif;letter-spacing:.02em;color:#fff!important;background:rgba(25,22,18,.78);border-radius:3px;text-align:center;pointer-events:none}
+html body #csMedVip .mv-colors button.on{border-color:#B8893A!important;box-shadow:0 0 0 2px #B8893A!important}
+html body #csMedVip .mv-colors button.on::after{content:"\2713";position:absolute;top:3px;left:50%;transform:translateX(-50%);width:15px;height:15px;border-radius:50%;background:rgba(25,22,18,.82);color:#fff;font:700 10px/15px system-ui,sans-serif;text-align:center}
+html body #csMedVip .mv-colors button:focus-visible{outline:2px solid #B8893A;outline-offset:2px}
+@media(max-width:700px){html body #csMedVip .mv-colors{grid-template-columns:repeat(6,minmax(0,1fr))}}
 
 /* --- Mug Studio PRO: botón de video 360° --- */
 #panel-mug .mg-save{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
@@ -2372,6 +2385,7 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
 #panel-budget .bq-sum small{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--bm);font-weight:700}
 #panel-budget .bq-sum b{font-size:17px}
 #panel-budget .bq-sum b s{font-size:12px;color:var(--bm);margin-right:6px}
+.bq-sum .bq-unit{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:999px;background:linear-gradient(180deg,#ffe16b,#ffbc1f);color:#1a1405;font-style:normal;font-weight:800;font-size:12.5px}
 #panel-budget .bq-actions{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px}
 #panel-budget .bq-go{display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:12px;padding:13px 14px;font:inherit;font-size:15px;font-weight:900;color:#fff;background:linear-gradient(135deg,#3dff8f,#18c75e 55%,#0d9e4b);cursor:pointer;box-shadow:0 8px 22px rgba(37,211,102,.35)}
 #panel-budget .bq-go svg{width:22px;height:22px}
@@ -3346,7 +3360,7 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
           <label class="mv-check"><input type="checkbox" id="mvBrandScale" checked> Ajustar los tamaños de diseño en proporción a mis medidas</label>
           <div class="mv-actions"><button type="button" class="mv-gold" id="mvBrandSave">Guardar tabla</button><button type="button" class="mv-alt" id="mvBrandCancel">Cancelar</button></div>
         </div>
-        <div class="mv-row"><div><p class="mv-lbl">Color</p><div class="mv-colors" id="mvColors"></div></div><div><p class="mv-lbl">Unidades</p><div class="mv-seg" id="mvUnits"><button type="button" data-u="cm" class="on">cm</button><button type="button" data-u="in">pulg</button></div></div></div>
+        <div class="mv-row"><div><p class="mv-lbl">Color · <b id="mvColorName" class="mv-colorname">Blanco</b></p><div class="mv-colors" id="mvColors" role="group" aria-label="Colores Eurocotton"></div></div><div><p class="mv-lbl">Unidades</p><div class="mv-seg" id="mvUnits"><button type="button" data-u="cm" class="on">cm</button><button type="button" data-u="in">pulg</button></div></div></div>
         <p class="mv-lbl">Cantidad por talla</p>
         <div class="mv-qty" id="mvQty"></div>
         <p class="mv-total" id="mvTotal"></p>
@@ -10412,12 +10426,14 @@ resetW();all();
 const $=id=>document.getElementById(id);
 const studio=$('csMedVip');if(!studio)return;
 const A=()=>window.csMedidas;
+const VCOL=[["#ffffff", "Blanco", "BLA"], ["#161c2c", "Azul marino", "MAR"], ["#151515", "Negro", "NEG"], ["#0c4298", "Azul rey", "REY"], ["#e20013", "Rojo", "ROJ"], ["#f1d144", "Canario", "CAN"], ["#37363b", "Charcoal", "CHA"], ["#82001e", "Cereza", "CHE"], ["#e43577", "Rosa helio", "HEL"], ["#b9a883", "Kaki", "KAK"], ["#333333", "Gris oxford", "OXF"], ["#203b49", "Petróleo", "PET"], ["#00a2b4", "Turquesa pavo real", "PEY"], ["#0480b1", "Turquesa", "TUR"], ["#6ddbe6", "Aqua", "AQU"], ["#01481b", "Verde bandera", "BAN"], ["#567fd3", "Azul celeste", "CEL"], ["#daf42a", "Amarillo flúor", "FLA"], ["#94dd25", "Verde limón", "LIM"], ["#8deae1", "Menta", "MEN"], ["#3a3829", "Verde militar", "MIL"], ["#3a2e5d", "Morado", "MOR"], ["#f18b00", "Naranja neón", "NNE"], ["#ff4d6e", "Rosa neón", "RNE"], ["#f8e2f0", "Rosa", "ROS"], ["#cf535b", "Salmón", "SAL"], ["#281b18", "Tabaco", "TAB"], ["#78eb57", "Verde neón", "VNE"], ["#b3b3b3", "Gris jaspe", "JAS"], ["#530101", "Vino", "VIN"], ["#e8e3ce", "Hueso", "HUE"], ["#d7d7db", "Perla", "PER"], ["#163e37", "Verde botella", "BOT"], ["#fd4f21", "Naranja", "NAN"], ["#3a2e5d", "Morado monarca", "MON"], ["#ffd753", "Amarillo oro", "AMA"]];
 const KEY='cs_medvip_v1';
 const SLUG={front:'frente',chest:'pecho-izq',center:'pecho-centro',back:'espalda',yoke:'espalda-alta',nape:'nuca',sleeve:'manga'};
 const MODES=[['ideal','Ideal por talla'],['one','Un solo tamaño'],['two','Dos tamaños'],['custom','Medida fija']];
 let st={g:'adulto',c:0,u:'cm',qty:{},zones:{},biz:'',client:'',film:'60',gap:1,price:null,tab:'prod',mockSize:null,mockBg:'light',mockDims:true};
 const imgs={};
 try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&typeof s==='object')Object.assign(st,s);}catch(e){}
+if(!st.cv2){st.c=[0,2,28,1,4,24][st.c]||0;st.cv2=1;}if(!(st.c>=0&&st.c<VCOL.length))st.c=0;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
 const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=v=>Number(v||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:2});
@@ -10468,7 +10484,7 @@ function price(){if(st.price==null){const p=$('cpPrice');st.price=p&&+p.value>0?
 /* ---------- interfaz ---------- */
 function renderGars(){$('mvGars').innerHTML=Object.entries(A().G).map(([k,g])=>`<button type="button" data-g="${k}" class="${k===st.g?'on':''}"><span>${g.i}</span><div>${esc(g.n)}${g.custom?'<small>Mi tabla</small>':''}</div></button>`).join('');
  const cu=!!gar().custom;$('mvBrandEdit').hidden=!cu;$('mvBrandDel').hidden=!cu;}
-function renderColors(){$('mvColors').innerHTML=A().COLORS.map((c,i)=>`<button type="button" data-c="${i}" class="${i===st.c?'on':''}" style="background:${c[0]}" title="${c[1]}" aria-label="${c[1]}"></button>`).join('');
+function renderColors(){$('mvColors').innerHTML=VCOL.map((c,i)=>`<button type="button" data-c="${i}" class="${i===st.c?'on':''}" style="background:${c[0]}" title="${c[1]}" aria-label="${c[1]}" aria-pressed="${i===st.c}"><span>${c[2]}</span></button>`).join('');const _nm=$('mvColorName');if(_nm)_nm.textContent=VCOL[st.c][1];
  document.querySelectorAll('#mvUnits button').forEach(b=>b.classList.toggle('on',b.dataset.u===st.u));}
 function renderQty(){const g=gar(),q=qtyArr();$('mvQty').innerHTML=g.sizes.map((s,i)=>`<label class="${q[i]?'has':''}">${esc(s)}${g.sub?`<small>${esc(g.sub[i])}</small>`:''}<input type="number" min="0" max="9999" inputmode="numeric" data-s="${esc(s)}" value="${q[i]||''}" placeholder="0" aria-label="Cantidad talla ${esc(s)}"></label>`).join('');}
 function renderTotal(){const t=qtyArr().reduce((a,b)=>a+b,0);$('mvTotal').innerHTML=t?`Total del pedido: <b>${t}</b> pieza${t>1?'s':''}`:'Escribe cuántas piezas lleva cada talla.';}
@@ -10518,7 +10534,7 @@ function svgImage(r,w,h){return new Promise((ok,ko)=>{const s=`<svg xmlns="http:
 function wrapLines(ctx,txt,max){const words=txt.split(' '),out=[];let l='';for(const w of words){const t=l?l+' '+w:w;if(ctx.measureText(t).width>max&&l){out.push(l);l=w;}else l=t;}if(l)out.push(l);return out;}
 async function renderMock(){
  const tok=++mockTok,cv=$('mvMockCanvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height,g=gar(),si=Math.max(0,g.sizes.indexOf(st.mockSize)),dark=st.mockBg==='dark';
- const col=A().COLORS[st.c],act=active(),idx=ordered();
+ const col=VCOL[st.c],act=active(),idx=ordered();
  const items={f:[],b:[]};for(const zk of act){const w=widthFor(zk,si,idx);items[A().ZM[zk].v].push({z:zk,w,a:asp(zk),img:imgs[zk]?imgs[zk].prev:null});}
  const views=['f','b'].filter(v=>items[v].length);if(!views.length)views.push('f');
  const bg=ctx.createLinearGradient(0,0,0,H);if(dark){bg.addColorStop(0,'#1d150b');bg.addColorStop(1,'#070605');}else{bg.addColorStop(0,'#fbf9f5');bg.addColorStop(1,'#ece6dc');}
@@ -10533,7 +10549,7 @@ async function renderMock(){
  for(let k=0;k<n;k++){const v=views[k];let r;try{r=A().svg({g:st.g,si,v,col:col[0],items:items[v],ghosts:false,guides:false,showMax:false,dims:!!st.mockDims,label:false,id:'mv'+v+k},st.u);}catch(e){continue;}
   const ar=r.vb[2]/r.vb[3],bh=bot-top;let dw=bw,dh=bw/ar;if(dh>bh){dh=bh;dw=bh*ar;}
   let im;try{im=await svgImage(r,dw*2,dh*2);}catch(e){continue;}if(tok!==mockTok)return;
-  const x0=64+k*(bw+gapX)+(bw-dw)/2,y0=top+Math.max(0,(bh+20-dh-30)/2);ctx.drawImage(im,x0,y0,dw,dh);
+  const x0=64+k*(bw+gapX)+(bw-dw)/2,y0=top+Math.max(0,(bh+20-dh-30)/2);{const tc=document.createElement('canvas');tc.width=Math.max(1,Math.round(dw*2));tc.height=Math.max(1,Math.round(dh*2));const tx=tc.getContext('2d');tx.drawImage(im,0,0,tc.width,tc.height);tx.globalCompositeOperation='source-atop';const lg=tx.createLinearGradient(0,0,tc.width,tc.height);lg.addColorStop(0,'rgba(255,255,255,.18)');lg.addColorStop(.42,'rgba(255,255,255,0)');lg.addColorStop(1,'rgba(0,0,0,.18)');tx.fillStyle=lg;tx.fillRect(0,0,tc.width,tc.height);const rg=tx.createRadialGradient(tc.width*.5,tc.height*.4,tc.width*.12,tc.width*.5,tc.height*.5,tc.width*.66);rg.addColorStop(0,'rgba(255,255,255,0)');rg.addColorStop(1,'rgba(0,0,0,.14)');tx.fillStyle=rg;tx.fillRect(0,0,tc.width,tc.height);ctx.save();ctx.shadowColor=dark?'rgba(0,0,0,.55)':'rgba(60,40,10,.22)';ctx.shadowBlur=30;ctx.shadowOffsetY=16;ctx.drawImage(tc,x0,y0,dw,dh);ctx.restore();}
   ctx.textAlign='center';ctx.fillStyle=gold;ctx.font='700 14px system-ui, Arial, sans-serif';ctx.fillText(v==='f'?'F R E N T E':'E S P A L D A',64+k*(bw+gapX)+bw/2,Math.min(bot+26,y0+dh+28));ctx.textAlign='left';}
  if(tok!==mockTok)return;
  ctx.strokeStyle=dark?'rgba(214,174,98,.3)':'rgba(154,114,48,.25)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(64,H-140);ctx.lineTo(W-64,H-140);ctx.stroke();
@@ -10560,7 +10576,7 @@ function zip(files){const enc=new TextEncoder(),parts=[],cen=[];let off=0;const 
 async function transferPng(t){const m=imgs[t.zk],c=document.createElement('canvas');c.width=t.pxW;c.height=t.pxH;const x=c.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(m.el,0,0,t.pxW,t.pxH);
  const b=await new Promise(r=>c.toBlob(r,'image/png'));c.width=c.height=1;if(!b)throw Error('png');return withDpi(new Uint8Array(await b.arrayBuffer()),300);}
 function summaryText(){const g=gar(),idx=ordered(),pz=qtyArr().reduce((a,b)=>a+b,0),f=film(),m=f.len/100;
- let t=`📋 Pedido${st.client?': '+st.client:''}\n${g.n} · ${A().COLORS[st.c][1]} · ${pz} piezas\n`;
+ let t=`📋 Pedido${st.client?': '+st.client:''}\n${g.n} · ${VCOL[st.c][1]} · ${pz} piezas\n`;
  for(const zk of active()){const rows=plan(zk);if(!rows.length)continue;t+=`\n${rows[0].z.n.toUpperCase()}\n`;rows.forEach(r=>{t+=`• ${r.size} ×${r.pieces}: ${fmt(r.w)} × ${fmt(r.h)} · ${posText(zk,r.z)}${r.copies!==r.pieces?` (${r.copies} transfers)`:''}\n`;});}
  if(m)t+=`\nPelícula ${st.film} cm: ${m.toFixed(2)} m ≈ ${money(m*price())}${pz?` (${money(m*price()/pz)} por pieza)`:''}\n`;
  return t+(st.biz?`— ${st.biz}`:'');}
@@ -10622,7 +10638,7 @@ $('mvPrint').addEventListener('click',async()=>{
  let rows='';for(const zk of active()){const P=plan(zk);if(!P.length)continue;rows+=`<tr class="z"><td colspan="6">${esc(P[0].z.n)} — ${MODES.find(x=>x[0]===zc(zk).mode)[1]}</td></tr>`;
   for(const r of P)rows+=`<tr><td><b>${esc(r.size)}</b></td><td>${r.pieces}</td><td>${fmt(r.w)} × ${fmt(r.h)}${r.over?' ⚠':''}</td><td>${esc(posText(zk,r.z))}</td><td>${r.copies}</td><td class="ck">☐</td></tr>`;}
  const html=`<!doctype html><html><head><meta charset="utf-8"><title>Hoja de producción</title><style>@page{size:letter;margin:14mm}body{font-family:system-ui,Arial,sans-serif;color:#1d1a16;margin:0}h1{font-family:Georgia,serif;font-weight:500;font-size:28px;margin:0}.k{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#9a7230;font-weight:700}.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #9a7230;padding-bottom:10px;margin-bottom:12px}.meta{font-size:13px;text-align:right;line-height:1.5}img{width:100%;border:1px solid #ddd;border-radius:6px}table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:12px}th{text-align:left;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#9a7230;border-bottom:1.5px solid #9a7230;padding:6px}td{padding:6px;border-bottom:1px solid #e5ded2}tr.z td{background:#f4eee3;font-weight:700}.ck{font-size:16px;text-align:center}.sum{display:flex;gap:10px;margin-top:12px}.sum div{flex:1;border:1px solid #e0d6c4;border-radius:6px;padding:8px}.sum small{display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#7a6f60}.sum b{font-size:17px}.ft{margin-top:14px;font-size:10.5px;color:#7a6f60}</style></head><body>
- <div class="hd"><div><div class="k">${esc(st.biz||'Taller')}</div><h1>Hoja de producción</h1></div><div class="meta"><b>${esc(st.client||'Pedido')}</b><br>${esc(g.n)} · ${esc(A().COLORS[st.c][1])} · ${pz} piezas<br>${new Date().toLocaleDateString('es-MX')}</div></div>
+ <div class="hd"><div><div class="k">${esc(st.biz||'Taller')}</div><h1>Hoja de producción</h1></div><div class="meta"><b>${esc(st.client||'Pedido')}</b><br>${esc(g.n)} · ${esc(VCOL[st.c][1])} · ${pz} piezas<br>${new Date().toLocaleDateString('es-MX')}</div></div>
  <img src="${mock}" alt="Mockup"><table><thead><tr><th>Talla</th><th>Piezas</th><th>Transfer</th><th>Posición</th><th>Copias</th><th>Listo</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Sin datos</td></tr>'}</tbody></table>
  <div class="sum"><div><small>Transfers</small><b>${f.count}</b></div><div><small>Película ${esc(st.film)} cm</small><b>${m?m.toFixed(2)+' m':'—'}</b></div><div><small>Costo aprox.</small><b>${m?money(m*price()):'—'}</b></div><div><small>Por pieza</small><b>${pz&&m?money(m*price()/pz):'—'}</b></div></div>
  <p class="ft">Medidas de referencia para corte estándar. Verifica la escala al 100% y presenta el transfer en la prenda antes de planchar.</p></body></html>`;
@@ -11715,7 +11731,8 @@ function calc(o){
  const qty=rows.reduce((a,r)=>a+r.q,0),total=rows.reduce((a,r)=>a+r.sub,0);
  let final=total;if(st.disc>0){final=total*(1-st.disc/100);if(+st.round>0)final=Math.round(final/st.round)*st.round;}
  const dep=st.dep>0?Math.round(final*st.dep/100):0;
- return {rows,qty,total,final,dep};
+ const unitD=qty?final/qty:0,sameP=rows.length>0&&rows.every(r=>r.p===rows[0].p);
+ return {rows,qty,total,final,dep,unitD,sameP};
 }
 const eqQty=()=>{const q=st.sizes.filter(s=>s.q>0).map(s=>s.q);return q.length>1&&q.every(v=>v===q[0])?q[0]:0;};
 
@@ -11778,7 +11795,7 @@ $('bqOpt').addEventListener('click',e=>{const o=st.opts[st.active],b=e.target.cl
  else if(b.id==='bqQApply'){const base=+$('bqQBase').value||0,inc=+$('bqQInc').value||0;st.sizes.forEach((s,i)=>o.prices[s.id]=base+inc*i);optUI();}
  else return;save();render();summary();});
 function summary(){
- $('bqSum').innerHTML=st.opts.map(o=>{const c=calc(o);return `<div><small>${esc(o.name)} · ${c.qty} pzs</small><b>${st.disc>0?'<s>'+money(c.total)+'</s>':''}${money(c.final)}</b></div>`;}).join('');
+ $('bqSum').innerHTML=st.opts.map(o=>{const c=calc(o);return `<div><small>${esc(o.name)} · ${c.qty} pzs</small><b>${st.disc>0?'<s>'+money(c.total)+'</s>':''}${money(c.final)}</b>${st.disc>0&&c.qty?`<em class="bq-unit">${money(c.unitD)} ${c.sameP?'por pieza':'promedio por pieza'} con descuento</em>`:''}</div>`;}).join('');
 }
 
 /* ---------- dibujo ---------- */
@@ -11911,10 +11928,17 @@ function table(x,X,Y,W,c,rowH,color,T,k){
   vals.forEach((v,j)=>{x.fillStyle=T.rowText;fitFont(x,v,xs[j][1]*.88,fs,j===0?'900':'800',SANS);x.fillText(v,xs[j][0]+xs[j][1]/2,cy);});});
  return H;
 }
+function unitBox(x,cx,y,bw,bh,c,o,T,th,k){
+ const lab=c.sameP?'Por pieza con descuento':'Promedio por pieza',val=money(c.unitD)+' c/u';
+ x.save();if(T.dark){x.fillStyle=th==='gold'?'rgba(233,196,106,.12)':hexA(o.color,.18);rr(x,cx-bw/2,y,bw,bh,bh*.28);x.fill();x.setLineDash([6*k,4*k]);x.strokeStyle='#ffd23f';x.lineWidth=2*k;rr(x,cx-bw/2,y,bw,bh,bh*.28);x.stroke();}
+ else{x.fillStyle='rgba(255,188,31,.16)';rr(x,cx-bw/2,y,bw,bh,bh*.28);x.fill();x.setLineDash([6*k,4*k]);x.strokeStyle='#e0a400';x.lineWidth=2*k;rr(x,cx-bw/2,y,bw,bh,bh*.28);x.stroke();}x.restore();
+ x.textAlign='center';x.textBaseline='middle';x.fillStyle=T.totLabel;fitFont(x,lab,bw*.9,bh*.3,'800',SANS);x.fillText(lab,cx,y+bh*.3);
+ x.fillStyle=T.dark?'#ffd23f':'#7a5200';fitFont(x,val,bw*.86,bh*.4,'900',HEAVY);x.fillText(val,cx,y+bh*.68);
+}
 function totals(x,X,Y,W,H,c,o,T,th,k,big){
  if(st.disc>0&&W>H*3.2){/* fila: total a la izquierda, descuento a la derecha */
   const half=(W-W*.04)/2,hasA=st.dep>0;const lab='Total por '+c.qty+' '+(st.noun||'piezas');
-  const u=Math.min(H/(hasA?3.4:2.9),W*.07),y0=Y+(H-u*(hasA?3.4:2.9))/2,cxL=X+half/2,cxR=X+W-half/2;
+  const hasU=c.qty>0,ex=hasU?1.75:0,u=Math.min(H/((hasA?3.4:2.9)+ex),W*.07),y0=Y+(H-u*((hasA?3.4:2.9)+ex))/2,cxL=X+half/2,cxR=X+W-half/2;
   x.textAlign='center';x.textBaseline='middle';x.fillStyle=T.totLabel;fitFont(x,lab,half*.95,u*.62,'800',SANS,1);x.fillText(lab,cxL,y0+u*.5);
   const t2='Con '+(+st.disc).toLocaleString('es-MX',{maximumFractionDigits:2})+'% de descuento';fitFont(x,t2,half*.95,u*.62,'800',SANS,1);x.fillText(t2,cxR,y0+u*.5);
   const by=y0+u*1.05,bh=u*1.75,bw=half*.96;
@@ -11923,13 +11947,14 @@ function totals(x,X,Y,W,H,c,o,T,th,k,big){
   const tt=money(c.total)+' MXN';x.fillStyle=T.totNum;fitFont(x,tt,bw*.86,bh*.5,'900',HEAVY);x.fillText(tt,cxL,by+bh/2);
   const g=x.createLinearGradient(0,by,0,by+bh);g.addColorStop(0,'#ffe16b');g.addColorStop(1,'#ffbc1f');x.fillStyle=g;x.save();x.shadowColor='rgba(255,188,31,.45)';x.shadowBlur=18*k;rr(x,cxR-bw/2,by,bw,bh,bh/2);x.fill();x.restore();
   const ft=money(c.final)+' MXN';x.fillStyle='#1a1405';fitFont(x,ft,bw*.86,bh*.5,'900',HEAVY);x.fillText(ft,cxR,by+bh/2);
-  if(hasA){const t='Anticipo '+st.dep+'%: '+money(c.dep);x.fillStyle=T.totLabel;fitFont(x,t,W*.9,u*.5,'800',SANS);x.fillText(t,X+W/2,by+bh+u*.45);}
+  if(hasU)unitBox(x,cxR,by+bh+u*.2,bw,u*1.45,c,o,T,th,k);
+  if(hasA){const t='Anticipo '+st.dep+'%: '+money(c.dep);x.fillStyle=T.totLabel;fitFont(x,t,W*.9,u*.5,'800',SANS);x.fillText(t,X+W/2,by+bh+u*(hasU?1.65:0)+u*.45);}
   return;}
  /* bloque de totales: etiqueta, total, descuento, anticipo */
  const lines=[];const label='Total por '+c.qty+' '+(st.noun||'piezas');
  const hasD=st.disc>0,hasA=st.dep>0;
- const unit=H/(1.1+1.9+(hasD?2.6:0)+(hasA?.9:0));const u=Math.min(unit,big?W*.14:W*.11);
- let y=Y+(H-u*(1.1+1.9+(hasD?2.6:0)+(hasA?.9:0)))/2;
+ const hasU=hasD&&c.qty>0,sum=1.1+1.9+(hasD?2.6:0)+(hasU?1.75:0)+(hasA?.9:0);const unit=H/sum;const u=Math.min(unit,big?W*.14:W*.11);
+ let y=Y+(H-u*sum)/2;
  x.textAlign='center';x.textBaseline='middle';const cx=X+W/2;
  x.fillStyle=T.totLabel;fitFont(x,label,W*.92,u*.62,'800',SANS,1);x.fillText(label,cx,y+u*.55);y+=u*1.1;
  const tbH=u*1.7,tbW=W*.92;
@@ -11942,7 +11967,8 @@ function totals(x,X,Y,W,H,c,o,T,th,k,big){
  y+=tbH+u*.2;
  if(hasD){x.fillStyle=T.totLabel;const t='Con '+(+st.disc).toLocaleString('es-MX',{maximumFractionDigits:2})+'% de descuento:';fitFont(x,t,W*.9,u*.5,'700',SANS);x.fillText(t,cx,y+u*.45);y+=u*.85;
   const pH=u*1.55,pW=W*.88,g=x.createLinearGradient(0,y,0,y+pH);g.addColorStop(0,'#ffe16b');g.addColorStop(1,'#ffbc1f');x.fillStyle=g;x.save();x.shadowColor='rgba(255,188,31,.45)';x.shadowBlur=18*k;rr(x,cx-pW/2,y,pW,pH,pH/2);x.fill();x.restore();
-  const ft=money(c.final)+' MXN';x.fillStyle='#1a1405';fitFont(x,ft,pW*.86,pH*.56,'900',HEAVY);x.fillText(ft,cx,y+pH/2);y+=pH+u*.2;}
+  const ft=money(c.final)+' MXN';x.fillStyle='#1a1405';fitFont(x,ft,pW*.86,pH*.56,'900',HEAVY);x.fillText(ft,cx,y+pH/2);y+=pH+u*.2;
+  if(hasU){unitBox(x,cx,y,W*.88,u*1.5,c,o,T,th,k);y+=u*1.75;}}
  if(hasA){const t='Anticipo '+st.dep+'%: '+money(c.dep);x.fillStyle=T.totLabel;fitFont(x,t,W*.9,u*.48,'800',SANS);x.fillText(t,cx,y+u*.45);}
 }
 function features(x,o,X,Y,W,H,T,k,cols){
@@ -12070,7 +12096,7 @@ $('bqShare').addEventListener('click',()=>blob().then(async b=>{if(!b)return;con
  download(b);flash('Se descargó la imagen. Ábrela en WhatsApp Web y adjúntala al chat de tu cliente.');}));
 function textVersion(){
  let t=`*${st.title||'Presupuesto'}* · ${st.subtitle||''}\n`;if(st.client.trim())t+=`Cliente: ${st.client.trim()}\n`;t+=`Folio: ${st.folio}\n`;
- st.opts.forEach(o=>{const c=calc(o);t+=`\n*${o.name}*\n`;c.rows.forEach(r=>t+=`${r.t}: ${r.q} × ${money(r.p)} = ${money(r.sub)}\n`);t+=`Total por ${c.qty} ${st.noun}: *${money(c.total)} MXN*\n`;if(st.disc>0)t+=`Con ${st.disc}% de descuento: *${money(c.final)} MXN*\n`;if(st.dep>0)t+=`Anticipo ${st.dep}%: ${money(c.dep)}\n`;});
+ st.opts.forEach(o=>{const c=calc(o);t+=`\n*${o.name}*\n`;c.rows.forEach(r=>t+=`${r.t}: ${r.q} × ${money(r.p)} = ${money(r.sub)}\n`);t+=`Total por ${c.qty} ${st.noun}: *${money(c.total)} MXN*\n`;if(st.disc>0)t+=`Con ${st.disc}% de descuento: *${money(c.final)} MXN*\n`+(c.qty?`${c.sameP?'Precio por pieza':'Promedio por pieza'} con descuento: *${money(c.unitD)}*\n`:'');if(st.dep>0)t+=`Anticipo ${st.dep}%: ${money(c.dep)}\n`;});
  if(st.note.trim())t+=`\nImportante: ${st.note.trim()}\n`;if(st.valid>0)t+=`Vigencia: ${st.valid} días\n`;if(st.biz.trim())t+=`\n${st.biz.trim()}${st.phone.trim()?' · '+st.phone.trim():''}`;return t;
 }
 $('bqCopy').addEventListener('click',()=>{const t=textVersion(),ok=()=>{const b=$('bqCopy'),o=b.textContent;b.textContent='✓ Copiado';setTimeout(()=>b.textContent=o,1500);};
