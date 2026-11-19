@@ -11795,7 +11795,7 @@ $('bqOpt').addEventListener('click',e=>{const o=st.opts[st.active],b=e.target.cl
  else if(b.id==='bqQApply'){const base=+$('bqQBase').value||0,inc=+$('bqQInc').value||0;st.sizes.forEach((s,i)=>o.prices[s.id]=base+inc*i);optUI();}
  else return;save();render();summary();});
 function summary(){
- $('bqSum').innerHTML=st.opts.map(o=>{const c=calc(o);return `<div><small>${esc(o.name)} · ${c.qty} pzs</small><b>${st.disc>0?'<s>'+money(c.total)+'</s>':''}${money(c.final)}</b>${st.disc>0&&c.qty?`<em class="bq-unit">${money(c.unitD)} ${c.sameP?'por pieza':'promedio por pieza'} con descuento</em>`:''}</div>`;}).join('');
+ $('bqSum').innerHTML=st.opts.map(o=>{const c=calc(o);return `<div><small>${esc(o.name)} · ${c.qty} pzs</small><b>${st.disc>0?'<s>'+money(c.total)+'</s>':''}${money(c.final)}</b>${st.disc>0&&c.qty?(c.sameP?`<em class="bq-unit">${money(c.unitD)} por pieza con descuento</em>`:`<em class="bq-unit">Con descuento: ${c.rows.map(r=>esc(r.t)+' '+money(r.p*(1-st.disc/100))).join(' · ')}</em>`):''}</div>`;}).join('');
 }
 
 /* ---------- dibujo ---------- */
@@ -11911,21 +11911,22 @@ function burst(x,cx,cy,R,k){
  const p=(+st.disc).toLocaleString('es-MX',{maximumFractionDigits:2})+'%';fitFont(x,p,R*1.5,R*.62,'900',HEAVY);x.fillText(p,0,R*.3);x.restore();
 }
 function table(x,X,Y,W,c,rowH,color,T,k){
- const q=eqQty(),cols=q?[['Talla',.24],['Precio unitario',.38],[q+' piezas',.38]]:[['Talla',.2],['Precio',.28],['Cant.',.18],['Subtotal',.34]];
+ const q=eqQty(),hd=st.disc>0,dl='Con '+(+st.disc).toLocaleString('es-MX',{maximumFractionDigits:2})+'% desc.',cols=hd?(q?[['Talla',.18],['Precio unitario',.27],[dl,.27],[q+' piezas',.28]]:[['Talla',.15],['Precio',.2],[dl,.23],['Cant.',.13],['Subtotal',.29]]):(q?[['Talla',.24],['Precio unitario',.38],[q+' piezas',.38]]:[['Talla',.2],['Precio',.28],['Cant.',.18],['Subtotal',.34]]);
  const hh=rowH*1.12,H=hh+rowH*c.rows.length,r=Math.min(18*k,rowH*.4);
  x.save();rr(x,X,Y,W,H,r);x.clip();
  const hg=x.createLinearGradient(X,Y,X,Y+hh);hg.addColorStop(0,shade(color,.12));hg.addColorStop(1,shade(color,-.2));x.fillStyle=hg;x.fillRect(X,Y,W,hh);
  c.rows.forEach((row,i)=>{x.fillStyle=i%2?T.rowB:T.rowA;x.fillRect(X,Y+hh+i*rowH,W,rowH);});
+ if(hd){let ax=X+W*cols[0][1]+W*cols[1][1];const dw=W*cols[2][1],dg=x.createLinearGradient(0,Y,0,Y+hh);dg.addColorStop(0,'#ffe16b');dg.addColorStop(1,'#ffbc1f');x.fillStyle=dg;x.fillRect(ax,Y,dw,hh);x.fillStyle='rgba(255,210,63,.22)';x.fillRect(ax,Y+hh,dw,H-hh);}
  x.restore();
  x.strokeStyle=T.dark&&T.rowText!=='#0d1530'?'rgba(233,196,106,.18)':'rgba(13,21,48,.08)';x.lineWidth=1;
  let cx=X;const xs=cols.map(([,w])=>{const a=cx;cx+=W*w;return [a,W*w];});
  xs.slice(1).forEach(([a])=>{x.beginPath();x.moveTo(a,Y+hh);x.lineTo(a,Y+H);x.stroke();});
  c.rows.forEach((row,i)=>{if(!i)return;x.beginPath();x.moveTo(X,Y+hh+i*rowH);x.lineTo(X+W,Y+hh+i*rowH);x.stroke();});
  x.textAlign='center';x.textBaseline='middle';
- cols.forEach(([t],j)=>{x.fillStyle='#ffffff';fitFont(x,t,xs[j][1]*.9,hh*.44,'800',SANS);x.fillText(t,xs[j][0]+xs[j][1]/2,Y+hh/2);});
+ cols.forEach(([t],j)=>{x.fillStyle=hd&&j===2?'#1a1405':'#ffffff';fitFont(x,t,xs[j][1]*.9,hh*.44,'800',SANS);x.fillText(t,xs[j][0]+xs[j][1]/2,Y+hh/2);});
  const fs=rowH*.58;
- c.rows.forEach((row,i)=>{const cy=Y+hh+i*rowH+rowH/2,vals=q?[row.t,money(row.p),money(row.sub)]:[row.t,money(row.p),String(row.q),money(row.sub)];
-  vals.forEach((v,j)=>{x.fillStyle=T.rowText;fitFont(x,v,xs[j][1]*.88,fs,j===0?'900':'800',SANS);x.fillText(v,xs[j][0]+xs[j][1]/2,cy);});});
+ c.rows.forEach((row,i)=>{const cy=Y+hh+i*rowH+rowH/2,pd=money(row.p*(1-st.disc/100)),vals=hd?(q?[row.t,money(row.p),pd,money(row.sub)]:[row.t,money(row.p),pd,String(row.q),money(row.sub)]):(q?[row.t,money(row.p),money(row.sub)]:[row.t,money(row.p),String(row.q),money(row.sub)]);
+  vals.forEach((v,j)=>{x.fillStyle=hd&&j===2?(String(T.rowText).startsWith('#f')?'#ffd23f':'#7a4d00'):T.rowText;fitFont(x,v,xs[j][1]*.88,fs,j===0?'900':'800',SANS);x.fillText(v,xs[j][0]+xs[j][1]/2,cy);});});
  return H;
 }
 function unitBox(x,cx,y,bw,bh,c,o,T,th,k){
@@ -11938,7 +11939,7 @@ function unitBox(x,cx,y,bw,bh,c,o,T,th,k){
 function totals(x,X,Y,W,H,c,o,T,th,k,big){
  if(st.disc>0&&W>H*3.2){/* fila: total a la izquierda, descuento a la derecha */
   const half=(W-W*.04)/2,hasA=st.dep>0;const lab='Total por '+c.qty+' '+(st.noun||'piezas');
-  const hasU=c.qty>0,ex=hasU?1.75:0,u=Math.min(H/((hasA?3.4:2.9)+ex),W*.07),y0=Y+(H-u*((hasA?3.4:2.9)+ex))/2,cxL=X+half/2,cxR=X+W-half/2;
+  const hasU=c.qty>0&&c.sameP,ex=hasU?1.75:0,u=Math.min(H/((hasA?3.4:2.9)+ex),W*.07),y0=Y+(H-u*((hasA?3.4:2.9)+ex))/2,cxL=X+half/2,cxR=X+W-half/2;
   x.textAlign='center';x.textBaseline='middle';x.fillStyle=T.totLabel;fitFont(x,lab,half*.95,u*.62,'800',SANS,1);x.fillText(lab,cxL,y0+u*.5);
   const t2='Con '+(+st.disc).toLocaleString('es-MX',{maximumFractionDigits:2})+'% de descuento';fitFont(x,t2,half*.95,u*.62,'800',SANS,1);x.fillText(t2,cxR,y0+u*.5);
   const by=y0+u*1.05,bh=u*1.75,bw=half*.96;
@@ -11953,7 +11954,7 @@ function totals(x,X,Y,W,H,c,o,T,th,k,big){
  /* bloque de totales: etiqueta, total, descuento, anticipo */
  const lines=[];const label='Total por '+c.qty+' '+(st.noun||'piezas');
  const hasD=st.disc>0,hasA=st.dep>0;
- const hasU=hasD&&c.qty>0,sum=1.1+1.9+(hasD?2.6:0)+(hasU?1.75:0)+(hasA?.9:0);const unit=H/sum;const u=Math.min(unit,big?W*.14:W*.11);
+ const hasU=hasD&&c.qty>0&&c.sameP,sum=1.1+1.9+(hasD?2.6:0)+(hasU?1.75:0)+(hasA?.9:0);const unit=H/sum;const u=Math.min(unit,big?W*.14:W*.11);
  let y=Y+(H-u*sum)/2;
  x.textAlign='center';x.textBaseline='middle';const cx=X+W/2;
  x.fillStyle=T.totLabel;fitFont(x,label,W*.92,u*.62,'800',SANS,1);x.fillText(label,cx,y+u*.55);y+=u*1.1;
@@ -12096,7 +12097,7 @@ $('bqShare').addEventListener('click',()=>blob().then(async b=>{if(!b)return;con
  download(b);flash('Se descargó la imagen. Ábrela en WhatsApp Web y adjúntala al chat de tu cliente.');}));
 function textVersion(){
  let t=`*${st.title||'Presupuesto'}* · ${st.subtitle||''}\n`;if(st.client.trim())t+=`Cliente: ${st.client.trim()}\n`;t+=`Folio: ${st.folio}\n`;
- st.opts.forEach(o=>{const c=calc(o);t+=`\n*${o.name}*\n`;c.rows.forEach(r=>t+=`${r.t}: ${r.q} × ${money(r.p)} = ${money(r.sub)}\n`);t+=`Total por ${c.qty} ${st.noun}: *${money(c.total)} MXN*\n`;if(st.disc>0)t+=`Con ${st.disc}% de descuento: *${money(c.final)} MXN*\n`+(c.qty?`${c.sameP?'Precio por pieza':'Promedio por pieza'} con descuento: *${money(c.unitD)}*\n`:'');if(st.dep>0)t+=`Anticipo ${st.dep}%: ${money(c.dep)}\n`;});
+ st.opts.forEach(o=>{const c=calc(o);t+=`\n*${o.name}*\n`;c.rows.forEach(r=>t+=`${r.t}: ${r.q} × ${money(r.p)} = ${money(r.sub)}${st.disc>0?` (con descuento ${money(r.p*(1-st.disc/100))} c/u)`:''}\n`);t+=`Total por ${c.qty} ${st.noun}: *${money(c.total)} MXN*\n`;if(st.disc>0)t+=`Con ${st.disc}% de descuento: *${money(c.final)} MXN*\n`+(c.qty&&c.sameP?`Precio por pieza con descuento: *${money(c.unitD)}*\n`:'');if(st.dep>0)t+=`Anticipo ${st.dep}%: ${money(c.dep)}\n`;});
  if(st.note.trim())t+=`\nImportante: ${st.note.trim()}\n`;if(st.valid>0)t+=`Vigencia: ${st.valid} días\n`;if(st.biz.trim())t+=`\n${st.biz.trim()}${st.phone.trim()?' · '+st.phone.trim():''}`;return t;
 }
 $('bqCopy').addEventListener('click',()=>{const t=textVersion(),ok=()=>{const b=$('bqCopy'),o=b.textContent;b.textContent='✓ Copiado';setTimeout(()=>b.textContent=o,1500);};
