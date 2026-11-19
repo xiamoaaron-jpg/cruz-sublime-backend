@@ -1380,6 +1380,12 @@ html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is([class*="eye
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(div.mp-imgbox,div.cs-vip-viewport,div.mp-cmp-stage,div.rv-img,div.mp-cmp-before){background-image:repeating-conic-gradient(#E9E0CF 0 25%,#FBF7EF 0 50%)!important;background-size:22px 22px!important}
 html body #panel-premium #csPlayeraVipStudio.pls #csPlayeraVipFrame{background:#F6EFE3!important;border-color:#E2D2B4!important}
 
+/* --- Mug Studio PRO: botón de video 360° --- */
+#panel-mug .mg-save{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+#panel-mug .mg-video{background:linear-gradient(110deg,#F94CA8,#9C7BFF)!important;color:#fff!important}
+#panel-mug .mg-video[disabled]{opacity:.7;cursor:progress}
+@media(max-width:640px){#panel-mug .mg-save > *{flex:1 1 100%}}
+
 /* --- Botón flotante de WhatsApp en celular: solo ícono --- */
 @media(max-width:640px){html body a.cs-fab{min-height:52px!important;width:52px;padding:0!important;right:16px!important;bottom:16px!important;border-radius:50%!important}html body a.cs-fab .cs-fab-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}/* --- Foco visible y movimiento reducido --- */
 html body > header button:focus-visible,#csTools input:focus-visible{outline:3px solid var(--rd-cyan)!important;outline-offset:3px}@media(prefers-reduced-motion:reduce){.cs-canva-slots .cv-bar i{transition:none}}
@@ -2458,7 +2464,7 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
     <div class="mg-stage" id="mugStage"><canvas id="mugPreview"></canvas><div class="mg-loading" id="mugLoading">Cargando visor 3D…</div></div>
     <div class="mg-bar mg-bar2">
      <label class="mg-zoom">Zoom<input id="mugZoom" type="range" min="70" max="160" value="100"></label>
-     <div class="mg-save"><select id="mugAspect" class="mg-select" aria-label="Formato del mockup"><option value="1.25">Horizontal 5:4</option><option value="1">Cuadrado 1:1 (Instagram)</option><option value="0.8">Vertical 4:5</option><option value="1.7778">Panorámico 16:9</option></select><button type="button" class="mg-primary" id="mugMockupSave">⬇ Descargar mockup</button></div>
+     <div class="mg-save"><select id="mugAspect" class="mg-select" aria-label="Formato del mockup"><option value="1.25">Horizontal 5:4</option><option value="1">Cuadrado 1:1 (Instagram)</option><option value="0.8">Vertical 4:5</option><option value="1.7778">Panorámico 16:9</option></select><button type="button" class="mg-primary" id="mugMockupSave">⬇ Descargar mockup</button><select id="mugVideoSecs" class="mg-select" aria-label="Duración del video"><option value="6">Video 6 s</option><option value="10">Video 10 s</option></select><button type="button" class="mg-primary mg-video" id="mugVideoSave">Descargar video 360°</button></div>
     </div>
     <p class="mg-note mg-center">Arrastra la taza para girarla · rueda del mouse para zoom. Simulación digital: confirma medidas y colores con tu proveedor.</p>
    </div>
@@ -8258,7 +8264,7 @@ function resize(){
 function updateTexture(){composeArt();if(artTex){artTex.needsUpdate=true;}drawFlat();quality();needs=true;}
 function angleFor(v){return v==='center'?Math.PI/2:v==='left'?Math.PI:0;}
 function render(){
- requestAnimationFrame(render);if(!renderer)return;
+ requestAnimationFrame(render);if(!renderer||st.rec)return;
  const pw=$('mugStage').parentElement.clientWidth;if(pw&&pw!==render.w){render.w=pw;resize();}
  if(st.auto){st.angle+=.008;needs=true;}
  else if(st.targetAngle!=null){let d=((st.targetAngle-st.angle+Math.PI*3)%(Math.PI*2))-Math.PI;if(Math.abs(d)<.002){st.angle=st.targetAngle;st.targetAngle=null;}else st.angle+=d*.14;needs=true;}
@@ -8360,6 +8366,80 @@ $('mugMockupSave').addEventListener('click',()=>{
  renderer.setPixelRatio(pr);renderer.setSize(oldW,oldH,false);camera.aspect=oldW/oldH;frame();needs=true;
  fetch(url).then(r=>r.blob()).then(b=>{save(b,'Cruz_Sublime_Mockup_'+(st.picName||'taza')+'.png');$('mugStatus').textContent='Mockup descargado ('+W+' × '+H+' px'+(st.scene==='none'?', fondo transparente':'')+').';});
 });
+
+/* ---------- video 360° (Cruz Sublime) ---------- */
+(function(){
+ const btn=$('mugVideoSave');if(!btn)return;
+ const MUXER_URL='https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js';
+ let muxerP=null;
+ function loadMuxer(){if(window.Mp4Muxer)return Promise.resolve(window.Mp4Muxer);
+  if(!muxerP)muxerP=new Promise((ok,ko)=>{const s=document.createElement('script');s.src=MUXER_URL;s.async=true;s.onload=()=>window.Mp4Muxer?ok(window.Mp4Muxer):ko(new Error('muxer'));s.onerror=()=>{muxerP=null;ko(new Error('muxer'));};document.head.appendChild(s);});
+  return muxerP;}
+ async function pickCodec(W,H,fps){if(!window.VideoEncoder||!window.VideoFrame)return null;
+  for(const codec of ['avc1.640028','avc1.4d0028','avc1.42002a','avc1.42001f']){
+   try{const r=await VideoEncoder.isConfigSupported({codec,width:W,height:H,bitrate:8000000,framerate:fps});if(r&&r.supported)return codec;}catch(e){}}
+  return null;}
+ function pickRecorderType(){if(!window.MediaRecorder)return null;const c=['video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];for(const t of c){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(e){}}return null;}
+ const status=t=>{$('mugStatus').textContent=t;};
+ const tick=()=>new Promise(r=>setTimeout(r,0));
+
+ /* Método 1: cuadro por cuadro con WebCodecs (siempre 30 fps, aunque el equipo sea lento) */
+ async function viaWebCodecs(W,H,secs,draw,out,codec){
+  const M=await loadMuxer(),fps=30,n=Math.round(secs*fps),dur=1e6/fps;
+  const muxer=new M.Muxer({target:new M.ArrayBufferTarget(),video:{codec:'avc',width:W,height:H},fastStart:'in-memory'});
+  let fail=null;const enc=new VideoEncoder({output:(c,m)=>muxer.addVideoChunk(c,m),error:e=>{fail=e;}});
+  enc.configure({codec,width:W,height:H,bitrate:8000000,framerate:fps});
+  for(let i=0;i<n;i++){
+   if(fail)throw fail;
+   draw(i/n*Math.PI*2);
+   const vf=new VideoFrame(out,{timestamp:Math.round(i*dur),duration:Math.round(dur)});
+   enc.encode(vf,{keyFrame:i%60===0});vf.close();
+   if(i%4===0){status('Creando video 360°… '+Math.round(i/n*100)+'%');await tick();}
+   while(enc.encodeQueueSize>8)await tick();
+  }
+  await enc.flush();if(fail)throw fail;enc.close();muxer.finalize();
+  return {blob:new Blob([muxer.target.buffer],{type:'video/mp4'}),mp4:true};
+ }
+ /* Método 2 (respaldo): grabación en tiempo real con MediaRecorder */
+ function viaRecorder(W,H,secs,draw,out,type){
+  return new Promise((ok,ko)=>{
+   let stream,rec;const chunks=[];
+   try{stream=out.captureStream(30);rec=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:8000000});}catch(e){ko(e);return;}
+   rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+   rec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());const mp4=type.indexOf('mp4')>=0;ok({blob:new Blob(chunks,{type:mp4?'video/mp4':'video/webm'}),mp4});};
+   draw(0);rec.start(250);const t0=performance.now();
+   (function step(){const p=Math.min(1,(performance.now()-t0)/(secs*1000));draw(p*Math.PI*2);
+    status('Grabando video 360°… '+Math.round(p*100)+'% (no cambies de pestaña)');
+    if(p<1)requestAnimationFrame(step);else setTimeout(()=>{try{rec.stop();}catch(e){ko(e);}},150);})();
+  });
+ }
+
+ btn.addEventListener('click',async()=>{
+  if(!renderer||!mugGroup){status('El visor 3D no está disponible en este navegador.');return;}
+  if(st.rec)return;
+  const secs=Math.max(3,Math.min(15,+(($('mugVideoSecs')||{}).value||6))),a=aspect();
+  let W=a>=1?1080:Math.round(1080*a),H=Math.round(W/a);W-=W%2;H-=H%2;
+  const codec=await pickCodec(W,H,30),recType=codec?null:pickRecorderType(),probe=document.createElement('canvas');
+  if(!codec&&(!recType||!probe.captureStream)){status('Tu navegador no permite crear video. Prueba con Chrome, Edge o Safari actualizados.');return;}
+  const out=document.createElement('canvas');out.width=W;out.height=H;const ox=out.getContext('2d');
+  const stage=$('mugStage'),oldW=stage.clientWidth,oldH=stage.clientHeight,pr=renderer.getPixelRatio(),a0=st.angle,auto0=st.auto;
+  st.rec=true;st.auto=false;st.targetAngle=null;btn.disabled=true;btn.setAttribute('aria-busy','true');
+  renderer.setPixelRatio(1);renderer.setSize(W,H,false);camera.aspect=W/H;frame();
+  const draw=d=>{mugGroup.rotation.y=a0+d;renderer.render(scene,camera);
+   if(st.scene==='none'){ox.fillStyle='#ffffff';ox.fillRect(0,0,W,H);}else ox.clearRect(0,0,W,H);
+   ox.drawImage(renderer.domElement,0,0,W,H);};
+  let res=null,err=null;
+  try{
+   if(codec){try{res=await viaWebCodecs(W,H,secs,draw,out,codec);}catch(e){err=e;const t=pickRecorderType();if(t&&probe.captureStream){res=await viaRecorder(W,H,secs,draw,out,t);err=null;}}}
+   else res=await viaRecorder(W,H,secs,draw,out,recType);
+  }catch(e){err=e;}
+  renderer.setPixelRatio(pr);renderer.setSize(oldW,oldH,false);camera.aspect=oldW/oldH;frame();st.angle=a0;st.auto=auto0;st.rec=false;needs=true;btn.disabled=false;btn.removeAttribute('aria-busy');
+  if(err||!res||!res.blob.size){console.warn('Video 360',err);status('No se pudo generar el video. Revisa tu conexión e intenta de nuevo.');return;}
+  const base=String(st.picName||'taza').replace(/\.[a-z0-9]+$/i,'').replace(/[^\w\-]+/g,'_').slice(0,40)||'taza';
+  save(res.blob,'Cruz_Sublime_Taza_360_'+base+(res.mp4?'.mp4':'.webm'));
+  status('Video descargado: '+W+' × '+H+' px, '+secs+' s, '+(res.mp4?'MP4':'WebM (si tu teléfono no lo abre, conviértelo a MP4)')+'.');
+ });
+})();
 
 /* ---------- arranque ---------- */
 syncModelUI();syncLabels();costs();updateTexture();setView('right');st.angle=0;st.targetAngle=null;
@@ -8463,11 +8543,11 @@ canvas:active{cursor:grabbing}
 .note{margin:0;font-size:11px;color:#8f846f;line-height:1.45}
 @media(max-width:860px){.layout{grid-template-columns:1fr;padding:10px}.view{position:static}}
 &lt;/style&gt;
-&lt;style id="cs-rediseno-playera"&gt;:root,html,body{--mu:#6B5A3E!important;--muted:#6B5A3E!important;--g:#9C7224!important;--g2:#B8893A!important;--ln:rgba(156,114,36,.28)!important;--tx:#2E2516!important}html,body{background:radial-gradient(60% 35% at 50% 0%,rgba(212,170,90,.16),rgba(212,170,90,0) 70%),linear-gradient(180deg,#F8F2E7 0%,#F3EADB 100%)!important;background-attachment:fixed!important;color:#2E2516!important}div.box,section.view{background:#FFFDF8!important;border-color:#E2D2B4!important;border-top:2px solid #B8893A!important;box-shadow:0 8px 24px rgba(120,90,40,.10)!important}div.box *:not(button):not(button *):not(input):not(select):not(option),#title,.viewhead *{color:#2E2516!important}.step,.step *,.colorname{color:#8A6420!important}div.box small,div.box .hint,div.box p.note{color:#6B5A3E!important}div.frame{background:#EFE6D6!important;border-color:#E2D2B4!important}div.pls-stage{background-color:#EFE6D6!important}input.txt,select.txt{background:#FFFFFF!important;border-color:#D9C7A3!important;color:#2E2516!important}button:not(.download):not(.pls-flip):not(.swatches button){background:#FFF8EC!important;border-color:#CDB68A!important;color:#5A4214!important}button.active:not(.swatches button){background:linear-gradient(120deg,rgba(184,137,58,.24),rgba(184,137,58,.08))!important;border-color:#B8893A!important;color:#5A4214!important}.drop{border-color:#CDB68A!important;background:#FFF8EC!important}div.pls-chip,button.pls-flip{background:rgba(255,250,240,.92)!important;border-color:#B8893A!important;color:#6B4A12!important}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main class="layout"&gt;&lt;section class="side"&gt;
-&lt;div class="box"&gt;&lt;p class="step"&gt;&lt;b&gt;I&lt;/b&gt;Modelo&lt;/p&gt;&lt;div class="grid model"&gt;&lt;button id="modeloNina" class="active"&gt;&lt;span&gt;👧&lt;/span&gt;Niña&lt;/button&gt;&lt;button id="modeloNino"&gt;&lt;span&gt;👦&lt;/span&gt;Niño&lt;/button&gt;&lt;button id="modeloMujer"&gt;&lt;span&gt;👩&lt;/span&gt;Mujer&lt;/button&gt;&lt;button id="modeloHombre"&gt;&lt;span&gt;👨&lt;/span&gt;Hombre&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;style id="cs-rediseno-playera"&gt;:root,html,body{--mu:#6B5A3E!important;--muted:#6B5A3E!important;--g:#9C7224!important;--g2:#B8893A!important;--ln:rgba(156,114,36,.28)!important;--tx:#2E2516!important}html,body{background:radial-gradient(60% 35% at 50% 0%,rgba(212,170,90,.16),rgba(212,170,90,0) 70%),linear-gradient(180deg,#F8F2E7 0%,#F3EADB 100%)!important;background-attachment:fixed!important;color:#2E2516!important}div.box,section.view{background:#FFFDF8!important;border-color:#E2D2B4!important;border-top:2px solid #B8893A!important;box-shadow:0 8px 24px rgba(120,90,40,.10)!important}div.box *:not(button):not(button *):not(input):not(select):not(option),#title,.viewhead *{color:#2E2516!important}.step,.step *,.colorname{color:#8A6420!important}div.box small,div.box .hint,div.box p.note{color:#6B5A3E!important}div.frame{background:#EFE6D6!important;border-color:#E2D2B4!important}div.pls-stage{background-color:#EFE6D6!important}input.txt,select.txt{background:#FFFFFF!important;border-color:#D9C7A3!important;color:#2E2516!important}button:not(.download):not(.pls-flip):not(.swatches button){background:#FFF8EC!important;border-color:#CDB68A!important;color:#5A4214!important}button.active:not(.swatches button){background:linear-gradient(120deg,rgba(184,137,58,.24),rgba(184,137,58,.08))!important;border-color:#B8893A!important;color:#5A4214!important}.drop{border-color:#CDB68A!important;background:#FFF8EC!important}div.pls-chip,button.pls-flip{background:rgba(255,250,240,.92)!important;border-color:#B8893A!important;color:#6B4A12!important}&lt;/style&gt;&lt;style id="cs-ec-colores"&gt;.swatches.ec{grid-template-columns:repeat(9,minmax(0,1fr))!important;gap:5px!important}.swatches.ec button{aspect-ratio:1;border-radius:7px!important;border:1.5px solid rgba(60,45,20,.22)!important;position:relative;overflow:hidden;padding:0;box-shadow:none}.swatches.ec button span{position:absolute;left:2px;right:2px;bottom:2px;font:800 8px/1.3 system-ui,sans-serif;letter-spacing:.02em;color:#fff;background:rgba(25,22,18,.78);border-radius:3px;text-align:center;pointer-events:none}.swatches.ec button.active{border-color:#B8893A!important;box-shadow:0 0 0 2px #B8893A!important}.swatches.ec button.active::after{content:"\2713";position:absolute;inset:auto;top:2px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;border:0;background:rgba(25,22,18,.82);color:#fff;font:700 9px/14px system-ui,sans-serif;text-align:center;opacity:1}.swatches.ec button:focus-visible{outline:2px solid #B8893A;outline-offset:2px}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main class="layout"&gt;&lt;section class="side"&gt;
+&lt;div class="box"&gt;&lt;p class="step"&gt;&lt;b&gt;I&lt;/b&gt;Modelo&lt;/p&gt;&lt;div class="grid model"&gt;&lt;button id="modeloNina" class="active"&gt;&lt;span&gt;👧&lt;/span&gt;Niña&lt;/button&gt;&lt;button id="modeloNino"&gt;&lt;span&gt;👦&lt;/span&gt;Niño&lt;/button&gt;&lt;button id="modeloMujer"&gt;&lt;span&gt;👩&lt;/span&gt;Mujer&lt;/button&gt;&lt;button id="modeloHombre"&gt;&lt;span&gt;👨&lt;/span&gt;Hombre&lt;/button&gt;&lt;/div&gt;&lt;div class="grid2" id="prendaRow" style="display:none;margin-top:8px"&gt;&lt;button id="prendaPlayera" class="active"&gt;&lt;span&gt;👕&lt;/span&gt;Playera&lt;/button&gt;&lt;button id="prendaSudadera"&gt;&lt;span&gt;🧥&lt;/span&gt;Sudadera&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;div class="box"&gt;&lt;p class="step"&gt;&lt;b&gt;II&lt;/b&gt;Color y vista&lt;/p&gt;
-&lt;div class="swatches"&gt;&lt;button id="blanca" class="active" title="Blanca" style="background:#f4f4f2;color:#555"&gt;&lt;/button&gt;&lt;button id="negra" title="Negra" style="background:#151515;color:#ddd"&gt;&lt;/button&gt;&lt;button id="roja" title="Roja" style="background:#c8102e;color:#fff"&gt;&lt;/button&gt;&lt;button id="marino" title="Azul marino" style="background:#1b2a4a;color:#fff"&gt;&lt;/button&gt;&lt;button id="gris" title="Gris" style="background:#9a9ea6;color:#222"&gt;&lt;/button&gt;&lt;button id="verde" title="Verde" style="background:#2e7d4f;color:#fff"&gt;&lt;/button&gt;&lt;button id="rosa" title="Rosa" style="background:#f2a7c3;color:#333"&gt;&lt;/button&gt;&lt;button id="cielo" title="Azul cielo" style="background:#8ec9ec;color:#123"&gt;&lt;/button&gt;&lt;/div&gt;
-&lt;div class="colorname" id="colorName"&gt;Blanca&lt;/div&gt;
+&lt;div class="swatches ec" id="ecSwatches" role="group" aria-label="Colores Eurocotton"&gt;&lt;button type="button" data-c="BLA" title="Blanco" aria-label="Blanco" aria-pressed="true" style="background:#ffffff" class="active"&gt;&lt;span&gt;BLA&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="MAR" title="Azul marino" aria-label="Azul marino" aria-pressed="false" style="background:#161c2c"&gt;&lt;span&gt;MAR&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="NEG" title="Negro" aria-label="Negro" aria-pressed="false" style="background:#000000"&gt;&lt;span&gt;NEG&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="REY" title="Azul rey" aria-label="Azul rey" aria-pressed="false" style="background:#0c4298"&gt;&lt;span&gt;REY&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="ROJ" title="Rojo" aria-label="Rojo" aria-pressed="false" style="background:#e20013"&gt;&lt;span&gt;ROJ&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="CAN" title="Canario" aria-label="Canario" aria-pressed="false" style="background:#f1d144"&gt;&lt;span&gt;CAN&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="CHA" title="Charcoal" aria-label="Charcoal" aria-pressed="false" style="background:#37363b"&gt;&lt;span&gt;CHA&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="CHE" title="Cereza" aria-label="Cereza" aria-pressed="false" style="background:#82001e"&gt;&lt;span&gt;CHE&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="HEL" title="Rosa helio" aria-label="Rosa helio" aria-pressed="false" style="background:#e43577"&gt;&lt;span&gt;HEL&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="KAK" title="Kaki" aria-label="Kaki" aria-pressed="false" style="background:#b9a883"&gt;&lt;span&gt;KAK&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="OXF" title="Gris oxford" aria-label="Gris oxford" aria-pressed="false" style="background:#333333"&gt;&lt;span&gt;OXF&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="PET" title="Petróleo" aria-label="Petróleo" aria-pressed="false" style="background:#203b49"&gt;&lt;span&gt;PET&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="PEY" title="Turquesa pavo real" aria-label="Turquesa pavo real" aria-pressed="false" style="background:#00a2b4"&gt;&lt;span&gt;PEY&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="TUR" title="Turquesa" aria-label="Turquesa" aria-pressed="false" style="background:#0480b1"&gt;&lt;span&gt;TUR&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="AQU" title="Aqua" aria-label="Aqua" aria-pressed="false" style="background:#6ddbe6"&gt;&lt;span&gt;AQU&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="BAN" title="Verde bandera" aria-label="Verde bandera" aria-pressed="false" style="background:#01481b"&gt;&lt;span&gt;BAN&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="CEL" title="Azul celeste" aria-label="Azul celeste" aria-pressed="false" style="background:#567fd3"&gt;&lt;span&gt;CEL&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="FLA" title="Amarillo flúor" aria-label="Amarillo flúor" aria-pressed="false" style="background:#daf42a"&gt;&lt;span&gt;FLA&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="LIM" title="Verde limón" aria-label="Verde limón" aria-pressed="false" style="background:#94dd25"&gt;&lt;span&gt;LIM&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="MEN" title="Menta" aria-label="Menta" aria-pressed="false" style="background:#8deae1"&gt;&lt;span&gt;MEN&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="MIL" title="Verde militar" aria-label="Verde militar" aria-pressed="false" style="background:#3a3829"&gt;&lt;span&gt;MIL&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="MOR" title="Morado" aria-label="Morado" aria-pressed="false" style="background:#3a2e5d"&gt;&lt;span&gt;MOR&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="NNE" title="Naranja neón" aria-label="Naranja neón" aria-pressed="false" style="background:#f18b00"&gt;&lt;span&gt;NNE&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="RNE" title="Rosa neón" aria-label="Rosa neón" aria-pressed="false" style="background:#ff4d6e"&gt;&lt;span&gt;RNE&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="ROS" title="Rosa" aria-label="Rosa" aria-pressed="false" style="background:#f8e2f0"&gt;&lt;span&gt;ROS&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="SAL" title="Salmón" aria-label="Salmón" aria-pressed="false" style="background:#cf535b"&gt;&lt;span&gt;SAL&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="TAB" title="Tabaco" aria-label="Tabaco" aria-pressed="false" style="background:#281b18"&gt;&lt;span&gt;TAB&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="VNE" title="Verde neón" aria-label="Verde neón" aria-pressed="false" style="background:#78eb57"&gt;&lt;span&gt;VNE&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="JAS" title="Gris jaspe" aria-label="Gris jaspe" aria-pressed="false" style="background:#b3b3b3"&gt;&lt;span&gt;JAS&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="VIN" title="Vino" aria-label="Vino" aria-pressed="false" style="background:#530101"&gt;&lt;span&gt;VIN&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="HUE" title="Hueso" aria-label="Hueso" aria-pressed="false" style="background:#e8e3ce"&gt;&lt;span&gt;HUE&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="PER" title="Perla" aria-label="Perla" aria-pressed="false" style="background:#d7d7db"&gt;&lt;span&gt;PER&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="BOT" title="Verde botella" aria-label="Verde botella" aria-pressed="false" style="background:#163e37"&gt;&lt;span&gt;BOT&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="NAN" title="Naranja" aria-label="Naranja" aria-pressed="false" style="background:#fd4f21"&gt;&lt;span&gt;NAN&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="MON" title="Morado monarca" aria-label="Morado monarca" aria-pressed="false" style="background:#3a2e5d"&gt;&lt;span&gt;MON&lt;/span&gt;&lt;/button&gt;&lt;button type="button" data-c="AMA" title="Amarillo oro" aria-label="Amarillo oro" aria-pressed="false" style="background:#ffd753"&gt;&lt;span&gt;AMA&lt;/span&gt;&lt;/button&gt;&lt;/div&gt;
+&lt;div class="colorname" id="colorName"&gt;Blanco&lt;/div&gt;
 &lt;div class="grid2"&gt;&lt;button id="frente" class="active"&gt;Frente&lt;/button&gt;&lt;button id="espalda"&gt;Espalda&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;div class="box"&gt;&lt;p class="step"&gt;&lt;b&gt;III&lt;/b&gt;Tu diseño&lt;/p&gt;
 &lt;label class="drop" for="art"&gt;&lt;input type="file" id="art" accept="image/png,image/jpeg,image/webp"&gt;&lt;svg viewBox="0 0 48 48" aria-hidden="true"&gt;&lt;path d="M24 32V10M15 19l9-9 9 9"/&gt;&lt;path d="M8 32v6a2 2 0 0 0 2 2h28a2 2 0 0 0 2-2v-6"/&gt;&lt;/svg&gt;&lt;span&gt;&lt;b id="artName"&gt;Subir diseño&lt;/b&gt;&lt;small&gt;PNG transparente recomendado · hasta 10 MB&lt;/small&gt;&lt;/span&gt;&lt;/label&gt;
@@ -8486,21 +8566,50 @@ canvas:active{cursor:grabbing}
 &lt;label class="sl"&gt;Tamaño del texto&lt;span id="plTextSizeV"&gt;40&lt;/span&gt;&lt;input type="range" id="plTextSize" min="14" max="110" value="40"&gt;&lt;/label&gt;&lt;/div&gt;
 &lt;div class="box"&gt;&lt;p class="step"&gt;&lt;b&gt;VI&lt;/b&gt;Exportar&lt;/p&gt;
 &lt;input class="txt" id="plMark" maxlength="40" placeholder="Marca de agua (opcional) · ej. Cruz Sublime"&gt;
-&lt;button class="download" id="save"&gt;⬇ Descargar mockup PNG&lt;/button&gt;
+&lt;button class="download" id="save"&gt;⬇ Descargar mockup PNG&lt;/button&gt;&lt;button class="download" id="saveVideo" type="button" style="margin-top:8px"&gt;🎬 Descargar video (frente y espalda)&lt;/button&gt;
 &lt;p class="note"&gt;Revisa el permiso de uso comercial de las fotografías antes de publicarlas.&lt;/p&gt;&lt;/div&gt;
 &lt;/section&gt;
-&lt;section class="view"&gt;&lt;div class="viewhead"&gt;&lt;h2 id="title"&gt;Niña · Blanca · Frente&lt;/h2&gt;&lt;span class="small"&gt;Arrastra para mover&lt;/span&gt;&lt;/div&gt;&lt;div class="frame"&gt;&lt;canvas id="canvas" width="650" height="900"&gt;&lt;/canvas&gt;&lt;/div&gt;&lt;div id="message" class="status"&gt;32 combinaciones de modelo y color listas.&lt;/div&gt;&lt;/section&gt;&lt;/main&gt;
+&lt;section class="view"&gt;&lt;div class="viewhead"&gt;&lt;h2 id="title"&gt;Niña · Blanco · Frente&lt;/h2&gt;&lt;span class="small"&gt;Arrastra para mover&lt;/span&gt;&lt;/div&gt;&lt;div class="frame"&gt;&lt;canvas id="canvas" width="650" height="900"&gt;&lt;/canvas&gt;&lt;/div&gt;&lt;div id="message" class="status"&gt;36 colores Eurocotton listos para playera y sudadera.&lt;/div&gt;&lt;/section&gt;&lt;/main&gt;
 &lt;script&gt;
-const white=['playera-nina-blanca-frente.webp','playera-nina-blanca-espalda.webp'];
-const girlPhotos={blanca:{frente:white[0],espalda:white[1]},negra:{frente:"playera-nina-negra-frente.webp",espalda:"playera-nina-negra-espalda.webp"},roja:{frente:"playera-nina-roja-frente.webp",espalda:"playera-nina-roja-espalda.webp"},marino:{frente:"playera-nina-marino-frente.webp",espalda:"playera-nina-marino-espalda.webp"},gris:{frente:"playera-nina-gris-frente.webp",espalda:"playera-nina-gris-espalda.webp"},verde:{frente:"playera-nina-verde-frente.webp",espalda:"playera-nina-verde-espalda.webp"},rosa:{frente:"playera-nina-rosa-frente.webp",espalda:"playera-nina-rosa-espalda.webp"},cielo:{frente:"playera-nina-cielo-frente.webp",espalda:"playera-nina-cielo-espalda.webp"}};
+const white=['playera-nina-blanca-frente-v2.webp','playera-nina-blanca-espalda.webp'];
+const girlPhotos={blanca:{frente:white[0],espalda:white[1]},negra:{frente:"playera-nina-negra-frente-v2.webp",espalda:"playera-nina-negra-espalda.webp"},roja:{frente:"playera-nina-roja-frente-v2.webp",espalda:"playera-nina-roja-espalda.webp"},marino:{frente:"playera-nina-marino-frente-v2.webp",espalda:"playera-nina-marino-espalda.webp"},gris:{frente:"playera-nina-gris-frente-v2.webp",espalda:"playera-nina-gris-espalda.webp"},verde:{frente:"playera-nina-verde-frente-v2.webp",espalda:"playera-nina-verde-espalda.webp"},rosa:{frente:"playera-nina-rosa-frente-v2.webp",espalda:"playera-nina-rosa-espalda.webp"},cielo:{frente:"playera-nina-cielo-frente-v2.webp",espalda:"playera-nina-cielo-espalda.webp"}};
 const boyPhotos={rosa:{frente:'playera-nino-rosa-frente.webp',espalda:'playera-nino-rosa-espalda.webp'},roja:{frente:'playera-nino-roja-frente.webp',espalda:'playera-nino-roja-espalda.webp'},blanca:{frente:'playera-nino-blanca-frente.webp',espalda:'playera-nino-blanca-espalda.webp'},negra:{frente:'playera-nino-negra-frente.webp',espalda:'playera-nino-negra-espalda.webp'},gris:{frente:'playera-nino-gris-frente.webp',espalda:'playera-nino-gris-espalda.webp'},verde:{frente:'playera-nino-verde-frente.webp',espalda:'playera-nino-verde-espalda.webp'},marino:{frente:'playera-nino-marino-frente.webp',espalda:'playera-nino-marino-espalda.webp'},cielo:{frente:'playera-nino-cielo-frente.webp',espalda:'playera-nino-cielo-espalda.webp'}};
 
-const womanPhotos={blanca:{frente:'playera-mujer-blanca-frente.webp',espalda:'playera-mujer-blanca-espalda.webp'},roja:{frente:'playera-mujer-roja-frente.webp',espalda:'playera-mujer-roja-espalda.webp'},negra:{frente:'playera-mujer-negra-frente.webp',espalda:'playera-mujer-negra-espalda.webp'},verde:{frente:'playera-mujer-verde-frente.webp',espalda:'playera-mujer-verde-espalda.webp'},rosa:{frente:'playera-mujer-rosa-frente.webp',espalda:'playera-mujer-rosa-espalda.webp'},gris:{frente:'playera-mujer-gris-frente.webp',espalda:'playera-mujer-gris-espalda.webp'},marino:{frente:'playera-mujer-marino-frente.webp',espalda:'playera-mujer-marino-espalda.webp'},cielo:{frente:'playera-mujer-cielo-frente.webp',espalda:'playera-mujer-cielo-espalda.webp'}};
-const manPhotos={negra:{frente:'playera-hombre-negra-frente.webp',espalda:'playera-hombre-negra-espalda.webp'},rosa:{frente:'playera-hombre-rosa-frente.webp',espalda:'playera-hombre-rosa-espalda.webp'},blanca:{frente:'playera-hombre-blanca-frente.webp',espalda:'playera-hombre-blanca-espalda.webp'},verde:{frente:'playera-hombre-verde-frente.webp',espalda:'playera-hombre-verde-espalda.webp'},marino:{frente:'playera-hombre-marino-frente.webp',espalda:'playera-hombre-marino-espalda.webp'},cielo:{frente:'playera-hombre-cielo-frente.webp',espalda:'playera-hombre-cielo-espalda.webp'},gris:{frente:'playera-hombre-gris-frente.webp',espalda:'playera-hombre-gris-espalda.webp'},roja:{frente:'playera-hombre-roja-frente.webp',espalda:'playera-hombre-roja-espalda.webp'}};
-let modelo='nina',color='blanca',side='frente',art=null,originalArt=null,whiteRemoval=false,artURL=null,photoCache={},position={x:.5,y:.45},scale=1,opacity=1,rotation=0,drag=false;
-const photosFor=()=&gt;({nina:girlPhotos,nino:boyPhotos,mujer:womanPhotos,hombre:manPhotos})[modelo];
+const womanPhotos={blanca:{frente:'playera-mujer-blanca-frente-v2.webp',espalda:'playera-mujer-blanca-espalda-v2.webp'},roja:{frente:'playera-mujer-roja-frente-v2.webp',espalda:'playera-mujer-roja-espalda-v2.webp'},negra:{frente:'playera-mujer-negra-frente-v2.webp',espalda:'playera-mujer-negra-espalda-v2.webp'},verde:{frente:'playera-mujer-verde-frente-v2.webp',espalda:'playera-mujer-verde-espalda-v2.webp'},rosa:{frente:'playera-mujer-rosa-frente-v2.webp',espalda:'playera-mujer-rosa-espalda-v2.webp'},gris:{frente:'playera-mujer-gris-frente-v2.webp',espalda:'playera-mujer-gris-espalda-v2.webp'},marino:{frente:'playera-mujer-marino-frente-v2.webp',espalda:'playera-mujer-marino-espalda-v2.webp'},cielo:{frente:'playera-mujer-cielo-frente-v2.webp',espalda:'playera-mujer-cielo-espalda-v2.webp'}};
+const manPhotos={negra:{frente:'playera-hombre-negra-frente-v2.webp',espalda:'playera-hombre-negra-espalda-v2.webp'},rosa:{frente:'playera-hombre-rosa-frente-v2.webp',espalda:'playera-hombre-rosa-espalda-v2.webp'},blanca:{frente:'playera-hombre-blanca-frente-v2.webp',espalda:'playera-hombre-blanca-espalda-v2.webp'},verde:{frente:'playera-hombre-verde-frente-v2.webp',espalda:'playera-hombre-verde-espalda-v2.webp'},marino:{frente:'playera-hombre-marino-frente-v2.webp',espalda:'playera-hombre-marino-espalda-v2.webp'},cielo:{frente:'playera-hombre-cielo-frente-v2.webp',espalda:'playera-hombre-cielo-espalda-v2.webp'},gris:{frente:'playera-hombre-gris-frente-v2.webp',espalda:'playera-hombre-gris-espalda-v2.webp'},roja:{frente:'playera-hombre-roja-frente-v2.webp',espalda:'playera-hombre-roja-espalda-v2.webp'}};
+let modelo='nina',color='BLA',side='frente',art=null,originalArt=null,whiteRemoval=false,artURL=null,photoCache={},position={x:.5,y:.45},scale=1,opacity=1,rotation=0,drag=false;
+let prenda='playera';
+const SUD=m=&gt;{const o={};['blanca','negra','roja','marino','gris','verde','rosa','cielo'].forEach(c=&gt;{o[c]={frente:'sudadera-'+m+'-'+c+'-frente-v2.webp',espalda:'sudadera-'+m+'-'+c+'-espalda-v2.webp'};});return o;};
+const hoodiePhotos={hombre:SUD('hombre'),mujer:SUD('mujer')};
+const EC=[["BLA","Blanco","#ffffff"],["MAR","Azul marino","#161c2c"],["NEG","Negro","#000000"],["REY","Azul rey","#0c4298"],["ROJ","Rojo","#e20013"],["CAN","Canario","#f1d144"],["CHA","Charcoal","#37363b"],["CHE","Cereza","#82001e"],["HEL","Rosa helio","#e43577"],["KAK","Kaki","#b9a883"],["OXF","Gris oxford","#333333"],["PET","Petróleo","#203b49"],["PEY","Turquesa pavo real","#00a2b4"],["TUR","Turquesa","#0480b1"],["AQU","Aqua","#6ddbe6"],["BAN","Verde bandera","#01481b"],["CEL","Azul celeste","#567fd3"],["FLA","Amarillo flúor","#daf42a"],["LIM","Verde limón","#94dd25"],["MEN","Menta","#8deae1"],["MIL","Verde militar","#3a3829"],["MOR","Morado","#3a2e5d"],["NNE","Naranja neón","#f18b00"],["RNE","Rosa neón","#ff4d6e"],["ROS","Rosa","#f8e2f0"],["SAL","Salmón","#cf535b"],["TAB","Tabaco","#281b18"],["VNE","Verde neón","#78eb57"],["JAS","Gris jaspe","#b3b3b3"],["VIN","Vino","#530101"],["HUE","Hueso","#e8e3ce"],["PER","Perla","#d7d7db"],["BOT","Verde botella","#163e37"],["NAN","Naranja","#fd4f21"],["MON","Morado monarca","#3a2e5d"],["AMA","Amarillo oro","#ffd753"]];
+const EC_RENDER={NEG:"#151515"};
+const VIEW=sd=&gt;((prenda==='sudadera'&amp;&amp;(modelo==='hombre'||modelo==='mujer'))?'sudadera':'playera')+'-'+modelo+'-'+sd;
+const photosFor=()=&gt;{const o={};for(const e of EC){o[e[0]]={frente:'tint:'+VIEW('frente')+'|'+e[0],espalda:'tint:'+VIEW('espalda')+'|'+e[0]};}return o;};
+const _loadImg=src=&gt;new Promise((ok,ko)=&gt;{const im=new Image();im.onload=()=&gt;ok(im);im.onerror=ko;im.src=src;});
+const _s2l=new Float32Array(256);for(let i=0;i&lt;256;i++){const c=i/255;_s2l[i]=c&lt;=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);}
+const _l2s=v=&gt;{v=v&lt;0?0:(v&gt;1?1:v);return 255*(v&lt;=.0031308?v*12.92:1.055*Math.pow(v,1/2.4)-.055);};
+async function tinted(src){
+  const [view,code]=src.slice(5).split('|'),p=view.split('-'),baseSrc=p[0]+'-'+p[1]+'-blanca-'+p[2]+'-v2.webp';
+  const base=await getImage(baseSrc);if(code==='BLA')return base;
+  const mask=await getImage('mascara-'+view+'-v2.png');
+  const W=650,H=900,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d',{willReadFrequently:true});
+  g.drawImage(mask,0,0,W,H);const md=g.getImageData(0,0,W,H).data;
+  g.clearRect(0,0,W,H);g.drawImage(base,0,0,W,H);const im=g.getImageData(0,0,W,H),d=im.data;
+  const hex=(EC_RENDER[code]||(EC.find(e=&gt;e[0]===code)||[0,0,'#ffffff'])[2]).replace('#','');
+  const C=[0,2,4].map(i=&gt;_s2l[parseInt(hex.substr(i,2),16)]),lum=.2126*C[0]+.7152*C[1]+.0722*C[2];
+  const N=W*H,L=new Float32Array(N),hist=new Uint32Array(1024);let cnt=0;
+  for(let i=0;i&lt;N;i++){const k=i*4;L[i]=.2126*_s2l[d[k]]+.7152*_s2l[d[k+1]]+.0722*_s2l[d[k+2]];if(md[k]&gt;153){hist[Math.min(1023,(L[i]*1023)|0)]++;cnt++;}}
+  let ref=1;if(cnt){let acc=0,t=cnt*.92;for(let b=0;b&lt;1024;b++){acc+=hist[b];if(acc&gt;=t){ref=Math.max(.05,(b+.5)/1023);break;}}}
+  for(let i=0;i&lt;N;i++){const k=i*4,a=md[k]/255;if(a&lt;=0)continue;
+    let s=L[i]/ref;s=s&lt;0?0:(s&gt;1.25?1.25:s);s=1-(1-s)*1.45;s=s&lt;0?0:(s&gt;1.25?1.25:s);
+    let o0,o1,o2;
+    if(lum&lt;.02){const f=.55+.45*s,h=Math.max(0,s-.55)*.035;o0=C[0]*f+h;o1=C[1]*f+h;o2=C[2]*f+h;}
+    else if(lum&lt;.08){const f=.35+.65*s,h=Math.max(0,s-.6)*.03;o0=C[0]*f+h;o1=C[1]*f+h;o2=C[2]*f+h;}
+    else{const f=Math.pow(s,1.05);o0=C[0]*f;o1=C[1]*f;o2=C[2]*f;}
+    d[k]=d[k]*(1-a)+_l2s(o0)*a;d[k+1]=d[k+1]*(1-a)+_l2s(o1)*a;d[k+2]=d[k+2]*(1-a)+_l2s(o2)*a;}
+  g.putImageData(im,0,0);c.src=src;return c;}
 const $=id=&gt;document.getElementById(id),cv=$('canvas'),ctx=cv.getContext('2d');
-function getImage(src){if(!src)return Promise.resolve(null);if(photoCache[src])return Promise.resolve(photoCache[src]);return new Promise((resolve,reject)=&gt;{let im=new Image();im.onload=()=&gt;{photoCache[src]=im;resolve(im)};im.onerror=reject;im.src=src})}
+function getImage(src){if(!src)return Promise.resolve(null);if(photoCache[src])return Promise.resolve(photoCache[src]);const p=(String(src).indexOf('tint:')===0?tinted(src):_loadImg(src)).then(im=&gt;{photoCache[src]=im;return im;},e=&gt;{delete photoCache[src];throw e;});photoCache[src]=p;return p;}
 let drawSequence=0;
 
 async function draw(){
@@ -8540,9 +8649,9 @@ async function draw(){
 }
 
 
-function select(){$('modeloNina').classList.toggle('active',modelo==='nina');$('modeloNino').classList.toggle('active',modelo==='nino');$('modeloMujer').classList.toggle('active',modelo==='mujer');$('modeloHombre').classList.toggle('active',modelo==='hombre');for(let id of ['blanca','negra','roja','marino','gris','verde','rosa','cielo','frente','espalda'])$(id).classList.toggle('active',id===color||id===side);draw()}
-$('modeloNina').onclick=()=&gt;{modelo='nina';select()};$('modeloNino').onclick=()=&gt;{modelo='nino';select()};$('modeloMujer').onclick=()=&gt;{modelo='mujer';select()};$('modeloHombre').onclick=()=&gt;{modelo='hombre';select()};
-for(let c of ['blanca','negra','roja','marino','gris','verde','rosa','cielo'])$(c).onclick=()=&gt;{color=c;select()};for(let s of ['frente','espalda'])$(s).onclick=()=&gt;{side=s;select()};
+function select(){const conPrenda=modelo==='hombre'||modelo==='mujer';$('prendaRow').style.display=conPrenda?'':'none';if(!conPrenda)prenda='playera';$('prendaPlayera').classList.toggle('active',prenda==='playera');$('prendaSudadera').classList.toggle('active',prenda==='sudadera');$('modeloNina').classList.toggle('active',modelo==='nina');$('modeloNino').classList.toggle('active',modelo==='nino');$('modeloMujer').classList.toggle('active',modelo==='mujer');$('modeloHombre').classList.toggle('active',modelo==='hombre');document.querySelectorAll('#ecSwatches [data-c]').forEach(b=&gt;{const on=b.dataset.c===color;b.classList.toggle('active',on);b.setAttribute('aria-pressed',on?'true':'false');});for(let id of ['frente','espalda'])$(id).classList.toggle('active',id===side);draw()}
+$('modeloNina').onclick=()=&gt;{modelo='nina';select()};$('modeloNino').onclick=()=&gt;{modelo='nino';select()};$('modeloMujer').onclick=()=&gt;{modelo='mujer';select()};$('modeloHombre').onclick=()=&gt;{modelo='hombre';select()};$('prendaPlayera').onclick=()=&gt;{prenda='playera';select()};$('prendaSudadera').onclick=()=&gt;{prenda='sudadera';select()};
+document.querySelectorAll('#ecSwatches [data-c]').forEach(b=&gt;b.onclick=()=&gt;{color=b.dataset.c;select()});for(let s of ['frente','espalda'])$(s).onclick=()=&gt;{side=s;select()};
 $('art').onchange=async e=&gt;{let f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')||f.size&gt;10e6){alert('Selecciona JPG, PNG o WEBP de hasta 10 MB');return}if(artURL)URL.revokeObjectURL(artURL);artURL=URL.createObjectURL(f);originalArt=await getImage(artURL);art=originalArt;whiteRemoval=false;$('removeWhite').classList.remove('active');$('bgStatus').textContent='Diseño original cargado. Puedes eliminar su fondo blanco.';position={x:.5,y:.45};draw()};
 // Elimina exclusivamente blancos conectados con el exterior; preserva detalles internos.
 function makeTransparent(source,tolerance){
@@ -8578,7 +8687,7 @@ function pos(e){let r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.w
 $('save').onclick=()=&gt;{if(!photosFor()[color][side]){alert('Primero carga la fotografía de este color');return}let a=document.createElement('a');a.download='Cruz_Sublime_'+(modelo==='nina'?'Nina':'Nino')+'_'+color+'_'+side+'.png';a.href=cv.toDataURL('image/png');a.click()};draw();
 
 /* ===== Playera Studio PRO: realismo, texto, ubicaciones, marca de agua ===== */
-const NAMES={nina:'Niña',nino:'Niño',mujer:'Mujer',hombre:'Hombre'},CNAMES={blanca:'Blanca',negra:'Negra',roja:'Roja',marino:'Azul marino',gris:'Gris',verde:'Verde',rosa:'Rosa',cielo:'Azul cielo'},SNAMES={frente:'Frente',espalda:'Espalda'};
+const NAMES={nina:'Niña',nino:'Niño',mujer:'Mujer',hombre:'Hombre'},CNAMES=Object.fromEntries(EC.map(e=&gt;[e[0],e[1]])),SNAMES={frente:'Frente',espalda:'Espalda'};
 let realism=.6,lumCache={};
 function photoLum(photo){const key=photo.src.length+':'+photo.src.slice(-64);if(lumCache[key])return lumCache[key];
   const W=650,H=900,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(photo,0,0,W,H);
@@ -8605,7 +8714,7 @@ function compose(photo){
 function watermark(){const t=$('plMark').value.trim();if(!t)return;ctx.save();ctx.font='600 20px Georgia,serif';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillStyle='rgba(255,255,255,.75)';ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=6;ctx.fillText(t,630,885);ctx.restore();}
 draw=async function(){
   const sequence=++drawSequence,src=photosFor()?.[color]?.[side];ctx.clearRect(0,0,650,900);
-  $('title').textContent=NAMES[modelo]+' · '+CNAMES[color]+' · '+SNAMES[side];$('colorName').textContent=CNAMES[color];
+  $('title').textContent=NAMES[modelo]+(prenda==='sudadera'?' · Sudadera':'')+' · '+CNAMES[color]+' · '+SNAMES[side];$('colorName').textContent=CNAMES[color];
   if(!src){$('message').textContent='Fotografía no disponible.';return;}
   try{const photo=await getImage(src);if(sequence!==drawSequence)return;ctx.drawImage(photo,0,0,650,900);compose(photo);watermark();}
   catch(error){if(sequence!==drawSequence)return;console.error('Error al cargar la playera:',error);}
@@ -8618,7 +8727,60 @@ $('plChest').onclick=()=&gt;place(.62,.37,.42,'frente');$('plCenter').onclick=()
 $('art').addEventListener('change',()=&gt;{const f=$('art').files[0];if(f)$('artName').textContent=f.name;});
 const _origPointer=cv.onpointerdown;
 cv.addEventListener('pointerdown',e=&gt;{if(!art&amp;&amp;$('plText').value.trim()){drag=true;cv.setPointerCapture(e.pointerId);position=pos(e);draw();}});
-$('save').onclick=()=&gt;{if(!photosFor()[color][side]){alert('Primero carga la fotografía de este color');return}const a=document.createElement('a');a.download='Cruz_Sublime_'+NAMES[modelo].replace('ñ','n')+'_'+color+'_'+side+'.png';a.href=cv.toDataURL('image/png');a.click();$('message').textContent='Mockup descargado.';};
+$('save').onclick=()=&gt;{if(!photosFor()[color][side]){alert('Primero carga la fotografía de este color');return}const a=document.createElement('a');a.download='Cruz_Sublime_'+NAMES[modelo].replace('ñ','n')+(prenda==='sudadera'?'_Sudadera':'')+'_'+color+'_'+side+'.png';a.href=cv.toDataURL('image/png');a.click();$('message').textContent='Mockup descargado.';};
+/* ===== Video tipo anuncio: frente con tu diseño, giro a la espalda y regreso ===== */
+(function(){const btn=$('saveVideo');if(!btn)return;
+ const MUX='https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js';let mp=null;
+ const loadMux=()=&gt;window.Mp4Muxer?Promise.resolve(window.Mp4Muxer):(mp=mp||new Promise((ok,ko)=&gt;{const s=document.createElement('script');s.src=MUX;s.async=true;s.onload=()=&gt;window.Mp4Muxer?ok(window.Mp4Muxer):ko(new Error('mux'));s.onerror=()=&gt;{mp=null;ko(new Error('mux'));};document.head.appendChild(s);}));
+ const tick=()=&gt;new Promise(r=&gt;setTimeout(r,0)),ease=t=&gt;t&lt;.5?2*t*t:1-Math.pow(-2*t+2,2)/2,cl=(v,a,b)=&gt;v&lt;a?a:(v&gt;b?b:v);
+ const W=720,H=996,FPS=30,SECS=6;
+ async function otherSide(sd){const im=await getImage(photosFor()[color][sd]);const c=document.createElement('canvas');c.width=650;c.height=900;const g=c.getContext('2d');g.drawImage(im,0,0,650,900);
+   const t=$('plMark').value.trim();if(t){g.font='600 20px Georgia,serif';g.textAlign='right';g.textBaseline='bottom';g.fillStyle='rgba(255,255,255,.75)';g.shadowColor='rgba(0,0,0,.55)';g.shadowBlur=6;g.fillText(t,630,885);}return c;}
+ function paint(g,A,B,t,fx,fy){
+   g.fillStyle='#ece6da';g.fillRect(0,0,W,H);
+   let img=A,z=1,sx=1,foc=0;
+   if(t&lt;2.2){const p=ease(t/2.2);z=1+.10*p;foc=p;}
+   else if(t&lt;2.9){const p=(t-2.2)/.7;z=1.10-.10*ease(p);foc=1-ease(p);if(p&lt;.5){sx=Math.cos(p*Math.PI);}else{img=B;sx=-Math.cos(p*Math.PI);}}
+   else if(t&lt;4.6){img=B;z=1+.06*ease((t-2.9)/1.7);}
+   else if(t&lt;5.3){const p=(t-4.6)/.7;z=1.06-.06*ease(p);if(p&lt;.5){img=B;sx=Math.cos(p*Math.PI);}else{img=A;sx=-Math.cos(p*Math.PI);}}
+   else{z=1+.03*ease((t-5.3)/.7);}
+   const k=W/650,cx=W/2+(fx*k-W/2)*.5*foc,cy=H/2+(fy*k-H/2)*.5*foc;
+   g.save();g.translate(W/2,H/2);g.scale(Math.max(.002,sx)*z,z);g.translate(-cx,-cy);g.drawImage(img,0,0,W,H);g.restore();
+   if(sx&lt;.999){const sh=(1-sx)*.28;g.fillStyle='rgba(20,14,6,'+sh.toFixed(3)+')';g.fillRect(0,0,W,H);}
+ }
+ async function pickCodec(){if(!window.VideoEncoder||!window.VideoFrame)return null;for(const codec of ['avc1.640028','avc1.4d0028','avc1.42002a','avc1.42001f']){try{const r=await VideoEncoder.isConfigSupported({codec,width:W,height:H,bitrate:6000000,framerate:FPS});if(r&amp;&amp;r.supported)return codec;}catch(e){}}return null;}
+ function recType(){if(!window.MediaRecorder)return null;for(const t of ['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm']){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(e){}}return null;}
+ btn.addEventListener('click',async()=&gt;{
+   if(btn.disabled)return;btn.disabled=true;const msg=$('message'),label=btn.textContent;btn.textContent='Creando video…';
+   try{
+     const A=document.createElement('canvas');A.width=650;A.height=900;A.getContext('2d').drawImage(cv,0,0);
+     const B=await otherSide(side==='frente'?'espalda':'frente');
+     const fx=(art||$('plText').value.trim())?position.x*650:325,fy=(art||$('plText').value.trim())?position.y*900:450;
+     const out=document.createElement('canvas');out.width=W;out.height=H;const g=out.getContext('2d');
+     let blob=null,mp4=true;const codec=await pickCodec();
+     if(codec){
+       const M=await loadMux(),n=FPS*SECS,dur=1e6/FPS;let fail=null;
+       const mux=new M.Muxer({target:new M.ArrayBufferTarget(),video:{codec:'avc',width:W,height:H},fastStart:'in-memory'});
+       const enc=new VideoEncoder({output:(c,m)=&gt;mux.addVideoChunk(c,m),error:e=&gt;{fail=e;}});
+       enc.configure({codec,width:W,height:H,bitrate:6000000,framerate:FPS});
+       for(let i=0;i&lt;n;i++){if(fail)throw fail;paint(g,A,B,i/FPS,fx,fy);const vf=new VideoFrame(out,{timestamp:Math.round(i*dur),duration:Math.round(dur)});enc.encode(vf,{keyFrame:i%60===0});vf.close();
+         if(i%5===0){msg.textContent='Creando video… '+Math.round(i/n*100)+'%';await tick();}while(enc.encodeQueueSize&gt;8)await tick();}
+       await enc.flush();if(fail)throw fail;enc.close();mux.finalize();blob=new Blob([mux.target.buffer],{type:'video/mp4'});
+     }else{
+       const type=recType();if(!type||!out.captureStream)throw new Error('sin soporte');mp4=type.indexOf('mp4')&gt;=0;
+       const stream=out.captureStream(FPS),rec=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:6000000}),chunks=[];
+       rec.ondataavailable=e=&gt;{if(e.data&amp;&amp;e.data.size)chunks.push(e.data);};
+       const done=new Promise(r=&gt;rec.onstop=r);paint(g,A,B,0,fx,fy);rec.start(250);const t0=performance.now();
+       await new Promise(res=&gt;{(function step(){const t=(performance.now()-t0)/1000;paint(g,A,B,Math.min(t,SECS),fx,fy);msg.textContent='Grabando video… '+Math.round(Math.min(1,t/SECS)*100)+'% (no cambies de pestaña)';if(t&lt;SECS)requestAnimationFrame(step);else res();})();});
+       rec.stop();await done;stream.getTracks().forEach(t=&gt;t.stop());blob=new Blob(chunks,{type:mp4?'video/mp4':'video/webm'});
+     }
+     if(!blob||!blob.size)throw new Error('vacío');
+     const a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download='Cruz_Sublime_'+NAMES[modelo].replace('ñ','n')+(prenda==='sudadera'?'_Sudadera':'')+'_'+color+'_video.'+(mp4?'mp4':'webm');document.body.appendChild(a);a.click();a.remove();setTimeout(()=&gt;URL.revokeObjectURL(u),60000);
+     msg.textContent='Video descargado ('+W+' × '+H+' px, '+SECS+' s, '+(mp4?'MP4':'WebM')+').';
+   }catch(err){console.warn('Video playera',err);msg.textContent='No se pudo crear el video. Revisa tu conexión o prueba con Chrome, Edge o Safari actualizados.';}
+   finally{btn.disabled=false;btn.textContent=label;}
+ });
+})();
 (function(){function report(){try{parent.postMessage({csPlayeraHeight:Math.ceil(document.body.getBoundingClientRect().height)},'*');}catch(e){}}new ResizeObserver(report).observe(document.body);window.addEventListener('load',report);report();})();
 draw();
 &lt;/script&gt;&lt;style id="pls-fx-style"&gt;
