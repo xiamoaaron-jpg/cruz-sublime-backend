@@ -1406,6 +1406,19 @@ html body #panel-plans .plans > .plan.cs-gold-vip{border:1px solid var(--rd-gold
 #panel-plans .cs-canva-slots small{font-size:11.5px;line-height:1.45;color:#B9B2E6}
 #panel-plans .cs-canva-slots.cv-out{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.5)}
 
+
+/* --- Estudios Premium VIP: más color (fondo nebulosa, tarjetas azul-violeta, dorado como acento) --- */
+html body #panel-premium section.vip-lobby,html body #panel-premium #vipStudioInner{background:radial-gradient(55% 40% at 12% 0%,rgba(156,123,255,.34),rgba(156,123,255,0) 70%),radial-gradient(50% 38% at 92% 6%,rgba(249,76,168,.26),rgba(249,76,168,0) 70%),radial-gradient(70% 45% at 50% 100%,rgba(56,217,249,.16),rgba(56,217,249,0) 70%),linear-gradient(180deg,#151C44 0%,#0D1230 50%,#090C22 100%)!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(article.vx-card,article.vx-flag,section.mv-card,div.mv-seg,div.mv-tabs,section.ct-card,div.ct-slug,label.ct-thumb,div.cp-box,div.dtfp-card,.cso-summary > div,div.cso-panel,details.cso-backup,div.mp-box,section.mp-view){background:linear-gradient(160deg,rgba(44,52,112,.78) 0%,rgba(24,30,68,.9) 55%,rgba(16,20,48,.94) 100%)!important;border-color:rgba(156,123,255,.42)!important;box-shadow:0 10px 30px rgba(5,8,25,.35),inset 0 1px 0 rgba(255,255,255,.05)}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(article.vx-card,div.dtfp-card,.cso-summary > div,div.mp-box):nth-child(4n+1){border-top-color:rgba(56,217,249,.75)!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(article.vx-card,div.dtfp-card,.cso-summary > div,div.mp-box):nth-child(4n+2){border-top-color:rgba(249,76,168,.75)!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(article.vx-card,div.dtfp-card,.cso-summary > div,div.mp-box):nth-child(4n+3){border-top-color:rgba(156,123,255,.85)!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(article.vx-card,div.dtfp-card,.cso-summary > div,div.mp-box):nth-child(4n+4){border-top-color:rgba(242,198,109,.85)!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) div.mp-box.rv-credit{background:linear-gradient(135deg,rgba(242,198,109,.22),rgba(156,123,255,.18) 60%,rgba(24,30,68,.9))!important;border-color:rgba(242,198,109,.6)!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]),select,textarea){background:#10173A!important;border-color:rgba(124,140,255,.4)!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(input,select,textarea):focus{border-color:#38D9F9!important;box-shadow:0 0 0 3px rgba(56,217,249,.2)!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) iframe#csPlayeraVipFrame{border-color:rgba(156,123,255,.42)!important}
+
 /* --- Botón flotante de WhatsApp en celular: solo ícono --- */
 @media(max-width:640px){html body a.cs-fab{min-height:52px!important;width:52px;padding:0!important;right:16px!important;bottom:16px!important;border-radius:50%!important}html body a.cs-fab .cs-fab-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
 
@@ -2406,7 +2419,7 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
 </style>
 
 <div class="panel" id="panel-mug">
- <div class="mg-head"><img loading="lazy" decoding="async" alt="Cruz Sublime" src="static/img/taza-logo.webp"><div><span class="mg-eyebrow">ESTUDIO DE SUBLIMACIÓN</span><h2>Mug Studio PRO</h2><p>Diseña tu taza, revísala en 3D con medidas reales, descarga el mockup para vender y la plantilla lista para imprimir a 300 DPI.</p></div></div>
+ <div class="mg-head"><img loading="lazy" decoding="async" alt="Cruz Sublime" src="taza-logo.webp"><div><span class="mg-eyebrow">ESTUDIO DE SUBLIMACIÓN</span><h2>Mug Studio PRO</h2><p>Diseña tu taza, revísala en 3D con medidas reales, descarga el mockup para vender y la plantilla lista para imprimir a 300 DPI.</p></div></div>
  <div class="mg-app">
   <aside class="mg-side">
    <div class="mg-box">
@@ -3946,7 +3959,7 @@ $('cpDownload').addEventListener('click',async()=>{
 #panel-premium #csPlayeraVipStudio.pls .pls-head h2{display:block;margin:8px 0 10px;font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;font-size:clamp(40px,6vw,68px);line-height:1;letter-spacing:0;color:#fbf3e0;background:none;-webkit-text-fill-color:currentColor}
 #panel-premium #csPlayeraVipStudio.pls .pls-head h2 em{font-style:italic;background:linear-gradient(100deg,#b8842f,#f4dfa6 50%,#c9973f);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 #panel-premium #csPlayeraVipStudio.pls .pls-sub{margin:0 auto;color:#d9ccb2;font-size:15px;line-height:1.65;max-width:640px}
-#csPlayeraVipStudio.pls #csPlayeraVipFrame{display:block;width:100%;min-height:600px;border:1px solid var(--ln);border-radius:18px;background:#0a0807;overflow:hidden}
+#csPlayeraVipStudio.pls #csPlayeraVipFrame{display:block;width:100%;min-height:600px;border:1px solid var(--ln);border-radius:18px;background:#0D1230;overflow:hidden}
 </style>
 <script>
 window.addEventListener('message',function(e){var f=document.getElementById('csPlayeraVipFrame');if(!f||e.source!==f.contentWindow||!e.data||typeof e.data.csPlayeraHeight!=='number')return;f.style.height=Math.max(600,Math.min(4000,e.data.csPlayeraHeight+4))+'px';});
@@ -5530,7 +5543,7 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
       <!-- Pedidos personalizados: independiente de pagos y membresías -->
       <section class="cs-orders cs-orders-art" aria-label="Pedidos personalizados Cruz Sublime">
   <div class="cs-orders-artwrap">
-    <img src="static/img/pedidos-personalizados.webp" alt="Pedidos personalizados Cruz Sublime: tazas, playeras, termos, gorras, bolsas y DTF. Hacer pedido por WhatsApp al +52 56 6971 7042." loading="lazy" decoding="async">
+    <img src="pedidos-personalizados.webp" alt="Pedidos personalizados Cruz Sublime: tazas, playeras, termos, gorras, bolsas y DTF. Hacer pedido por WhatsApp al +52 56 6971 7042." loading="lazy" decoding="async">
     <a class="cs-orders-artlink" href="https://wa.me/525669717042?text=Hola%2C%20vengo%20de%20Cruz%20Sublime%20y%20quiero%20cotizar%20un%20pedido%20personalizado." target="_blank" rel="noopener noreferrer" aria-label="Hacer pedido personalizado por WhatsApp al +52 56 6971 7042" title="Hacer pedido por WhatsApp"></a>
   </div>
   <div class="cs-orders-artnote cs-pop-bar"><div class="cs-pop-chips"><span style="--c:#3fc3ee">Tazas</span><span style="--c:#e66bc0">Playeras</span><span style="--c:#ffd23d">Termos</span><span style="--c:#a46bff">Gorras</span><span style="--c:#2ee6a8">DTF</span></div><a class="cs-pop-cta" href="https://wa.me/525669717042?text=Hola%2C%20vengo%20de%20Cruz%20Sublime%20y%20quiero%20cotizar%20un%20pedido%20personalizado." target="_blank" rel="noopener noreferrer"><i class="cs-pop-ic"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.1 19.8L3 29l6.4-1.7A13 13 0 1 0 16 3Zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.8 1 1-3.7-.2-.4A10.6 10.6 0 1 1 16 26.6Zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.1-.2.2-.4.2-.7.1-.3-.2-1.4-.5-2.7-1.7-1-1-1.7-2.1-1.9-2.4-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-1-2.3c-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.3 3.5 5.6 4.9.8.3 1.4.5 1.9.6.8.3 1.5.2 2.1.1.6-.1 1.9-.8 2.2-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.3-.6-.5Z"/></svg></i><span><b>Cotizar mi pedido</b><small>Respuesta por WhatsApp</small></span><em aria-hidden="true">→</em></a></div>
@@ -5588,7 +5601,7 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
         <div class="plan">
           <!-- Logo Prime Video integrado en el HTML -->
 <img loading="lazy" decoding="async"
-  src="static/img/plan-prime-video.webp"
+  src="plan-prime-video.webp"
   alt="Prime Video"
   style="display:block;width:72px;height:72px;object-fit:contain;border-radius:50%;margin:0 auto 12px;filter:drop-shadow(0 0 9px rgba(0,210,255,.35));"
 >
@@ -5606,7 +5619,7 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
 <div class="plan">
   <!-- Logo Canva Pro integrado: no requiere archivo externo -->
 <img loading="lazy" decoding="async"
-  src="static/img/plan-canva-pro.webp"
+  src="plan-canva-pro.webp"
   alt="Canva Pro"
   style="display:block;width:72px;height:72px;object-fit:contain;border-radius:50%;margin:0 auto 12px;filter:drop-shadow(0 0 9px rgba(0,210,255,.35));"
 >
@@ -5730,7 +5743,7 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
       </div>
     </div>
   </div>
-  <img loading="lazy" decoding="async" src="static/img/contacto-ilustracion.webp" class="logo-footer" alt="">
+  <img loading="lazy" decoding="async" src="contacto-ilustracion.webp" class="logo-footer" alt="">
   
 <div class="support" style="text-align:center; padding:24px 12px;">
 
@@ -8098,7 +8111,7 @@ function detenerTemporizadorVIP() {
 </script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 <script>
-const mugScenes={"natural":"static/img/taza-escena-natural.webp"};
+const mugScenes={"natural":"taza-escena-natural.webp"};
 /* ===== Mug Studio PRO · taza 3D con medidas reales ===== */
 (function(){
 "use strict";
@@ -8492,7 +8505,7 @@ canvas:active{cursor:grabbing}
 .note{margin:0;font-size:11px;color:#8f846f;line-height:1.45}
 @media(max-width:860px){.layout{grid-template-columns:1fr;padding:10px}.view{position:static}}
 &lt;/style&gt;
-&lt;/head&gt;&lt;body&gt;&lt;main class="layout"&gt;&lt;section class="side"&gt;
+&lt;style id="cs-rediseno-playera"&gt;html,body{background:radial-gradient(60% 40% at 10% 0%,rgba(156,123,255,.30),rgba(156,123,255,0) 70%),radial-gradient(55% 35% at 95% 5%,rgba(249,76,168,.22),rgba(249,76,168,0) 70%),linear-gradient(180deg,#141B42 0%,#0D1230 55%,#090C22 100%)!important;background-attachment:fixed!important}div.box,section.view{background:linear-gradient(160deg,rgba(44,52,112,.78) 0%,rgba(24,30,68,.9) 55%,rgba(16,20,48,.94) 100%)!important;border-color:rgba(156,123,255,.42)!important;box-shadow:0 10px 30px rgba(5,8,25,.35)!important}div.box:nth-of-type(4n+1){border-top-color:rgba(56,217,249,.75)!important}div.box:nth-of-type(4n+2){border-top-color:rgba(249,76,168,.75)!important}div.box:nth-of-type(4n+3){border-top-color:rgba(156,123,255,.85)!important}div.box:nth-of-type(4n+4){border-top-color:rgba(242,198,109,.85)!important}input.txt,select.txt{background:#10173A!important;border-color:rgba(124,140,255,.4)!important}div.pls-chip,button.pls-flip{background:rgba(16,23,58,.85)!important;border-color:rgba(156,123,255,.5)!important}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main class="layout"&gt;&lt;section class="side"&gt;
 &lt;div class="box"&gt;&lt;p class="step"&gt;&lt;b&gt;I&lt;/b&gt;Modelo&lt;/p&gt;&lt;div class="grid model"&gt;&lt;button id="modeloNina" class="active"&gt;&lt;span&gt;👧&lt;/span&gt;Niña&lt;/button&gt;&lt;button id="modeloNino"&gt;&lt;span&gt;👦&lt;/span&gt;Niño&lt;/button&gt;&lt;button id="modeloMujer"&gt;&lt;span&gt;👩&lt;/span&gt;Mujer&lt;/button&gt;&lt;button id="modeloHombre"&gt;&lt;span&gt;👨&lt;/span&gt;Hombre&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;div class="box"&gt;&lt;p class="step"&gt;&lt;b&gt;II&lt;/b&gt;Color y vista&lt;/p&gt;
 &lt;div class="swatches"&gt;&lt;button id="blanca" class="active" title="Blanca" style="background:#f4f4f2;color:#555"&gt;&lt;/button&gt;&lt;button id="negra" title="Negra" style="background:#151515;color:#ddd"&gt;&lt;/button&gt;&lt;button id="roja" title="Roja" style="background:#c8102e;color:#fff"&gt;&lt;/button&gt;&lt;button id="marino" title="Azul marino" style="background:#1b2a4a;color:#fff"&gt;&lt;/button&gt;&lt;button id="gris" title="Gris" style="background:#9a9ea6;color:#222"&gt;&lt;/button&gt;&lt;button id="verde" title="Verde" style="background:#2e7d4f;color:#fff"&gt;&lt;/button&gt;&lt;button id="rosa" title="Rosa" style="background:#f2a7c3;color:#333"&gt;&lt;/button&gt;&lt;button id="cielo" title="Azul cielo" style="background:#8ec9ec;color:#123"&gt;&lt;/button&gt;&lt;/div&gt;
@@ -8520,12 +8533,12 @@ canvas:active{cursor:grabbing}
 &lt;/section&gt;
 &lt;section class="view"&gt;&lt;div class="viewhead"&gt;&lt;h2 id="title"&gt;Niña · Blanca · Frente&lt;/h2&gt;&lt;span class="small"&gt;Arrastra para mover&lt;/span&gt;&lt;/div&gt;&lt;div class="frame"&gt;&lt;canvas id="canvas" width="650" height="900"&gt;&lt;/canvas&gt;&lt;/div&gt;&lt;div id="message" class="status"&gt;32 combinaciones de modelo y color listas.&lt;/div&gt;&lt;/section&gt;&lt;/main&gt;
 &lt;script&gt;
-const white=['static/img/playera-nina-blanca-frente.webp','static/img/playera-nina-blanca-espalda.webp'];
-const girlPhotos={blanca:{frente:white[0],espalda:white[1]},negra:{frente:"static/img/playera-nina-negra-frente.webp",espalda:"static/img/playera-nina-negra-espalda.webp"},roja:{frente:"static/img/playera-nina-roja-frente.webp",espalda:"static/img/playera-nina-roja-espalda.webp"},marino:{frente:"static/img/playera-nina-marino-frente.webp",espalda:"static/img/playera-nina-marino-espalda.webp"},gris:{frente:"static/img/playera-nina-gris-frente.webp",espalda:"static/img/playera-nina-gris-espalda.webp"},verde:{frente:"static/img/playera-nina-verde-frente.webp",espalda:"static/img/playera-nina-verde-espalda.webp"},rosa:{frente:"static/img/playera-nina-rosa-frente.webp",espalda:"static/img/playera-nina-rosa-espalda.webp"},cielo:{frente:"static/img/playera-nina-cielo-frente.webp",espalda:"static/img/playera-nina-cielo-espalda.webp"}};
-const boyPhotos={rosa:{frente:'static/img/playera-nino-rosa-frente.webp',espalda:'static/img/playera-nino-rosa-espalda.webp'},roja:{frente:'static/img/playera-nino-roja-frente.webp',espalda:'static/img/playera-nino-roja-espalda.webp'},blanca:{frente:'static/img/playera-nino-blanca-frente.webp',espalda:'static/img/playera-nino-blanca-espalda.webp'},negra:{frente:'static/img/playera-nino-negra-frente.webp',espalda:'static/img/playera-nino-negra-espalda.webp'},gris:{frente:'static/img/playera-nino-gris-frente.webp',espalda:'static/img/playera-nino-gris-espalda.webp'},verde:{frente:'static/img/playera-nino-verde-frente.webp',espalda:'static/img/playera-nino-verde-espalda.webp'},marino:{frente:'static/img/playera-nino-marino-frente.webp',espalda:'static/img/playera-nino-marino-espalda.webp'},cielo:{frente:'static/img/playera-nino-cielo-frente.webp',espalda:'static/img/playera-nino-cielo-espalda.webp'}};
+const white=['playera-nina-blanca-frente.webp','playera-nina-blanca-espalda.webp'];
+const girlPhotos={blanca:{frente:white[0],espalda:white[1]},negra:{frente:"playera-nina-negra-frente.webp",espalda:"playera-nina-negra-espalda.webp"},roja:{frente:"playera-nina-roja-frente.webp",espalda:"playera-nina-roja-espalda.webp"},marino:{frente:"playera-nina-marino-frente.webp",espalda:"playera-nina-marino-espalda.webp"},gris:{frente:"playera-nina-gris-frente.webp",espalda:"playera-nina-gris-espalda.webp"},verde:{frente:"playera-nina-verde-frente.webp",espalda:"playera-nina-verde-espalda.webp"},rosa:{frente:"playera-nina-rosa-frente.webp",espalda:"playera-nina-rosa-espalda.webp"},cielo:{frente:"playera-nina-cielo-frente.webp",espalda:"playera-nina-cielo-espalda.webp"}};
+const boyPhotos={rosa:{frente:'playera-nino-rosa-frente.webp',espalda:'playera-nino-rosa-espalda.webp'},roja:{frente:'playera-nino-roja-frente.webp',espalda:'playera-nino-roja-espalda.webp'},blanca:{frente:'playera-nino-blanca-frente.webp',espalda:'playera-nino-blanca-espalda.webp'},negra:{frente:'playera-nino-negra-frente.webp',espalda:'playera-nino-negra-espalda.webp'},gris:{frente:'playera-nino-gris-frente.webp',espalda:'playera-nino-gris-espalda.webp'},verde:{frente:'playera-nino-verde-frente.webp',espalda:'playera-nino-verde-espalda.webp'},marino:{frente:'playera-nino-marino-frente.webp',espalda:'playera-nino-marino-espalda.webp'},cielo:{frente:'playera-nino-cielo-frente.webp',espalda:'playera-nino-cielo-espalda.webp'}};
 
-const womanPhotos={blanca:{frente:'static/img/playera-mujer-blanca-frente.webp',espalda:'static/img/playera-mujer-blanca-espalda.webp'},roja:{frente:'static/img/playera-mujer-roja-frente.webp',espalda:'static/img/playera-mujer-roja-espalda.webp'},negra:{frente:'static/img/playera-mujer-negra-frente.webp',espalda:'static/img/playera-mujer-negra-espalda.webp'},verde:{frente:'static/img/playera-mujer-verde-frente.webp',espalda:'static/img/playera-mujer-verde-espalda.webp'},rosa:{frente:'static/img/playera-mujer-rosa-frente.webp',espalda:'static/img/playera-mujer-rosa-espalda.webp'},gris:{frente:'static/img/playera-mujer-gris-frente.webp',espalda:'static/img/playera-mujer-gris-espalda.webp'},marino:{frente:'static/img/playera-mujer-marino-frente.webp',espalda:'static/img/playera-mujer-marino-espalda.webp'},cielo:{frente:'static/img/playera-mujer-cielo-frente.webp',espalda:'static/img/playera-mujer-cielo-espalda.webp'}};
-const manPhotos={negra:{frente:'static/img/playera-hombre-negra-frente.webp',espalda:'static/img/playera-hombre-negra-espalda.webp'},rosa:{frente:'static/img/playera-hombre-rosa-frente.webp',espalda:'static/img/playera-hombre-rosa-espalda.webp'},blanca:{frente:'static/img/playera-hombre-blanca-frente.webp',espalda:'static/img/playera-hombre-blanca-espalda.webp'},verde:{frente:'static/img/playera-hombre-verde-frente.webp',espalda:'static/img/playera-hombre-verde-espalda.webp'},marino:{frente:'static/img/playera-hombre-marino-frente.webp',espalda:'static/img/playera-hombre-marino-espalda.webp'},cielo:{frente:'static/img/playera-hombre-cielo-frente.webp',espalda:'static/img/playera-hombre-cielo-espalda.webp'},gris:{frente:'static/img/playera-hombre-gris-frente.webp',espalda:'static/img/playera-hombre-gris-espalda.webp'},roja:{frente:'static/img/playera-hombre-roja-frente.webp',espalda:'static/img/playera-hombre-roja-espalda.webp'}};
+const womanPhotos={blanca:{frente:'playera-mujer-blanca-frente.webp',espalda:'playera-mujer-blanca-espalda.webp'},roja:{frente:'playera-mujer-roja-frente.webp',espalda:'playera-mujer-roja-espalda.webp'},negra:{frente:'playera-mujer-negra-frente.webp',espalda:'playera-mujer-negra-espalda.webp'},verde:{frente:'playera-mujer-verde-frente.webp',espalda:'playera-mujer-verde-espalda.webp'},rosa:{frente:'playera-mujer-rosa-frente.webp',espalda:'playera-mujer-rosa-espalda.webp'},gris:{frente:'playera-mujer-gris-frente.webp',espalda:'playera-mujer-gris-espalda.webp'},marino:{frente:'playera-mujer-marino-frente.webp',espalda:'playera-mujer-marino-espalda.webp'},cielo:{frente:'playera-mujer-cielo-frente.webp',espalda:'playera-mujer-cielo-espalda.webp'}};
+const manPhotos={negra:{frente:'playera-hombre-negra-frente.webp',espalda:'playera-hombre-negra-espalda.webp'},rosa:{frente:'playera-hombre-rosa-frente.webp',espalda:'playera-hombre-rosa-espalda.webp'},blanca:{frente:'playera-hombre-blanca-frente.webp',espalda:'playera-hombre-blanca-espalda.webp'},verde:{frente:'playera-hombre-verde-frente.webp',espalda:'playera-hombre-verde-espalda.webp'},marino:{frente:'playera-hombre-marino-frente.webp',espalda:'playera-hombre-marino-espalda.webp'},cielo:{frente:'playera-hombre-cielo-frente.webp',espalda:'playera-hombre-cielo-espalda.webp'},gris:{frente:'playera-hombre-gris-frente.webp',espalda:'playera-hombre-gris-espalda.webp'},roja:{frente:'playera-hombre-roja-frente.webp',espalda:'playera-hombre-roja-espalda.webp'}};
 let modelo='nina',color='blanca',side='frente',art=null,originalArt=null,whiteRemoval=false,artURL=null,photoCache={},position={x:.5,y:.45},scale=1,opacity=1,rotation=0,drag=false;
 const photosFor=()=&gt;({nina:girlPhotos,nino:boyPhotos,mujer:womanPhotos,hombre:manPhotos})[modelo];
 const $=id=&gt;document.getElementById(id),cv=$('canvas'),ctx=cv.getContext('2d');
@@ -11660,7 +11673,7 @@ function icon(x,name,cx,cy,size,color,stroke){const ic=ICONS[name]||ICONS.star;c
 function check(x,cx,cy,s,color){x.save();x.strokeStyle=color;x.lineWidth=s*.18;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(cx-s*.4,cy);x.lineTo(cx-s*.1,cy+s*.3);x.lineTo(cx+s*.45,cy-s*.35);x.stroke();x.restore();}
 function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;}
 function shade(h,k){const n=parseInt(h.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;const f=v=>Math.round(k>0?v+(255-v)*k:v*(1+k));return `rgb(${f(r)},${f(g)},${f(b)})`;}
-const BQ_BOUTIQUE={base:'static/img/presupuesto-boutique-fondo.webp',shirts:'static/img/presupuesto-boutique-ropa.webp',rack:'static/img/presupuesto-boutique-perchero.webp',plant:'static/img/presupuesto-boutique-planta.webp'};
+const BQ_BOUTIQUE={base:'presupuesto-boutique-fondo.webp',shirts:'presupuesto-boutique-ropa.webp',rack:'presupuesto-boutique-perchero.webp',plant:'presupuesto-boutique-planta.webp'};
 const THEMES={
  neon:{dark:1,title:'#ffffff',sub:'#ffffff',muted:'#aab6d8',card:'rgba(8,13,34,.88)',rowA:'#f4f7ff',rowB:'#e2e8f6',rowText:'#0d1530',feat:'#e8eeff',chk:'#3fe0ff',totLabel:'#ffffff',totNum:'#ffffff',note:'rgba(8,13,34,.88)',noteStroke:'#3fc3ee',noteText:'#e8eeff',accent:'#3fe0ff'},
  light:{dark:0,title:'#0d1330',sub:'#ffffff',muted:'#5b6481',card:'#ffffff',rowA:'#ffffff',rowB:'#f1f3f9',rowText:'#141a33',feat:'#2a3150',chk:'#16a34a',totLabel:'#141a33',totNum:'#0d1330',note:'#ffffff',noteStroke:'#d9def0',noteText:'#2a3150',accent:'#7b3fe4'},
