@@ -7412,7 +7412,43 @@ document.addEventListener("DOMContentLoaded", function(){
     bgPipelineDevice = key;
     return model;
   }
+  let bg512 = null;
+  async function bgFree512() { if (bg512 && bg512.model && bg512.model.dispose) { try { await bg512.model.dispose(); } catch (e) {} } bg512 = null; }
+  /* BiRefNet lite 512: el modelo entrega valores en bruto (logits); se convierten a máscara 0–1 con sigmoide. */
+  async function bgSegment512(file, device) {
+    const T = await bgLibrary();
+    const key = device;
+    if (!bg512 || bg512.key !== key) {
+      await bgFree512();
+      if (bgPipeline && bgPipeline.dispose) { try { await bgPipeline.dispose(); } catch (e) {} } bgPipeline = null; bgPipelineDevice = null;
+      bgSetStatus('Descargando IA general (BiRefNet lite) para ' + (device === 'webgpu' ? 'GPU' : 'CPU') + '… La primera vez puede tardar.');
+      const progress_callback = p => { if (p.status === 'progress' && Number.isFinite(p.progress)) bgSetStatus('Descargando modelo IA: ' + Math.round(p.progress) + '%'); };
+      const model = await T.AutoModel.from_pretrained('studioludens/birefnet-lite-512', { device, dtype: device === 'webgpu' ? 'fp16' : 'fp32', progress_callback });
+      const proc = await T.AutoProcessor.from_pretrained('studioludens/birefnet-lite-512');
+      bg512 = { key, model, proc };
+    }
+    bgSetStatus('Analizando la imagen con IA…');
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await T.RawImage.fromURL(url);
+      const { pixel_values } = await bg512.proc(img);
+      const out = await bg512.model({ input_image: pixel_values });
+      const t = out.logits || out.output_image || out[Object.keys(out)[0]];
+      const dims = t.dims, W = dims[dims.length - 1], H = dims[dims.length - 2], n = W * H;
+      let src = t.data;
+      if (t.type === 'float16' && !(typeof Float16Array !== 'undefined' && src instanceof Float16Array)) {
+        const h2f = h => { const s = (h & 0x8000) ? -1 : 1, e = (h >> 10) & 31, f = h & 1023; return e === 0 ? s * Math.pow(2, -14) * (f / 1024) : e === 31 ? (f ? NaN : s * Infinity) : s * Math.pow(2, e - 15) * (1 + f / 1024); };
+        const c = new Float32Array(n); for (let i = 0; i < n; i++) c[i] = h2f(src[i]); src = c;
+      }
+      let mn = Infinity, mx = -Infinity; for (let i = 0; i < n; i++) { const v = src[i]; if (v < mn) mn = v; if (v > mx) mx = v; }
+      const isProb = mn >= 0 && mx <= 1, a = new Float32Array(n);
+      for (let i = 0; i < n; i++) { const v = Number(src[i]); a[i] = isProb ? v : 1 / (1 + Math.exp(-v)); }
+      return [{ mask: { data: a, width: W, height: H, channels: 1 } }];
+    } finally { URL.revokeObjectURL(url); }
+  }
   async function bgSegment(file, device, variant) {
+    if (window.csBgMode !== 'portrait' && variant !== 'hq') return bgSegment512(file, device);
+    await bgFree512();
     const model = await bgGetPipeline(device, variant);
     const imageURL = URL.createObjectURL(file);
     try {
@@ -7487,7 +7523,7 @@ document.addEventListener("DOMContentLoaded", function(){
       bgSetStatus('Cargando inteligencia artificial…');
       await bgLibrary();
       const hasGPU = !!navigator.gpu, general = window.csBgMode !== 'portrait';
-      const bgFree = async () => { if (bgPipeline && bgPipeline.dispose) { try { await bgPipeline.dispose(); } catch (e) {} } bgPipeline = null; bgPipelineDevice = null; };
+      const bgFree = async () => { if (bgPipeline && bgPipeline.dispose) { try { await bgPipeline.dispose(); } catch (e) {} } bgPipeline = null; bgPipelineDevice = null; await bgFree512(); };
       let hqFailed = false; try { hqFailed = localStorage.getItem('cs_bg_hq_fail') === '1'; } catch (e) {}
       if (hasGPU && general && !hqFailed) {
         try {
@@ -7730,15 +7766,27 @@ document.addEventListener("DOMContentLoaded", function(){
       const bm=await createImageBitmap(file),W=bm.width,H=bm.height,sc=Math.min(1,2400/Math.max(W,H)),w=Math.max(1,Math.round(W*sc)),h=Math.max(1,Math.round(H*sc));
       const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bm,0,0,w,h);bm.close();
       const d=x.getImageData(0,0,w,h).data,N=w*h;
-      let ref=keyColor;
+      let ref=keyColor,ref2=null;
       if(!ref){const bins=new Map();const add=i=>{const k=(d[i*4]>>3)<<10|(d[i*4+1]>>3)<<5|(d[i*4+2]>>3);bins.set(k,(bins.get(k)||0)+1);};
         for(let X=0;X<w;X++){add(X);add((h-1)*w+X);}for(let Y=0;Y<h;Y++){add(Y*w);add(Y*w+w-1);}
         let best=0,bk=0;bins.forEach((v,k)=>{if(v>best){best=v;bk=k;}});
         let sr=0,sg=0,sb=0,n=0;const chk=i=>{const k=(d[i*4]>>3)<<10|(d[i*4+1]>>3)<<5|(d[i*4+2]>>3);if(k===bk){sr+=d[i*4];sg+=d[i*4+1];sb+=d[i*4+2];n++;}};
         for(let X=0;X<w;X++){chk(X);chk((h-1)*w+X);}for(let Y=0;Y<h;Y++){chk(Y*w);chk(Y*w+w-1);}
-        ref=[Math.round(sr/n),Math.round(sg/n),Math.round(sb/n)];showKey(ref,true);}
+        ref=[Math.round(sr/n),Math.round(sg/n),Math.round(sb/n)];
+        /* ¿cuadriculado falso? un segundo color claro casi tan frecuente en la orilla */
+        let tot=0,b2=0,k2=-1;bins.forEach((v,k)=>{tot+=v;if(k!==bk&&v>b2){b2=v;k2=k;}});
+        if(k2>=0&&b2>tot*.18&&best<tot*.82){const c2=[((k2>>10)&31)*8+4,((k2>>5)&31)*8+4,(k2&31)*8+4];
+          let s2r=0,s2g=0,s2b=0,n2=0;const chk2=i=>{const k=(d[i*4]>>3)<<10|(d[i*4+1]>>3)<<5|(d[i*4+2]>>3);if(k===k2){s2r+=d[i*4];s2g+=d[i*4+1];s2b+=d[i*4+2];n2++;}};
+          for(let X=0;X<w;X++){chk2(X);chk2((h-1)*w+X);}for(let Y=0;Y<h;Y++){chk2(Y*w);chk2(Y*w+w-1);}
+          const cand=[Math.round(s2r/n2),Math.round(s2g/n2),Math.round(s2b/n2)],lum=c=>.3*c[0]+.59*c[1]+.11*c[2],sat=c=>Math.max(...c)-Math.min(...c);
+          if(Math.abs(lum(cand)-lum(ref))<70&&sat(cand)<30&&sat(ref)<30){ref2=cand;if(!window.__csChkHint){window.__csChkHint=1;$('bgKeyHoles').checked=true;}}}
+        showKey(ref,true);if(ref2)$('bgKeyLabel').textContent='Fondo cuadriculado falso: '+hex(ref).toUpperCase()+' + '+hex(ref2).toUpperCase()+' (automático)';}
       const tol=+$('bgKeyTol').value,soft=Math.max(4,tol*.6),dist=new Float32Array(N);
-      for(let i=0;i<N;i++){const r=d[i*4]-ref[0],g=d[i*4+1]-ref[1],b=d[i*4+2]-ref[2];dist[i]=d[i*4+3]<10?0:Math.sqrt(.3*r*r+.59*g*g+.11*b*b)/2.55;}
+      for(let i=0;i<N;i++){const r=d[i*4]-ref[0],g=d[i*4+1]-ref[1],b=d[i*4+2]-ref[2];let dd=Math.sqrt(.3*r*r+.59*g*g+.11*b*b)/2.55;
+        if(ref2){const r2=d[i*4]-ref2[0],g2=d[i*4+1]-ref2[1],b2=d[i*4+2]-ref2[2],e=Math.sqrt(.3*r2*r2+.59*g2*g2+.11*b2*b2)/2.55;if(e<dd)dd=e;
+          const lo=Math.min(ref[0]+ref[1]+ref[2],ref2[0]+ref2[1]+ref2[2])/3,hi=Math.max(ref[0]+ref[1]+ref[2],ref2[0]+ref2[1]+ref2[2])/3,L=(d[i*4]+d[i*4+1]+d[i*4+2])/3,sp=Math.max(d[i*4],d[i*4+1],d[i*4+2])-Math.min(d[i*4],d[i*4+1],d[i*4+2]);
+          if(L>=lo-4&&L<=hi+4&&sp<14)dd=Math.min(dd,0);}
+        dist[i]=d[i*4+3]<10?0:dd;}
       const bg=new Uint8Array(N),q=new Int32Array(N);let qh=0,qt=0;
       const push=i=>{if(!bg[i]&&dist[i]<=tol){bg[i]=1;q[qt++]=i;}};
       if($('bgKeyHoles').checked){for(let i=0;i<N;i++)if(dist[i]<=tol)bg[i]=1;}
