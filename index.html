@@ -7423,7 +7423,7 @@ document.addEventListener("DOMContentLoaded", function(){
       if (bgPipeline && bgPipeline.dispose) { try { await bgPipeline.dispose(); } catch (e) {} } bgPipeline = null; bgPipelineDevice = null;
       bgSetStatus('Descargando IA general (BiRefNet lite) para ' + (device === 'webgpu' ? 'GPU' : 'CPU') + '… La primera vez puede tardar.');
       const progress_callback = p => { if (p.status === 'progress' && Number.isFinite(p.progress)) bgSetStatus('Descargando modelo IA: ' + Math.round(p.progress) + '%'); };
-      const model = await T.AutoModel.from_pretrained('studioludens/birefnet-lite-512', { device, dtype: device === 'webgpu' ? 'fp16' : 'fp32', progress_callback });
+      const model = await T.AutoModel.from_pretrained('studioludens/birefnet-lite-512', { device, dtype: 'fp32', progress_callback });
       const proc = await T.AutoProcessor.from_pretrained('studioludens/birefnet-lite-512');
       bg512 = { key, model, proc };
     }
@@ -7442,7 +7442,12 @@ document.addEventListener("DOMContentLoaded", function(){
       }
       let mn = Infinity, mx = -Infinity; for (let i = 0; i < n; i++) { const v = src[i]; if (v < mn) mn = v; if (v > mx) mx = v; }
       const isProb = mn >= 0 && mx <= 1, a = new Float32Array(n);
-      for (let i = 0; i < n; i++) { const v = Number(src[i]); a[i] = isProb ? v : 1 / (1 + Math.exp(-v)); }
+      let bad = 0, kept = 0;
+      for (let i = 0; i < n; i++) { const v = Number(src[i]); let m = isProb ? v : 1 / (1 + Math.exp(-v)); if (!Number.isFinite(m)) { bad++; m = 0; } if (m > .5) kept++; a[i] = m; }
+      if (bad > n * .01 || kept < n * .002) {
+        if (device === 'webgpu') { await bgFree512(); throw new Error('máscara vacía en GPU'); }
+        throw new Error('la IA no encontró un objeto principal en esta imagen. Si el fondo es de un solo color, usa «Fondo de color»');
+      }
       return [{ mask: { data: a, width: W, height: H, channels: 1 } }];
     } finally { URL.revokeObjectURL(url); }
   }
@@ -7781,17 +7786,31 @@ document.addEventListener("DOMContentLoaded", function(){
           const cand=[Math.round(s2r/n2),Math.round(s2g/n2),Math.round(s2b/n2)],lum=c=>.3*c[0]+.59*c[1]+.11*c[2],sat=c=>Math.max(...c)-Math.min(...c);
           if(Math.abs(lum(cand)-lum(ref))<70&&sat(cand)<30&&sat(ref)<30){ref2=cand;if(!window.__csChkHint){window.__csChkHint=1;$('bgKeyHoles').checked=true;}}}
         showKey(ref,true);if(ref2)$('bgKeyLabel').textContent='Fondo cuadriculado falso: '+hex(ref).toUpperCase()+' + '+hex(ref2).toUpperCase()+' (automático)';}
-      const tol=+$('bgKeyTol').value,soft=Math.max(4,tol*.6),dist=new Float32Array(N);
+      let tol=+$('bgKeyTol').value,soft=Math.max(4,tol*.6);const dist=new Float32Array(N);
       for(let i=0;i<N;i++){const r=d[i*4]-ref[0],g=d[i*4+1]-ref[1],b=d[i*4+2]-ref[2];let dd=Math.sqrt(.3*r*r+.59*g*g+.11*b*b)/2.55;
         if(ref2){const r2=d[i*4]-ref2[0],g2=d[i*4+1]-ref2[1],b2=d[i*4+2]-ref2[2],e=Math.sqrt(.3*r2*r2+.59*g2*g2+.11*b2*b2)/2.55;if(e<dd)dd=e;
           const lo=Math.min(ref[0]+ref[1]+ref[2],ref2[0]+ref2[1]+ref2[2])/3,hi=Math.max(ref[0]+ref[1]+ref[2],ref2[0]+ref2[1]+ref2[2])/3,L=(d[i*4]+d[i*4+1]+d[i*4+2])/3,sp=Math.max(d[i*4],d[i*4+1],d[i*4+2])-Math.min(d[i*4],d[i*4+1],d[i*4+2]);
           if(L>=lo-4&&L<=hi+4&&sp<14)dd=Math.min(dd,0);}
         dist[i]=d[i*4+3]<10?0:dd;}
+      /* Tolerancia automática: se mide qué tan parejo es el fondo en la orilla (ruido JPG) para no comerse colores cercanos del diseño */
+      if(!window.__csTolManual){let s2=0,nn=0;const add2=i=>{if(dist[i]<25){s2+=dist[i]*dist[i];nn++;}};
+        for(let X=0;X<w;X+=2){add2(X);add2((h-1)*w+X);}for(let Y=0;Y<h;Y+=2){add2(Y*w);add2(Y*w+w-1);}
+        const rms=nn?Math.sqrt(s2/nn):3;tol=Math.round(Math.max(3,Math.min(14,rms*2.6+2.5)));soft=Math.max(4,tol*.6);$('bgKeyTol').value=tol;$('bgKeyTolV').textContent=tol+'% (auto)';}
       const bg=new Uint8Array(N),q=new Int32Array(N);let qh=0,qt=0;
       const push=i=>{if(!bg[i]&&dist[i]<=tol){bg[i]=1;q[qt++]=i;}};
       if($('bgKeyHoles').checked){for(let i=0;i<N;i++)if(dist[i]<=tol)bg[i]=1;}
       else{for(let X=0;X<w;X++){push(X);push((h-1)*w+X);}for(let Y=0;Y<h;Y++){push(Y*w);push(Y*w+w-1);}
         while(qh<qt){const i=q[qh++],X=i%w;if(X>0)push(i-1);if(X<w-1)push(i+1);if(i>=w)push(i-w);if(i<N-w)push(i+w);}}
+      /* Limpieza de motas: manchitas de tono parecido al fondo (restos de compresión JPG) pegadas a la orilla; las zonas grandes del diseño se conservan */
+      {const cand=new Uint8Array(N),lab=new Int32Array(N),stk=new Int32Array(N),lim=Math.max(12,Math.round(N*.0003)),ct=tol*2.6;let id=0;
+        for(let i=0;i<N;i++)cand[i]=!bg[i]&&dist[i]<ct?1:0;
+        for(let s=0;s<N;s++){if(!cand[s]||lab[s])continue;id++;let sp=0,area=0,touch=false;stk[sp++]=s;lab[s]=id;const mem=[];
+          while(sp){const i=stk[--sp];area++;if(area<=lim)mem.push(i);const X=i%w;
+            const nb=[X>0?i-1:-1,X<w-1?i+1:-1,i>=w?i-w:-1,i<N-w?i+w:-1];
+            for(const j of nb){if(j<0)continue;if(bg[j])touch=true;else if(cand[j]&&!lab[j]){lab[j]=id;stk[sp++]=j;}}}
+          if(area<=lim&&touch)for(const i of mem)bg[i]=1;}
+        /* puntos sueltos de 1 a 3 píxeles */
+        for(let i=0;i<N;i++){if(bg[i])continue;const X=i%w;let n=0;if(X>0&&!bg[i-1])n++;if(X<w-1&&!bg[i+1])n++;if(i>=w&&!bg[i-w])n++;if(i<N-w&&!bg[i+w])n++;if(n===0)bg[i]=1;}}
       // Alfa suave solo en la franja del borde para evitar dientes de sierra y halos
       const a=new Uint8Array(N);
       for(let i=0;i<N;i++){if(bg[i]){a[i]=0;continue;}const X=i%w;
@@ -7799,7 +7818,8 @@ document.addEventListener("DOMContentLoaded", function(){
         if(near){const t=Math.min(1,Math.max(0,(dist[i]-tol)/soft));a[i]=Math.round(255*t*t*(3-2*t));}else a[i]=255;}
       return [{mask:{data:a,width:w,height:h,channels:1}}];
     };
-    $('bgKeyTol').addEventListener('input',()=>{$('bgKeyTolV').textContent=$('bgKeyTol').value+'%';rerun();});
+    $('bgKeyTol').addEventListener('input',()=>{window.__csTolManual=true;$('bgKeyTolV').textContent=$('bgKeyTol').value+'%';rerun();});
+    $('bgFile').addEventListener('change',()=>{window.__csTolManual=false;});
     $('bgKeyHoles').addEventListener('change',rerun);
     function rerun(){if(window.csBgMode!=='color'||$('btnBgDl').disabled)return;clearTimeout(timer);timer=setTimeout(()=>{if(!$('btnBg').disabled)$('btnBg').click();},250);}
     $('bgKeyPick').addEventListener('click',()=>{if(!$('bgBefore').getAttribute('src')){$('bgStatus').textContent='Primero sube una imagen.';return;}
