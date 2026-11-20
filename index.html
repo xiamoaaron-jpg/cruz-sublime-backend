@@ -3002,14 +3002,9 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
       <label class="mx-drop" id="mxDrop"><input type="file" id="mxFile" accept="image/png,image/jpeg,image/webp" hidden><span class="mx-ic" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span><span class="mx-dt"><b id="mxFileName">Subir o arrastrar imagen</b><small id="mxFileInfo">PNG, JPG o WEBP</small></span></label>
      </div>
      <div class="mx-box"><p class="mx-step"><b>2</b>Estilo de desgaste</p>
+      <div class="mx-cats" id="mxCats"><button type="button" data-c="all">Todos</button><button type="button" data-c="b">Bordes</button><button type="button" data-c="f">Formas</button><button type="button" data-c="t">Texturas</button></div>
       <div class="mx-styles" id="mxStyles">
-       <button type="button" data-s="vintage"><canvas width="132" height="96"></canvas><span>Grunge vintage</span></button>
-       <button type="button" data-s="clasico"><canvas width="132" height="96"></canvas><span>Marco clásico</span></button>
-       <button type="button" data-s="rasgado"><canvas width="132" height="96"></canvas><span>Borde rasgado</span></button>
-       <button type="button" data-s="brocha"><canvas width="132" height="96"></canvas><span>Brocha seca</span></button>
-       <button type="button" data-s="sello"><canvas width="132" height="96"></canvas><span>Sello gastado</span></button>
-       <button type="button" data-s="salpicado"><canvas width="132" height="96"></canvas><span>Salpicado</span></button>
-       <button type="button" data-s="propia" id="mxOwnCard" hidden><canvas width="132" height="96"></canvas><span>Tu máscara</span></button>
+       <button type="button" data-s="propia" data-cat="all" id="mxOwnCard" hidden><canvas width="132" height="96"></canvas><span>Tu máscara</span></button>
       </div>
       <label class="mx-own"><input type="file" id="mxMask" accept="image/png,image/jpeg,image/webp" hidden>＋ Usar mi propia máscara</label>
       <p class="mx-note">Máscara en blanco y negro: el <b>negro</b> borra y el <b>blanco</b> conserva. Se estira al tamaño de tu diseño.</p>
@@ -3062,7 +3057,11 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
 #panel-marco .mx-dt{display:grid;gap:2px;min-width:0}
 #panel-marco .mx-dt b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #panel-marco .mx-dt small{font-size:12px;color:var(--mx-muted)}
+#panel-marco .mx-cats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+#panel-marco .mx-cats button{padding:6px 11px;border-radius:999px;border:1px solid var(--mx-line);background:var(--mx-card2);color:var(--mx-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+#panel-marco .mx-cats button.on{border-color:var(--mx-acc);color:#fff;background:rgba(245,158,11,.12)}
 #panel-marco .mx-styles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#panel-marco .mx-count{margin:8px 0 0;font-size:11.5px;color:var(--mx-muted)}
 #panel-marco .mx-styles button{display:grid;gap:6px;padding:6px 6px 8px;border-radius:12px;border:1px solid var(--mx-line);background:var(--mx-card2);color:var(--mx-text);cursor:pointer;font:inherit;font-size:12px;font-weight:700;transition:.15s}
 #panel-marco .mx-styles button:hover{border-color:var(--mx-line2);transform:translateY(-1px)}
 #panel-marco .mx-styles button.on{border-color:var(--mx-acc);box-shadow:inset 0 0 0 1px var(--mx-acc);background:rgba(245,158,11,.08)}
@@ -3131,30 +3130,57 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
   const $=id=>document.getElementById(id);
   if(!$("mxCanvas"))return;
 
+  /* ---------- catálogo de estilos (motor propio) ---------- */
+  const MX_STYLES=[
+    ["vintage","Grunge vintage","b",{dep:1,low:.45,lf:3,fine:.5,ff:150,spk:.5,isl:.3}],
+    ["rasgado","Borde rasgado","b",{dep:1.2,low:.95,lf:2.2,fine:.28,ff:110,spk:.1,isl:.18}],
+    ["papel","Papel rasgado","b",{dep:.9,low:.5,lf:2.6,fine:.7,ff:260,tear:.8,spk:.05}],
+    ["brocha","Brocha seca","b",{dep:1.1,low:.4,lf:3,fine:.3,ff:150,spk:.22,isl:.2,str:.95}],
+    ["salpicado","Salpicado","b",{dep:1.2,low:.45,lf:3.5,fine:.42,ff:140,spk:.3,isl:1}],
+    ["grueso","Borde grueso","b",{dep:1.9,low:.55,lf:2.8,fine:.55,ff:170,spk:.4,isl:.15}],
+    ["carcomido1","Carcomido leve","b",{dep:.45,low:.3,lf:4,fine:.45,ff:160,pits:.6,spk:.2}],
+    ["carcomido2","Carcomido medio","b",{dep:.8,low:.4,lf:3.5,fine:.5,ff:150,pits:1.2,spk:.35}],
+    ["oxido","Óxido en la orilla","b",{dep:.7,low:.35,lf:4,fine:.6,ff:120,pits:1.5,isl:.2,spk:.25}],
+    ["aerosol","Aerosol","b",{dep:.5,low:.3,lf:3,fine:.2,ff:90,spray:1.6}],
+    ["semitono","Disolución en semitono","b",{dep:.45,low:.25,lf:3,fine:.12,ff:80,half:1.8}],
+    ["tinta","Tinta corrida","b",{dep:.55,low:.35,lf:3,fine:.35,ff:140,drip:1,spk:.15}],
+    ["pelicula","Película quemada","b",{dep:1.1,low:.85,lf:1.8,fine:.65,ff:200,burn:.9}],
+    ["quemada","Foto quemada","b",{dep:1.4,low:.6,lf:2.4,fine:.7,ff:210,spk:.25,burn:.4}],
+    ["clasico","Marco clásico","f",{dep:.6,low:.15,lf:5,fine:.75,ff:230,spk:.12,isl:.06}],
+    ["rectangulo","Rectángulo áspero","f",{dep:.9,low:.12,lf:6,fine:1,ff:300,spk:.08}],
+    ["fotovieja","Foto vintage","f",{shape:"round",rc:.07,dep:.35,low:.25,lf:4,fine:.4,ff:180,spk:.25,grain:.35}],
+    ["ovalo","Óvalo grunge","f",{shape:"ellipse",dep:.7,low:.4,lf:3,fine:.55,ff:160,spk:.3,isl:.2}],
+    ["circulo","Sello circular","f",{shape:"circle",dep:.35,low:.2,lf:4,fine:.45,ff:180,grain:.7}],
+    ["comic","Explosión cómic","f",{shape:"burst",dep:.25,low:.15,lf:4,fine:.3,ff:160,spk:.1}],
+    ["boleto","Boleto","f",{holes:"notch",dep:.3,low:.15,lf:5,fine:.35,ff:200,spk:.1}],
+    ["35mm","Película 35 mm","f",{holes:"sprocket",dep:.25,low:.1,lf:5,fine:.3,ff:220,spk:.12}],
+    ["cuaderno","Cuaderno","f",{holes:"spiral",sides:"t",dep:.5,low:.4,lf:3,fine:.8,ff:260,tear:.6}],
+    ["estampilla","Estampilla","f",{holes:"scallop",dep:.15,low:.1,lf:5,fine:.15,ff:200}],
+    ["zigzag","Tijera zigzag","f",{zig:1,dep:.2,low:.1,lf:5,fine:.15,ff:200}],
+    ["washi","Cinta washi","f",{sides:"tb",dep:.6,low:.35,lf:4,fine:.9,ff:280,tear:.7}],
+    ["sello","Sello gastado","t",{dep:.45,low:.2,lf:6,fine:.45,ff:200,spk:.3,grain:1}],
+    ["agrietado","Agrietado","t",{dep:.4,low:.3,lf:4,fine:.4,ff:160,cracks:1,spk:.1}],
+    ["rayado","Rayado","t",{dep:.35,low:.25,lf:4,fine:.4,ff:160,scratch:1,spk:.12}],
+    ["carbon","Carboncillo","t",{dep:.9,low:.4,lf:3,fine:.4,ff:150,diag:1,grain:.25}],
+    ["pizarron","Pizarrón","t",{dep:.5,low:.3,lf:4,fine:.5,ff:170,chalk:1,grain:.5}]
+  ];
+  const MX_P={};MX_STYLES.forEach(s=>MX_P[s[0]]=s[3]);
+
   /* ---------- motor: devuelve un campo de "conservación" (>0 se conserva) ---------- */
   function mxEngine(o){
     const W=o.W,H=o.H,N=W*H,out=new Float32Array(N),A=o.alpha;
-    const ST={
-      vintage:{dep:1,low:.45,lf:3,fine:.5,ff:150,spk:.5,isl:.3,str:0,grain:0},
-      clasico:{dep:.6,low:.15,lf:5,fine:.75,ff:230,spk:.12,isl:.06,str:0,grain:0},
-      rasgado:{dep:1.2,low:.95,lf:2.2,fine:.28,ff:110,spk:.1,isl:.18,str:0,grain:0},
-      brocha:{dep:1.1,low:.4,lf:3,fine:.3,ff:150,spk:.22,isl:.2,str:.95,grain:0},
-      sello:{dep:.45,low:.2,lf:6,fine:.45,ff:200,spk:.3,isl:0,str:0,grain:1},
-      salpicado:{dep:1.2,low:.45,lf:3.5,fine:.42,ff:140,spk:.3,isl:1,str:0,grain:0}
-    };
-    const P=ST[o.style]||ST.vintage,inten=o.inten,rough=.55+o.rough*.9,seed=o.seed|0;
+    const P=o.P||{dep:1,low:.45,lf:3,fine:.5,ff:150},inten=o.inten,rough=.55+o.rough*.9,seed=o.seed|0;
     const hash=(x,y,s)=>{let h=Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(s,1442695041)|0;h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967296;};
     const vn=(x,y,s)=>{const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
       const a=hash(xi,yi,s),b=hash(xi+1,yi,s),c=hash(xi,yi+1,s),d=hash(xi+1,yi+1,s);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;};
     const fbm=(x,y,s,oct)=>{let t=0,a=.5,f=1,n=0;for(let i=0;i<oct;i++){t+=a*vn(x*f,y*f,s+i*131);n+=a;a*=.5;f*=2.03;}return t/n;};
-    /* caja del diseño (en píxeles de este lienzo) */
+    const fr=t=>t-Math.floor(t);
     let x0=W,y0=H,x1=-1,y1=-1;
     for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(A[y*W+x]>16){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
     if(x1<0){x0=0;y0=0;x1=W-1;y1=H-1;}
-    const M=Math.max(8,Math.min(x1-x0+1,y1-y0+1));
-    /* distancia al borde: caja rectangular o silueta (transformada de distancia en dos pasadas) */
-    let D=null;
-    if(o.shape==="sil"){
+    const M=Math.max(8,Math.min(x1-x0+1,y1-y0+1)),BW=(x1-x0+1)/M,BH=(y1-y0+1)/M,cu=BW/2,cv=BH/2,mn=Math.min(cu,cv);
+    let D=null;const shp=P.shape||"rect";
+    if(o.shape==="sil"&&(shp==="rect"||shp==="round")){
       D=new Float32Array(N);const BIG=1e9;
       for(let i=0;i<N;i++)D[i]=A[i]>127?BIG:0;
       for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(!D[i])continue;let v=D[i];
@@ -3163,21 +3189,68 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
       for(let y=H-1;y>=0;y--)for(let x=W-1;x>=0;x--){const i=y*W+x;if(!D[i])continue;let v=D[i];
         if(x<W-1)v=Math.min(v,D[i+1]+1);if(y<H-1){v=Math.min(v,D[i+W]+1);if(x<W-1)v=Math.min(v,D[i+W+1]+1.4142);if(x>0)v=Math.min(v,D[i+W-1]+1.4142);}D[i]=v;}
     }
-    const dep=o.depth*P.dep,lf=P.lf,ff=P.ff*rough,low=Math.min(.98,P.low*(.7+o.rough*.6)),fine=P.fine*(.6+o.rough*.8);
-    const spk=P.spk*inten,isl=P.isl*inten;
+    const dep=o.depth*(P.dep||1),lf=P.lf||3,ff=(P.ff||150)*rough,low=Math.min(.98,(P.low||0)*(.7+o.rough*.6)),fine=(P.fine||0)*(.6+o.rough*.8);
+    const spk=(P.spk||0)*inten,isl=(P.isl||0)*inten,grain=(P.grain||0)*inten,pits=(P.pits||0)*inten;
+    /* explosión: picos fijos por semilla */
+    const NSP=14,spR=[];for(let k=0;k<NSP;k++)spR.push(.86+.14*hash(k,7,seed));
+    /* grietas: celdas de Voronoi */
+    const ccs=.11;const cell=(gx,gy)=>[gx+hash(gx,gy,seed+900),gy+hash(gx,gy,seed+901)];
     for(let y=0;y<H;y++){
       for(let x=0;x<W;x++){
         const i=y*W+x;if(A[i]<8){out[i]=-1;continue;}
         const u=(x-x0)/M,v=(y-y0)/M;
-        const d=D?(D[i]/M):Math.min(x-x0,x1-x,y-y0,y1-y)/M;
-        if(d>dep*2.6&&spk<=0&&!(P.grain&&inten>0)){out[i]=1;continue;}
+        const dl=Math.min(u,BW-u),dt=Math.min(v,BH-v);
+        let d;
+        if(D)d=D[i]/M;
+        else if(shp==="round"){const r=(P.rc||.06)*Math.min(BW,BH),qx=Math.abs(u-cu)-(cu-r),qy=Math.abs(v-cv)-(cv-r);d=-(Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-r);}
+        else if(shp==="ellipse"){const px=(u-cu)/cu,py=(v-cv)/cv;d=(1-Math.hypot(px,py))*mn;}
+        else if(shp==="circle"){d=mn*.98-Math.hypot(u-cu,v-cv);}
+        else if(shp==="burst"){const ang=Math.atan2(v-cv,u-cu),t=(ang/(2*Math.PI)+.5)*NSP,k=Math.floor(t),f=t-k,tri=1-2*Math.abs(f-.5),R=mn*.98*(.66+.34*tri)*spR[k%NSP];d=R-Math.hypot(u-cu,v-cv);}
+        else d=Math.min(dl,dt);
+        /* agujeros y recortes de forma (bordes limpios, sin desgaste) */
+        let hole=1e9;
+        if(P.holes==="notch"){const r=.075*Math.min(BW,BH);hole=Math.min(Math.hypot(u,v-cv)-r,Math.hypot(u-BW,v-cv)-r);}
+        else if(P.holes==="sprocket"){const pit=.08,hw=.02,hh=.028,ins=.05,ly=fr((v-pit/2)/pit)*pit-pit/2;
+          const bx=(lx)=>{const qx=Math.abs(lx)-hw,qy=Math.abs(ly)-hh;return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-.006;};
+          hole=Math.min(bx(u-ins),bx(BW-u-ins));}
+        else if(P.holes==="spiral"){const pit=.07,ly=fr((v-pit/2)/pit)*pit-pit/2;hole=Math.hypot(u-.055,ly)-.019;}
+        else if(P.holes==="scallop"){const s=.055,r=.4*s;const ey=fr(v/s)*s-s/2,ex=fr(u/s)*s-s/2;
+          hole=Math.min(Math.hypot(u,ey)-r,Math.hypot(BW-u,ey)-r,Math.hypot(ex,v)-r,Math.hypot(ex,BH-v)-r);}
+        if(Math.min(d,hole)>dep*3.2&&!(spk||grain||P.cracks||P.scratch||P.burn||P.chalk||P.diag)){out[i]=1;continue;}
+        /* orilla irregular */
         let thr=dep*(1-low+low*2*fbm(u*lf,v*lf,seed,4));
-        thr+=dep*fine*(fbm(u*ff,v*ff,seed+101,3)-.5)*2.4;
+        if(fine)thr+=dep*fine*(fbm(u*ff,v*ff,seed+101,3)-.5)*2.4;
+        if(P.tear)thr+=dep*P.tear*(Math.abs(fbm(u*lf*2.2,v*lf*2.2,seed+71,3)-.5)*4-.6);
         if(P.str)thr+=dep*P.str*(fbm(u*1.4,v*ff*.5,seed+7,3)-.5)*2.6;
-        let sc=d-thr;
+        if(P.zig){const t=dl<dt?v:u,p=.04;thr+=.022*(1-2*Math.abs(fr(t/p)-.5))-.011;}
+        let sc;
+        if(P.sides==="tb")sc=Math.min(dl-.004,dt-thr);
+        else if(P.sides==="t")sc=Math.min(d-.004,v-thr);
+        else sc=d-thr;
+        if(hole<1e9)sc=Math.min(sc,hole);
+        /* gotas que escurren desde arriba */
+        if(P.drip){const L=dep*P.drip*3.4*Math.pow(Math.max(0,vn(u*34,0,seed+44)-.42)/.58,1.6);if(v<L+thr)sc=Math.min(sc,v-L-thr*.6);}
+        /* islas sueltas cerca de la orilla */
         if(sc<0&&isl>0&&d>0){const sp=fbm(u*ff*.22,v*ff*.22,seed+303,3),lim=.76-.13*isl;if(sp>lim&&d>thr*.35)sc=(sp-lim)*dep*.6;}
-        if(sc>0&&spk>0){const near=Math.exp(-sc/(dep*1.5+1e-6)),k=fbm(u*ff*.9,v*ff*.9,seed+505,2),lim=.86-spk*(.004+.3*near);if(k>lim)sc=-(k-lim)*dep*.5-1e-4;}
-        if(sc>0&&P.grain&&inten>0){const g=fbm(u*ff*1.7,v*ff*1.7,seed+909,2),lim=.83-.17*P.grain*inten;if(g>lim)sc=-1e-4;}
+        /* aerosol: puntos finos que se disuelven */
+        if(P.spray){const band=dep*P.spray,g=hash(Math.floor(u/.0042),Math.floor(v/.0042),seed+55);
+          if(sc>0&&sc<band){if(g>Math.pow(sc/band,.8))sc=-1e-4;}else if(sc<=0&&sc>-band*.6){if(g<.22*(1+sc/(band*.6)))sc=1e-4;}}
+        /* disolución en semitono */
+        if(P.half&&sc>0){const band=dep*P.half;if(sc<band){const c=.02,a=(u+v)*.7071/c,b=(v-u)*.7071/c,fx=fr(a)-.5,fy=fr(b)-.5,r=Math.sqrt(sc/band)*.6;if(fx*fx+fy*fy>r*r)sc=-1e-4;}}
+        if(sc>0){
+          const near=Math.exp(-sc/(dep*1.5+1e-6));
+          if(spk>0){const k=fbm(u*ff*.9,v*ff*.9,seed+505,2),lim=.86-spk*(.004+.3*near);if(k>lim)sc=-1e-4;}
+          if(pits>0){const pp=fbm(u*ff*.32,v*ff*.32,seed+211,3),lim=.78-pits*.13*near;if(pp>lim)sc=-1e-4;}
+          if(grain>0){const g=fbm(u*ff*1.7,v*ff*1.7,seed+909,2),lim=.83-.17*grain;if(g>lim)sc=-1e-4;}
+          if(P.burn){const hb=fbm(u*2.1,v*2.1,seed+77,3)+(fbm(u*ff,v*ff,seed+78,2)-.5)*.06,lim=.74-.08*P.burn*inten;if(hb>lim)sc=-1e-4;}
+          if(P.cracks){const gx=Math.floor(u/ccs),gy=Math.floor(v/ccs),pu=u/ccs,pv=v/ccs;let f1=9,f2=9;
+            for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const c=cell(gx+ox,gy+oy),dd=Math.hypot(c[0]-pu,c[1]-pv);if(dd<f1){f2=f1;f1=dd;}else if(dd<f2)f2=dd;}
+            const w=.035*(.35+.65*Math.exp(-sc/(dep*4+1e-6)))*(.4+P.cracks*inten);if(f2-f1<w)sc=-1e-4;}
+          if(P.scratch){for(let k=0;k<3;k++){const a=hash(k,3,seed)*Math.PI,cs=Math.cos(a),sn=Math.sin(a),r1=u*cs+v*sn,r2=-u*sn+v*cs;
+            const ln=Math.abs(vn(r2*55+vn(r1*2,k,seed+60+k)*3,k*7,seed+40+k)-.5);if(ln<.006*(.5+inten)&&vn(r1*3,k,seed+50+k)>.52){sc=-1e-4;break;}}}
+          if(P.diag){const r1=u*.866+v*.5,r2=-u*.5+v*.866,dg=fbm(r1*1.6,r2*ff*.6,seed+33,3),lim=.78-.07*P.diag*inten-.16*near;if(dg>lim)sc=-1e-4;}
+          if(P.chalk){const ch=fbm(u*ff*1.6,v*ff*.35,seed+66,2),lim=.74-.08*P.chalk*inten;if(ch>lim)sc=-1e-4;}
+        }
         out[i]=sc;
       }
       if(o.progress&&y%128===0)o.progress(y/H);
@@ -3213,10 +3286,17 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
   seg("mxShape","shape",()=>{thumbs();schedule();});
   seg("mxRes","res",info);
   seg("mxShow","show",show);
-  function paintStyles(){$("mxStyles").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.s===st.style));}
+  st.cat="all";
+  (function buildStyles(){const box=$("mxStyles"),own=$("mxOwnCard");
+    MX_STYLES.forEach(([k,n,c])=>{const b=document.createElement("button");b.type="button";b.dataset.s=k;b.dataset.cat=c;b.innerHTML='<canvas width="132" height="96"></canvas><span>'+n+'</span>';box.insertBefore(b,own);});
+    const cnt=document.createElement("p");cnt.className="mx-count";cnt.id="mxCount";box.after(cnt);})();
+  function paintStyles(){$("mxStyles").querySelectorAll("button").forEach(b=>{b.classList.toggle("on",b.dataset.s===st.style);if(b.dataset.s!=="propia")b.hidden=!(st.cat==="all"||b.dataset.cat===st.cat);});
+    $("mxCats").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.c===st.cat));
+    const vis=[...$("mxStyles").querySelectorAll("button[data-cat]")].filter(b=>!b.hidden&&b.dataset.s!=="propia").length;$("mxCount").textContent=vis+" estilos"+(st.cat==="all"?" disponibles":" en esta categoría");}
   $("mxStyles").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;st.style=b.dataset.s;paintStyles();schedule(0);});
+  $("mxCats").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;st.cat=b.dataset.c;paintStyles();});
   paintStyles();
-  [["mxDepth","mxDepthV","%"],["mxInt","mxIntV","%"],["mxRough","mxRoughV","%"]].forEach(([i,o,u])=>$(i).addEventListener("input",()=>{$(o).textContent=$(i).value+u;if(i!=="mxInt")thumbs();schedule();}));
+  [["mxDepth","mxDepthV","%"],["mxInt","mxIntV","%"],["mxRough","mxRoughV","%"]].forEach(([i,o,u])=>$(i).addEventListener("input",()=>{$(o).textContent=$(i).value+u;thumbsSoon();schedule();}));
   $("mxNew").addEventListener("click",()=>{st.seed=Math.floor(Math.random()*1e6);thumbs();schedule(0);});
   $("mxWidth").addEventListener("input",info);
 
@@ -3262,13 +3342,14 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
     if(sample)return sample;const c=document.createElement("canvas");c.width=110;c.height=82;const x=c.getContext("2d");
     const g=x.createLinearGradient(0,0,110,82);g.addColorStop(0,"#3fc3ee");g.addColorStop(1,"#e66bc0");x.fillStyle=g;x.fillRect(0,0,110,82);
     x.fillStyle="rgba(255,255,255,.85)";x.font="900 26px system-ui,Arial";x.textAlign="center";x.fillText("CS",55,52);sample=c;return c;}
-  function params(W,H,alpha,style){return {W,H,alpha,style:style||st.style,shape:st.shape,depth:Number($("mxDepth").value)/100,inten:Number($("mxInt").value)/100,rough:Number($("mxRough").value)/100,seed:st.seed};}
+  function params(W,H,alpha,style){return {W,H,alpha,style:style||st.style,P:MX_P[style||st.style],shape:st.shape,depth:Number($("mxDepth").value)/100,inten:Number($("mxInt").value)/100,rough:Number($("mxRough").value)/100,seed:st.seed};}
   function compose(srcData,f,W,H){const o=new ImageData(new Uint8ClampedArray(srcData.data),W,H),d=o.data;for(let i=0;i<f.length;i++)if(f[i]<=0)d[i*4+3]=0;return o;}
+  let thT=null;function thumbsSoon(){clearTimeout(thT);thT=setTimeout(thumbs,220);}
   function thumbs(){
     const sc=sampleCanvas(),W=sc.width,H=sc.height,sd=sc.getContext("2d").getImageData(0,0,W,H),al=new Uint8Array(W*H);for(let i=0;i<al.length;i++)al[i]=sd.data[i*4+3];
     $("mxStyles").querySelectorAll("button").forEach(b=>{const cv=b.querySelector("canvas"),cx=cv.getContext("2d");cx.clearRect(0,0,cv.width,cv.height);
       if(b.dataset.s==="propia"&&!ownMask)return;
-      const f=b.dataset.s==="propia"?maskField(ownMask,W,H,al):mxEngine(Object.assign(params(W,H,al,b.dataset.s),{depth:Math.max(.06,Number($("mxDepth").value)/100)}));
+      const f=b.dataset.s==="propia"?maskField(ownMask,W,H,al):mxEngine(Object.assign(params(W,H,al,b.dataset.s),{depth:Math.max(.08,Number($("mxDepth").value)/100),inten:Math.max(.5,Number($("mxInt").value)/100)}));
       const c2=document.createElement("canvas");c2.width=W;c2.height=H;c2.getContext("2d").putImageData(compose(sd,f,W,H),0,0);
       cx.drawImage(c2,(cv.width-W)/2,(cv.height-H)/2);});
   }
@@ -5391,7 +5472,7 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
           </div>
           <button class="rb-go" id="btnBg" disabled>✦ Quitar fondo</button>
           <div class="rb-status" id="bgStatus" role="status" aria-live="polite">Sube una imagen para comenzar.</div>
-          <p class="rb-note" id="bgModeNote">IA general (BiRefNet): reconoce personajes, dibujos, productos y personas. La primera vez descarga el modelo (puede tardar unos minutos); después queda guardado.</p>
+          <p class="rb-note" id="bgModeNote">IA general (BiRefNet lite): reconoce personajes, dibujos, productos y personas. Funciona con poca memoria; la primera vez descarga el modelo (unos 100 MB) y después queda guardado.</p>
         </div>
         <div class="rb-box">
           <p class="rb-step"><b>3</b>Ajustar borde</p>
@@ -7303,10 +7384,13 @@ document.addEventListener("DOMContentLoaded", function(){
     }
     return bgLibraryPromise;
   }
-  async function bgGetPipeline(device) {
+  async function bgGetPipeline(device, variant) {
     // IA general: en GPU usa BiRefNet lite (1024 px); en CPU la versión 512 px, que necesita mucha menos memoria.
-    const modelId = window.csBgMode === 'portrait' ? 'Xenova/modnet' : (device === 'webgpu' ? 'onnx-community/BiRefNet_lite-ONNX' : 'onnx-community/BiRefNet_512x512-ONNX');
-    const key = device + '|' + modelId;
+    // IA general: BiRefNet lite a 512 px (MIT, ~94 MB en GPU / ~183 MB en CPU) cabe en la memoria del navegador.
+    // La versión de 1024 px solo se intenta en GPU y, si falla una vez, no se vuelve a intentar en ese equipo.
+    const modelId = window.csBgMode === 'portrait' ? 'Xenova/modnet' : (variant === 'hq' ? 'onnx-community/BiRefNet_lite-ONNX' : 'studioludens/birefnet-lite-512');
+    const bgDtype = modelId.includes('modnet') ? 'fp32' : (device === 'webgpu' ? 'fp16' : 'fp32');
+    const key = device + '|' + modelId + '|' + bgDtype;
     if (bgPipeline && bgPipelineDevice === key) return bgPipeline;
     const { pipeline } = await bgLibrary();
     const label = modelId.includes('modnet') ? 'IA retrato (MODNet)' : 'IA general (BiRefNet)';
@@ -7323,13 +7407,13 @@ document.addEventListener("DOMContentLoaded", function(){
     };
     if (bgPipeline && bgPipeline.dispose) { try { await bgPipeline.dispose(); } catch (e) {} }
     bgPipeline = null;
-    const model = await pipeline('image-segmentation', modelId, Object.assign({ dtype: 'fp32' }, opts));
+    const model = await pipeline('image-segmentation', modelId, Object.assign({ dtype: bgDtype }, opts));
     bgPipeline = model;
     bgPipelineDevice = key;
     return model;
   }
-  async function bgSegment(file, device) {
-    const model = await bgGetPipeline(device);
+  async function bgSegment(file, device, variant) {
+    const model = await bgGetPipeline(device, variant);
     const imageURL = URL.createObjectURL(file);
     try {
       return await model(imageURL);
@@ -7402,21 +7486,31 @@ document.addEventListener("DOMContentLoaded", function(){
       if (!window.isSecureContext) throw new Error('Abre Cruz Sublime desde HTTPS, no desde un archivo local.');
       bgSetStatus('Cargando inteligencia artificial…');
       await bgLibrary();
-      const hasGPU = !!navigator.gpu;
-      if (hasGPU) {
+      const hasGPU = !!navigator.gpu, general = window.csBgMode !== 'portrait';
+      const bgFree = async () => { if (bgPipeline && bgPipeline.dispose) { try { await bgPipeline.dispose(); } catch (e) {} } bgPipeline = null; bgPipelineDevice = null; };
+      let hqFailed = false; try { hqFailed = localStorage.getItem('cs_bg_hq_fail') === '1'; } catch (e) {}
+      if (hasGPU && general && !hqFailed) {
+        try {
+          bgSetStatus('Procesando en máxima calidad con tarjeta gráfica…');
+          output = await bgSegment(file, 'webgpu', 'hq');
+        } catch (hqError) {
+          console.warn('IA 1024 px no cabe en esta GPU; se usará la versión de 512 px:', hqError);
+          try { localStorage.setItem('cs_bg_hq_fail', '1'); } catch (e) {}
+          await bgFree(); output = null;
+        }
+      }
+      if (!output && hasGPU) {
         try {
           bgSetStatus('Procesando con tarjeta gráfica (WebGPU)…');
-          output = await bgSegment(file, 'webgpu');
+          output = await bgSegment(file, 'webgpu', 'std');
         } catch (gpuError) {
           console.warn('IA en GPU no disponible; reintentando en CPU:', gpuError);
-          if (bgPipeline && bgPipeline.dispose) { try { await bgPipeline.dispose(); } catch (e) {} }
-          bgPipeline = null; bgPipelineDevice = null;
-          bgSetStatus('GPU no disponible. Reintentando con procesador (CPU)…');
-          output = await bgSegment(file, 'wasm');
+          await bgFree(); output = null;
         }
-      } else {
-        bgSetStatus('Procesando con CPU… puede tardar un poco.');
-        output = await bgSegment(file, 'wasm');
+      }
+      if (!output) {
+        bgSetStatus(hasGPU ? 'Reintentando con el procesador (CPU)… puede tardar un poco.' : 'Procesando con CPU… puede tardar un poco.');
+        output = await bgSegment(file, 'wasm', 'std');
       }
       }
       if (generation !== bgGeneration) return;
@@ -7623,7 +7717,7 @@ document.addEventListener("DOMContentLoaded", function(){
     if(!$('bgModes'))return;
     window.csBgMode='general';
     let keyColor=null,picking=false,timer=null;
-    const notes={general:'IA general (BiRefNet): reconoce personajes, dibujos, productos y personas. La primera vez descarga el modelo (puede tardar unos minutos); después queda guardado.',
+    const notes={general:'IA general (BiRefNet lite): reconoce personajes, dibujos, productos y personas. Funciona con poca memoria; la primera vez descarga el modelo (unos 100 MB) y después queda guardado.',
       portrait:'IA retrato (MODNet): ideal y rápida para fotos de personas reales. No funciona bien con dibujos ni objetos.',
       color:'Para diseños con fondo de un solo color (blanco, negro o cualquier color liso). Es instantáneo, funciona sin internet y deja bordes limpios.'};
     $('bgModes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;window.csBgMode=b.dataset.mode;
