@@ -1428,6 +1428,35 @@ html body #csMedVip .mv-sz-n{display:block;margin-top:7px;font-size:10.5px;color
 html body #csMedVip .mv-drag-tip{margin:8px 2px 0;padding:7px 12px;border-radius:10px;background:#FFF6E2;border:1px dashed #C9A25A;color:#6b4a12!important;font:700 12px/1.4 system-ui,sans-serif}
 html body #csMedVip .mv-drag-tip[hidden]{display:none!important}
 
+/* --- Semitonos PRO: Automático DTF, presets y trama --- */
+#panel-semi [hidden]{display:none!important}
+#panel-semi .sp-auto{display:grid;gap:2px;width:100%;margin:0 0 12px;padding:12px 14px;border:0;border-radius:12px;cursor:pointer;text-align:left;font:800 15px/1.2 system-ui,sans-serif;color:#0b1020;background:linear-gradient(135deg,#5ee7ff,#3fc3ee 45%,#e66bc0);box-shadow:0 8px 22px rgba(63,195,238,.28);transition:transform .12s ease,filter .15s ease}
+#panel-semi .sp-auto small{font-weight:600;font-size:11.5px;opacity:.85}
+#panel-semi .sp-auto:hover{filter:brightness(1.08);transform:translateY(-1px)}
+#panel-semi .sp-auto:active{transform:scale(.98)}
+#panel-semi .sp-autonote{margin:-4px 0 12px;padding:9px 11px;border-radius:10px;background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.35);color:#c9f5df;font-size:12px;line-height:1.45}
+#panel-semi .sp-seg3 button{font-size:11.5px;padding:8px 4px;line-height:1.2}
+#panel-semi .sp-diag{margin:8px 2px 0;padding:8px 10px;border-radius:9px;background:rgba(63,195,238,.08);border:1px solid var(--sp-line2)}
+#panel-semi .sp-pre{display:flex;align-items:center;gap:6px;margin:-2px 0 6px;font-size:11px;color:var(--sp-muted)}
+#panel-semi .sp-pre span{margin-right:auto}
+#panel-semi .sp-pre button{min-width:44px;padding:5px 8px;border-radius:8px;border:1px solid var(--sp-line2);background:var(--sp-card2);color:var(--sp-text);font-weight:800;font-size:12px;cursor:pointer}
+#panel-semi .sp-pre button.on,#panel-semi .sp-pre button:hover{border-color:var(--sp-acc);color:#fff;background:rgba(63,195,238,.18)}
+
+/* --- Semitonos PRO: herramienta de escritorio con vista fija --- */
+#panel-semi .sp-desk-only{display:none}
+@media (min-width:1000px){
+ #panel-semi .sp-app{height:calc(100vh - 24px);min-height:640px;align-items:stretch!important}
+ #panel-semi .sp-side{overflow-y:auto;overscroll-behavior:contain;padding-right:6px;scrollbar-width:thin;scrollbar-color:#33415f transparent}
+ #panel-semi .sp-view{position:relative!important;top:auto!important;display:flex;flex-direction:column;min-height:0}
+ #panel-semi .sp-viewport{flex:1 1 auto;height:auto!important;min-height:0}
+}
+@media (max-width:999px),(pointer:coarse) and (max-width:1279px){
+ #panel-semi .sp-app{display:none!important}
+ #panel-semi .sp-desk-only{display:grid;gap:8px;margin:8px 0 4px;padding:22px 20px;border-radius:14px;border:1px solid var(--sp-line2);background:linear-gradient(135deg,#121a2e,#1a1030);color:var(--sp-text);font-size:14px;line-height:1.5;text-align:center}
+ #panel-semi .sp-desk-only b{font-size:17px}
+ #panel-semi .sp-desk-only span{color:var(--sp-muted)}
+}
+
 /* --- Mug Studio PRO: botón de video 360° --- */
 #panel-mug .mg-save{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
 #panel-mug .mg-video{background:linear-gradient(110deg,#F94CA8,#9C7BFF)!important;color:#fff!important}
@@ -2966,23 +2995,27 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
   <!-- SEMITONOS MASTER MEJORADO -->
   <div class="panel" id="panel-semi">
    <div class="sp-head"><div><span class="sp-eyebrow">DTF · PRINT LAB</span><h2>Semitonos PRO</h2><p>Crea tramas de semitono profesionales para DTF: quita fondos, desvanece bordes y elimina transparencias que tu impresora no maneja bien.</p></div></div>
-   <div class="sp-app">
+   <div class="sp-desk-only" role="note"><b>🖥️ Semitonos PRO es para computadora</b><span>Esta herramienta procesa archivos de impresión grandes y necesita la potencia y la pantalla de una computadora. Abre cruzsublim.com en tu computadora para usarla.</span></div>
+<div class="sp-app">
     <aside class="sp-side">
      <div class="sp-box">
       <p class="sp-step"><b>1</b>Imagen</p>
-      <label class="sp-drop" id="spDrop"><input type="file" id="spFile" accept="image/png,image/jpeg,image/webp"><span class="sp-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span><span class="sp-dt"><span class="sp-t" id="spFileName">Subir o arrastrar imagen</span><span class="sp-s" id="spFileInfo">PNG, JPG o WEBP · hasta 16 MP</span></span></label>
+      <label class="sp-drop" id="spDrop"><input type="file" id="spFile" accept="image/png,image/jpeg,image/webp"><span class="sp-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span><span class="sp-dt"><span class="sp-t" id="spFileName">Subir o arrastrar imagen</span><span class="sp-s" id="spFileInfo">PNG, JPG o WEBP</span></span></label>
+<p class="sp-note sp-diag" id="spAlphaDiag" hidden></p>
      </div>
      <div class="sp-box">
       <p class="sp-step"><b>2</b>¿Qué quieres hacer?</p>
       <div class="sp-modes" id="spModes">
        <button type="button" data-mode="knock"><span>⬛</span><strong>Quitar fondo</strong><small>Perfora un color (ej. negro) con transición en puntos</small></button>
-       <button type="button" data-mode="fade"><span>🌫️</span><strong>Desvanecer</strong><small>Bordes que se deshacen en puntos</small></button>
+       <button type="button" data-mode="fade"><span>🌫️</span><strong>Desvanecer</strong><small>Centro sólido y orillas que se deshacen en puntos</small></button>
        <button type="button" data-mode="alpha"><span>💧</span><strong>Arreglar transparencias</strong><small>Convierte sombras y brillos semitransparentes en puntos</small></button>
        <button type="button" data-mode="tone"><span>🎨</span><strong>Semitono artístico</strong><small>Toda la imagen en trama, estilo vintage</small></button>
       </div>
      </div>
      <div class="sp-box">
       <p class="sp-step"><b>3</b>Ajustes</p>
+<button type="button" class="sp-auto" id="spAuto">✨ Automático DTF<small>Elige lineatura, contraste y niveles por ti</small></button>
+<p class="sp-autonote" id="spAutoNote" hidden></p>
       <div class="sp-fields">
        <div data-show="knock" class="sp-color-row"><label class="sp-lbl">Color a quitar</label><div class="sp-inline"><input type="color" id="spTarget" value="#000000"><button type="button" class="sp-mini" id="spPick">🎯 Tomar de la imagen</button></div></div>
        <label data-show="knock" class="sp-sl">Rango del color<span id="spRangeV">12%</span><input type="range" id="spRange" min="0" max="60" value="12"></label>
@@ -2990,21 +3023,35 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
        <div data-show="fade"><label class="sp-lbl">Dirección</label><div class="sp-seg sp-seg5" id="spFadeDir"><button type="button" data-v="radial" title="Hacia los bordes">◎</button><button type="button" data-v="down" title="Hacia abajo">↓</button><button type="button" data-v="up" title="Hacia arriba">↑</button><button type="button" data-v="left" title="Hacia la izquierda">←</button><button type="button" data-v="right" title="Hacia la derecha">→</button></div></div>
        <label data-show="fade" class="sp-sl">Inicio del desvanecido<span id="spFadeV">45%</span><input type="range" id="spFade" min="0" max="90" value="45"></label>
        <label data-show="tone" class="sp-sl">Contraste<span id="spContrastV">100%</span><input type="range" id="spContrast" min="50" max="200" value="100"></label>
-       <label data-show="tone" class="sp-tg">Invertir (tinta clara sobre prenda oscura)<input type="checkbox" id="spInvert"></label>
+       <label data-show="tone" class="sp-sl">Punto negro<span id="spLevLoV">0</span><input type="range" id="spLevLo" min="0" max="200" value="0"></label>
+<label data-show="tone" class="sp-sl">Punto blanco<span id="spLevHiV">255</span><input type="range" id="spLevHi" min="55" max="255" value="255"></label>
+<label data-show="tone" class="sp-tg">Invertir (tinta clara sobre prenda oscura)<input type="checkbox" id="spInvert"></label>
        <p data-show="alpha" class="sp-note">Las zonas sólidas quedan intactas; solo las partes semitransparentes (sombras, brillos, humo) se vuelven puntos sólidos que el DTF imprime bien.</p>
        <hr class="sp-hr">
-       <label class="sp-lbl">Forma del punto</label>
-       <div class="sp-seg sp-seg5" id="spShape"><button type="button" data-v="round" title="Redondo">●</button><button type="button" data-v="square" title="Cuadrado">■</button><button type="button" data-v="diamond" title="Diamante">◆</button><button type="button" data-v="ellipse" title="Elíptico">⬬</button><button type="button" data-v="line" title="Líneas">☰</button></div>
-       <label class="sp-sl">Lineatura (LPI)<span id="spLpiV">35</span><input type="range" id="spLpi" min="10" max="85" value="35"></label>
-       <label class="sp-sl">Ángulo<span id="spAngleV">45°</span><input type="range" id="spAngle" min="0" max="90" step="7.5" value="45"></label>
-       <label class="sp-lbl" for="spWidth">Ancho de impresión</label>
+       <label class="sp-lbl">Tipo de trama</label><div class="sp-seg sp-seg3" id="spScreen"><button type="button" data-v="am">Puntos (AM)</button><button type="button" data-v="hy">Híbrido</button><button type="button" data-v="fm">Estocástica (FM)</button></div>
+<p class="sp-note" data-scr="hy">Puntos AM en tonos medios y puntos mínimos repartidos sin patrón en luces y sombras: degradados suaves sin puntos que el polvo no fija.</p>
+<label class="sp-sl" data-scr="fm">Tamaño del grano<span id="spGrainV">0.25 mm</span><input type="range" id="spGrain" min="0.12" max="0.8" step="0.01" value="0.25"></label>
+<p class="sp-note" data-scr="fm">Puntitos finos del mismo tamaño repartidos sin patrón: ideal para fotos, piel y degradados suaves.</p>
+<label class="sp-lbl" data-scr="am hy">Forma del punto</label>
+       <div class="sp-seg sp-seg5" id="spShape" data-scr="am hy"><button type="button" data-v="round" title="Redondo">●</button><button type="button" data-v="square" title="Cuadrado">■</button><button type="button" data-v="diamond" title="Diamante">◆</button><button type="button" data-v="ellipse" title="Elíptico">⬬</button><button type="button" data-v="line" title="Líneas">☰</button></div>
+       <label class="sp-sl" data-scr="am hy">Lineatura (LPI)<span id="spLpiV">55</span><input type="range" id="spLpi" min="10" max="85" value="55"></label>
+<div class="sp-pre" id="spLpiPre" data-scr="am hy"><span>Recomendado DTF</span><button type="button" data-v="45">45</button><button type="button" data-v="55">55</button><button type="button" data-v="65">65</button></div>
+       <label class="sp-sl" data-scr="am hy">Ángulo<span id="spAngleV">45°</span><input type="range" id="spAngle" min="0" max="90" step="7.5" value="45"></label>
+       <label class="sp-tg">Proteger orillas de texto y logos<input type="checkbox" id="spEdge" checked></label>
+<p class="sp-note">Las orillas duras se quedan sólidas y limpias; los puntos solo aparecen en los tonos intermedios.</p>
+<label class="sp-sl">Punto mínimo físico<span id="spMinMMV">0.18 mm</span><input type="range" id="spMinMM" min="0" max="0.5" step="0.01" value="0.18"></label>
+<p class="sp-note">Los puntos más chicos se agrupan sin perder el tono, para que el polvo DTF sí los fije. Ajústalo según tu impresora y tu polvo.</p>
+<label class="sp-lbl" for="spWidth">Ancho de impresión</label>
        <div class="sp-inline"><input type="number" id="spWidth" min="2" max="150" step="0.5" value="28"><span class="sp-unit">cm</span></div>
       </div>
      </div>
      <details class="sp-adv"><summary>Acabado avanzado</summary><div class="sp-fields">
       <label class="sp-sl">Punto mínimo<span id="spMinV">6%</span><input type="range" id="spMin" min="0" max="30" value="6"></label>
       <label class="sp-sl">Sólido desde<span id="spSolidV">94%</span><input type="range" id="spSolid" min="60" max="100" value="94"></label>
-      <label class="sp-tg">Bordes nítidos (sin semitransparencias)<input type="checkbox" id="spHard" checked></label>
+      <label class="sp-tg">Trama alineada a píxeles (puntos idénticos)<input type="checkbox" id="spRat" checked></label>
+<label class="sp-sl">Hueco mínimo en sombras<span id="spGapMMV">0.12 mm</span><input type="range" id="spGapMM" min="0" max="0.4" step="0.01" value="0.12"></label>
+<label class="sp-tg">Respetar transparencias de la imagen<input type="checkbox" id="spKeepAlpha" checked></label>
+<label class="sp-tg">Bordes nítidos (sin semitransparencias)<input type="checkbox" id="spHard" checked></label>
       <label class="sp-lbl">Color de los puntos</label>
       <div class="sp-seg" id="spInkMode"><button type="button" data-v="orig">Colores originales</button><button type="button" data-v="ink">Un solo color</button></div>
       <div class="sp-inline" id="spInkRow" hidden><input type="color" id="spInk" value="#ffffff"><span class="sp-unit">Color de tinta</span></div>
@@ -3014,14 +3061,14 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
       <button type="button" class="sp-go" id="spGo" disabled>Aplicar semitono</button>
       <div class="sp-bar" id="spBar"><i id="spBarFill"></i></div>
       <p class="sp-status" id="spStatus">Sube una imagen para comenzar.</p>
-      <button type="button" class="sp-dl" id="spDl" hidden>⬇ Descargar PNG para DTF</button>
+      <button type="button" class="sp-dl" id="spDl" hidden>⬇ Descargar PNG · fondo transparente</button>
      </div>
     </aside>
     <main class="sp-view">
      <div class="sp-toolbar">
       <div class="sp-seg sp-tabs" id="spShow"><button type="button" data-v="res">Resultado</button><button type="button" data-v="orig">Original</button></div>
       <div class="sp-bg"><span>Ver sobre</span><button type="button" data-bg="checker" title="Transparente" class="sp-bgc"></button><button type="button" data-bg="#ffffff" title="Prenda blanca" style="background:#fff"></button><button type="button" data-bg="#111111" title="Prenda negra" style="background:#111"></button><label title="Otro color" class="sp-bgpick"><input type="color" id="spBgColor" value="#8b2a3f"></label></div>
-      <div class="sp-zoom"><button type="button" id="spZOut" aria-label="Alejar">−</button><button type="button" id="spZFit">Ajustar</button><span id="spZVal">100%</span><button type="button" id="spZIn" aria-label="Acercar">+</button></div>
+      <div class="sp-zoom"><button type="button" id="spZOut" aria-label="Alejar">−</button><button type="button" id="spZFit">Ajustar</button><button type="button" id="spZReal" title="Ver al tamaño real de impresión">Tamaño real</button><span id="spZVal">100%</span><button type="button" id="spZIn" aria-label="Acercar">+</button></div>
      </div>
      <div class="sp-viewport" id="spViewport" data-bg="checker"><div class="sp-empty" id="spEmpty"><b>Tu vista previa aparecerá aquí</b><span>Usa la rueda del mouse para hacer zoom y arrastra para moverte. Acerca al 100% o más para revisar los puntos.</span></div><canvas id="spCanvas"></canvas></div>
      <div class="sp-info" id="spInfo"><span>—</span></div>
@@ -6130,33 +6177,54 @@ document.addEventListener("DOMContentLoaded", function(){
     "use strict";
     const $=id=>document.getElementById(id);
     if(!$("spCanvas"))return;
-    const MAX_PX=16000000, AUTO_PX=6000000;
+    const MAX_PX=16000000, AUTO_PX=6000000, EXPORT_MAX=80000000;
+    const PREV_PX=((window.matchMedia&&matchMedia("(pointer:coarse)").matches)||(navigator.deviceMemory&&navigator.deviceMemory<=4))?6000000:16000000;
     const st={mode:"knock",shape:"round",fadeDir:"radial",ink:"orig",show:"res",bg:"checker",zoom:1};
     let src=null,srcData=null,result=null,fileName="",busy=false,queued=false,picking=false,timer=null,worker=null,jobId=0;
     const canvas=$("spCanvas"),ctx=canvas.getContext("2d"),vp=$("spViewport");
 
     /* ---------- motor (corre en un Worker para no congelar la página) ---------- */
     function engine(){
+      function getBN(){
+        const M=128,N2=M*M;if(self.BN&&self.BNM===M)return self.BN;
+        const sig=1.5,rad=6,K=[];for(let dy=-rad;dy<=rad;dy++)for(let dx=-rad;dx<=rad;dx++)K.push(dx,dy,Math.exp(-(dx*dx+dy*dy)/(2*sig*sig)));
+        const bin=new Uint8Array(N2),E=new Float32Array(N2),rank=new Float32Array(N2);
+        const add=(q,sg)=>{const x=q%M,y=(q/M)|0;for(let j=0;j<K.length;j+=3)E[((y+K[j+1]+M)%M)*M+((x+K[j]+M)%M)]+=sg*K[j+2];};
+        let seed=12345;const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+        let ones=0;while(ones<N2*.1){const q=Math.floor(rnd()*N2);if(!bin[q]){bin[q]=1;add(q,1);ones++;}}
+        const tight=()=>{let b=-1,v=-1e9;for(let q=0;q<N2;q++)if(bin[q]&&E[q]>v){v=E[q];b=q;}return b;};
+        const vd=()=>{let b=-1,v=1e9;for(let q=0;q<N2;q++)if(!bin[q]&&E[q]<v){v=E[q];b=q;}return b;};
+        for(let it=0;it<N2;it++){const t=tight();bin[t]=0;add(t,-1);const v=vd();if(v===t){bin[t]=1;add(t,1);break;}bin[v]=1;add(v,1);}
+        const pb=bin.slice(),pe=E.slice();
+        let r=ones-1;while(r>=0){const t=tight();bin[t]=0;add(t,-1);rank[t]=r--;}
+        bin.set(pb);E.set(pe);r=ones;while(r<N2){const v=vd();bin[v]=1;add(v,1);rank[v]=r++;}
+        const out=new Float32Array(N2);for(let q=0;q<N2;q++)out[q]=(rank[q]+.5)/N2;self.BN=out;self.BNM=M;return out;
+      }
+      /* Trama racional: vector de celda con componentes enteras, así todos los puntos se dibujan igual. */
+      function ratScreen(cell,deg){const t=deg*Math.PI/180;let best=null;
+        for(let a=0;a<=Math.ceil(cell)+1;a++)for(let b=0;b<=Math.ceil(cell)+1;b++){const L=Math.hypot(a,b);if(L<2)continue;
+          const da=Math.abs(Math.atan2(b,a)-t),cost=Math.abs(L-cell)/cell/.1+da/(10*Math.PI/180);if(!best||cost<best.c)best={a,b,c:cost};}
+        return best;}
       self.onmessage=function(e){
         const {id,w,h,buf,p}=e.data,s=new Uint8ClampedArray(buf),N=w*h;
-        const cov=new Float32Array(N);
+        const cov=new Float32Array(N),OY=p.oy||0,GH=p.gh||h;let small=0;
         const tr=p.target[0],tg=p.target[1],tb=p.target[2];
         const ss=(a,b,x)=>{if(b<=a)return x>=a?1:0;const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};
         for(let y=0,i=0;y<h;y++){
           for(let x=0;x<w;x++,i++){
-            const k=i*4,r=s[k],g=s[k+1],b=s[k+2],a=s[k+3]/255;
+            const k=i*4,r=s[k],g=s[k+1],b=s[k+2],a=p.flat?1:s[k+3]/255;
             let c=a;
             if(a>0){
               if(p.mode==="knock"){
                 const d=Math.sqrt(.3*(r-tr)*(r-tr)+.59*(g-tg)*(g-tg)+.11*(b-tb)*(b-tb))/2.55;
                 c=a*ss(p.range,p.range+p.soft,d);
               }else if(p.mode==="tone"){
-                const L=(.2126*r+.7152*g+.0722*b)/255;
+                let L=(.2126*r+.7152*g+.0722*b)/255;L=Math.min(1,Math.max(0,(L-p.lo)/Math.max(.05,p.hi-p.lo)));
                 let t=p.invert?L:1-L;t=Math.min(1,Math.max(0,(t-.5)*p.contrast+.5));c=a*t;
               }else if(p.mode==="fade"){
                 let t;
-                if(p.fadeDir==="radial")t=Math.hypot((x+.5)/w*2-1,(y+.5)/h*2-1)/Math.SQRT2*1.18;
-                else if(p.fadeDir==="down")t=(y+.5)/h;else if(p.fadeDir==="up")t=1-(y+.5)/h;
+                if(p.fadeDir==="radial")t=Math.hypot((x+.5)/w*2-1,(y+OY+.5)/GH*2-1)/Math.SQRT2*1.18;
+                else if(p.fadeDir==="down")t=(y+OY+.5)/GH;else if(p.fadeDir==="up")t=1-(y+OY+.5)/GH;
                 else if(p.fadeDir==="right")t=(x+.5)/w;else t=1-(x+.5)/w;
                 c=a*(1-ss(p.fade,1,t));
               }
@@ -6164,6 +6232,32 @@ document.addEventListener("DOMContentLoaded", function(){
             cov[i]=c;
           }
           if(y%256===0)self.postMessage({id,progress:.35*y/h});
+        }
+        let prot=null;
+        if(p.edge){/* Orillas duras (texto, logos): se conservan sólidas en lugar de volverse puntos. */
+          const r=Math.max(1,Math.min(5,Math.round((p.screen==="fm"?Math.max(2,p.grain):p.cell)*.6))),mx=new Float32Array(N),mn=new Float32Array(N);
+          for(let y=0;y<h;y++){const o=y*w;for(let x=0;x<w;x++){let a=-1,b=2;const x1=Math.min(w-1,x+r);for(let k=Math.max(0,x-r);k<=x1;k++){const v=cov[o+k];if(v>a)a=v;if(v<b)b=v;}mx[o+x]=a;mn[o+x]=b;}}
+          prot=new Uint8Array(N);let any=0;
+          for(let y=0;y<h;y++){const y0=Math.max(0,y-r),y1=Math.min(h-1,y+r);for(let x=0;x<w;x++){let a=-1,b=2;for(let k=y0;k<=y1;k++){const q=k*w+x;if(mx[q]>a)a=mx[q];if(mn[q]<b)b=mn[q];}if(a-b>.85){prot[y*w+x]=1;any=1;}}}
+          if(!any)prot=null;
+        }
+        if(p.screen==="fm"){
+          const M=128,N2=M*M;getBN();
+          const d=Math.max(1,Math.round(p.grain),p.dminSq||1),BY=Math.round(OY/d),bw=Math.ceil(w/d),bh=Math.ceil(h/d),out=new Uint8ClampedArray(N*4),ink=p.inkColor,BN=self.BN;
+          for(let by=0;by<bh;by++){
+            for(let bx=0;bx<bw;bx++){
+              const x0=bx*d,y0=by*d,x1=Math.min(w,x0+d),y1=Math.min(h,y0+d);let sm=0,n=0;
+              for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){sm+=cov[y*w+x];n++;}
+              let C=n?sm/n:0;if(C>=p.solid)C=1;else if(C<=p.min)C=0;
+              const on=!(C<=0||(C<1&&C<=BN[((by+BY)%M)*M+(bx%M)]));if(!on&&!prot)continue;
+              const ccx=x0+d/2,ccy=y0+d/2,R2=(C>=1||d<3)?1e9:(d*.5642)*(d*.5642);
+              for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const i=y*w+x,k=i*4;if(!p.flat&&s[k+3]<5)continue;
+                let mm=on&&((x+.5-ccx)*(x+.5-ccx)+(y+.5-ccy)*(y+.5-ccy)<=R2);if(prot&&prot[i])mm=cov[i]>=.5;if(!mm)continue;
+                if(p.ink==="ink"){out[k]=ink[0];out[k+1]=ink[1];out[k+2]=ink[2];}else{out[k]=s[k];out[k+1]=s[k+1];out[k+2]=s[k+2];}out[k+3]=255;}
+            }
+            if(by%64===0)self.postMessage({id,progress:.35+.65*by/bh});
+          }
+          self.postMessage({id,done:true,small:0,buf:out.buffer},[out.buffer]);return;
         }
         // Mapa de umbrales por rango: cada forma reproduce exactamente el % de cobertura.
         const R=64,T=new Float32Array(R*R),val=new Float32Array(R*R),idx=new Uint32Array(R*R);
@@ -6185,28 +6279,33 @@ document.addEventListener("DOMContentLoaded", function(){
           return (T[Y0*R+X0]*(1-dx)+T[Y0*R+X1]*dx)*(1-dy)+(T[Y1*R+X0]*(1-dx)+T[Y1*R+X1]*dx)*dy;
         };
         // Promedio por celda en la cuadrícula girada (semitono AM).
-        const cell=p.cell,ang=p.angle*Math.PI/180,cs=Math.cos(ang)/cell,sn=Math.sin(ang)/cell;
+        let cell=p.cell,ang=p.angle*Math.PI/180,cs=Math.cos(ang)/cell,sn=Math.sin(ang)/cell;
+        if(p.rat){const rs=ratScreen(p.cell,p.angle);if(rs){const L2=rs.a*rs.a+rs.b*rs.b;cs=rs.a/L2;sn=rs.b/L2;cell=Math.sqrt(L2);}}
         let minU=1e9,maxU=-1e9,minV=1e9,maxV=-1e9;
-        for(const [x,y] of [[0,0],[w,0],[0,h],[w,h]]){const u=x*cs+y*sn,v=-x*sn+y*cs;minU=Math.min(minU,u);maxU=Math.max(maxU,u);minV=Math.min(minV,v);maxV=Math.max(maxV,v);}
+        for(const [x,y] of [[0,OY],[w,OY],[0,OY+h],[w,OY+h]]){const u=x*cs+y*sn,v=-x*sn+y*cs;minU=Math.min(minU,u);maxU=Math.max(maxU,u);minV=Math.min(minV,v);maxV=Math.max(maxV,v);}
         const ox=Math.floor(minU)-1,oy=Math.floor(minV)-1,nx=Math.ceil(maxU)-ox+2,ny=Math.ceil(maxV)-oy+2;
         const sum=new Float32Array(nx*ny),cnt=new Uint32Array(nx*ny);
         for(let y=0,i=0;y<h;y++){for(let x=0;x<w;x++,i++){
-          const q=(Math.floor(-x*sn+y*cs)-oy)*nx+(Math.floor(x*cs+y*sn)-ox);sum[q]+=cov[i];cnt[q]++;}
+          const Y=y+OY,q=(Math.floor(-x*sn+Y*cs)-oy)*nx+(Math.floor(x*cs+Y*sn)-ox);sum[q]+=cov[i];cnt[q]++;}
           if(y%256===0)self.postMessage({id,progress:.35+.25*y/h});}
-        for(let q=0;q<sum.length;q++){let c=cnt[q]?sum[q]/cnt[q]:0;if(c>=p.solid)c=1;else if(c<=p.min)c=0;sum[q]=c;}
+        const hyb=p.screen==="hy",cmin=hyb?Math.max(p.cmin||0,.22):(p.cmin||0),cgap=hyb?Math.max(p.cgap||0,.15):(p.cgap||0),BNa=(cmin>0||cgap>0)?getBN():null,bnAt=(a,b)=>BNa[(((b%128)+128)%128)*128+(((a%128)+128)%128)],hs=(a,b)=>{let z=(a*374761393+b*668265263)|0;z=Math.imul(z^(z>>>13),1274126177);return ((z^(z>>>16))>>>0)/4294967296;};
+        for(let q=0;q<sum.length;q++){let c=cnt[q]?sum[q]/cnt[q]:0;if(c>=p.solid)c=1;else if(c<=p.min)c=0;
+          if(c>0&&c<cmin){small++;c=bnAt(q%nx+ox,((q/nx)|0)+oy)<c/cmin?cmin:0;}
+          else if(c<1&&1-c<cgap){c=bnAt(q%nx+ox+64,((q/nx)|0)+oy+37)<(1-c)/cgap?1-cgap:1;}
+          sum[q]=c;}
         const out=new Uint8ClampedArray(N*4),soft=Math.max(.02,1.2/cell),ink=p.inkColor;
         for(let y=0,i=0;y<h;y++){for(let x=0;x<w;x++,i++){
-          const k=i*4;if(s[k+3]<5)continue;
-          const u=x*cs+y*sn,v=-x*sn+y*cs,fu=u-Math.floor(u),fv=v-Math.floor(v);
+          const k=i*4;if(!p.flat&&s[k+3]<5)continue;
+          const Y=y+OY,u=x*cs+Y*sn,v=-x*sn+Y*cs,fu=u-Math.floor(u),fv=v-Math.floor(v);
           const C=sum[(Math.floor(v)-oy)*nx+(Math.floor(u)-ox)];
           let m;
-          if(C>=1||cov[i]>=p.solid)m=1;else if(C<=0)m=0;
+          if(prot&&prot[i])m=cov[i]>=.5?1:0;else if(C>=1||cov[i]>=p.solid)m=1;else if(C<=0)m=0;
           else{const t=tAt(fu,fv);m=p.hard?(t<C?1:0):Math.min(1,Math.max(0,(C-t)/soft+.5));}
           if(!m)continue;
           if(p.ink==="ink"){out[k]=ink[0];out[k+1]=ink[1];out[k+2]=ink[2];}else{out[k]=s[k];out[k+1]=s[k+1];out[k+2]=s[k+2];}
           out[k+3]=p.hard?255:Math.round(m*255);
         }if(y%256===0)self.postMessage({id,progress:.6+.4*y/h});}
-        self.postMessage({id,done:true,buf:out.buffer},[out.buffer]);
+        self.postMessage({id,done:true,small,buf:out.buffer},[out.buffer]);
       };
     }
     try{worker=new Worker(URL.createObjectURL(new Blob(["("+engine.toString()+")()"],{type:"text/javascript"})));}catch(e){worker=null;}
@@ -6237,6 +6336,91 @@ document.addEventListener("DOMContentLoaded", function(){
     $("spWidth").addEventListener("input",info);
     paintModes();syncLabels();
 
+    st.screen="am";st.lev=[0,1];
+    let orig=null,origPx=[0,0],alphaFixed=false,wTimer=null;
+    function scrUI(){document.querySelectorAll("#panel-semi [data-scr]").forEach(el=>{el.hidden=!el.dataset.scr.split(" ").includes(st.screen);});}
+    const paintScr=seg("spScreen","screen",()=>{scrUI();changed();});scrUI();
+    $("spGrain").addEventListener("input",()=>{$("spGrainV").textContent=Number($("spGrain").value).toFixed(2)+" mm";changed();});
+    $("spKeepAlpha").addEventListener("input",changed);
+    function paintPre(){$("spLpiPre").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.v===$("spLpi").value));}
+    $("spLpiPre").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;$("spLpi").value=b.dataset.v;syncLabels();paintPre();changed();});
+    $("spLpi").addEventListener("input",paintPre);paintPre();
+    function resample(c0,W,H){let cur=c0,cw=c0.width,ch=c0.height;
+      while(cw*.5>=W&&ch*.5>=H){const t=document.createElement("canvas");t.width=Math.round(cw*.5);t.height=Math.round(ch*.5);const tx=t.getContext("2d");tx.imageSmoothingQuality="high";tx.drawImage(cur,0,0,t.width,t.height);cur=t;cw=t.width;ch=t.height;}
+      const o=document.createElement("canvas");o.width=W;o.height=H;const ox=o.getContext("2d",{willReadFrequently:true});ox.imageSmoothingEnabled=true;ox.imageSmoothingQuality="high";ox.drawImage(cur,0,0,W,H);return o;}
+    /* Trabaja siempre a 300 DPI del ancho de impresión: lo que ves es lo que se descarga. */
+    function buildWork(){if(!orig)return;const cm=Math.max(2,Number($("spWidth").value)||28);
+      let W=Math.round(cm/2.54*300),H=Math.round(W*orig.height/orig.width);if(W*H>PREV_PX){const f=Math.sqrt(PREV_PX/(W*H));W=Math.floor(W*f);H=Math.floor(H*f);}
+      src=resample(orig,W,H);srcData=src.getContext("2d",{willReadFrequently:true}).getImageData(0,0,W,H);result=null;$("spDl").hidden=true;}
+    /* Fotos mejoradas con IA suelen traer transparencias por bloques: provocan bandas rectangulares. */
+    function detectAlpha(d){const W=orig.width,H=orig.height,a=d.data,bw=Math.max(2,Math.round(Math.min(W,H)*.02));let op=0,n=0,bo=0,bn=0,tr=0;
+      for(let y=0;y<H;y+=2)for(let x=0;x<W;x+=2){const v=a[(y*W+x)*4+3];n++;if(v>=250)op++;if(v<5)tr++;if(x<bw||y<bw||x>=W-bw||y>=H-bw){bn++;if(v>=128)bo++;}}
+      const fo=op/n,fb=bn?bo/bn:1;alphaFixed=fo<.999&&fb>.6&&tr/n<.05;
+      const dg=$("spAlphaDiag");dg.hidden=false;dg.innerHTML=fo>=.999?"<b>Transparencias:</b> ninguna, la imagen es sólida.":alphaFixed?"<b>Transparencias raras por bloques</b> (típico de fotos mejoradas con IA): se ignoran para evitar bandas. Si tu imagen es un recorte, activa «Respetar transparencias» en Acabado avanzado.":"<b>Recorte con fondo transparente</b> ("+Math.round(tr/n*100)+"% transparente): el fondo se respeta y queda transparente en el PNG.";$("spKeepAlpha").checked=!alphaFixed;return alphaFixed;}
+    $("spWidth").addEventListener("input",()=>{if(!orig)return;clearTimeout(wTimer);wTimer=setTimeout(()=>{buildWork();st.show="orig";document.querySelectorAll("#spShow button").forEach(b=>b.classList.toggle("on",b.dataset.v==="orig"));draw();fit();info();changed();},300);});
+    $("spZReal").onclick=()=>{if(!src)return;setZoom(96/Math.max(1,dpi()));status("Vista a tamaño real aproximado (depende de tu pantalla). Así se verán los puntos en la prenda.");};
+    const lumHex=v=>{if(!/^#[0-9a-f]{6}$/i.test(v))return 1;const c=hex(v);return (.2126*c[0]+.7152*c[1]+.0722*c[2])/255;};
+    $("spAuto").addEventListener("click",()=>{
+      if(!src){status("Primero sube una imagen.");return;}
+      const d=orig.getContext("2d",{willReadFrequently:true}).getImageData(0,0,orig.width,orig.height).data,hist=new Uint32Array(256),flat=!$("spKeepAlpha").checked;let n=0;
+      for(let k=0;k<d.length;k+=16){if(!flat&&d[k+3]<128)continue;hist[Math.round(.2126*d[k]+.7152*d[k+1]+.0722*d[k+2])]++;n++;}
+      let acc=0,lo=0,hi=255;for(let i=0;i<256;i++){acc+=hist[i];if(acc>=n*.005){lo=i;break;}}acc=0;for(let i=255;i>=0;i--){acc+=hist[i];if(acc>=n*.005){hi=i;break;}}
+      if(hi-lo<40){lo=0;hi=255;}st.lev=[lo/255,hi/255];syncLev();$("spEdge").checked=true;
+      st.mode="tone";paintModes();st.screen="am";paintScr();scrUI();st.shape="round";document.querySelectorAll("#spShape button").forEach(b=>b.classList.toggle("on",b.dataset.v==="round"));
+      const dark=st.bg!=="checker"&&lumHex(st.bg)<.45;$("spInvert").checked=dark;
+      const cm=Math.max(2,Number($("spWidth").value)||28),od=origPx[0]/(cm/2.54),lpi=od>=200?55:45;
+      $("spLpi").value=lpi;$("spAngle").value=22.5;$("spContrast").value=115;$("spMin").value=4;$("spSolid").value=96;$("spHard").checked=true;
+      syncLabels();paintPre();info();
+      const nt=$("spAutoNote");nt.hidden=false;
+      nt.innerHTML="Listo: <b>"+lpi+" LPI</b>, punto redondo a 22.5°, niveles ajustados ("+lo+"–"+hi+"), contraste 115%, punto mínimo 4%"+(dark?", invertido para prenda oscura":"")+"."+(st.bg==="checker"?" <br>¿Prenda oscura? Elige «Ver sobre» negro y presiona otra vez.":"")+(alphaFixed?" <br>Corregimos transparencias raras de tu foto.":"");
+      run();});
+    let origImg=null,lastSmall=0;
+    ["spMinMM","spGapMM"].forEach(i=>$(i).addEventListener("input",()=>{$(i+"V").textContent=Number($(i).value).toFixed(2)+" mm";changed();}));
+    function syncLev(){$("spLevLo").value=Math.round(st.lev[0]*255);$("spLevHi").value=Math.round(st.lev[1]*255);$("spLevLoV").textContent=$("spLevLo").value;$("spLevHiV").textContent=$("spLevHi").value;}
+    ["spLevLo","spLevHi"].forEach(i=>$(i).addEventListener("input",()=>{let lo=Number($("spLevLo").value),hi=Number($("spLevHi").value);
+      if(hi-lo<20){if(i==="spLevLo")lo=hi-20;else hi=lo+20;}st.lev=[Math.max(0,lo)/255,Math.min(255,hi)/255];syncLev();changed();}));
+    ["spEdge","spRat"].forEach(i=>$(i).addEventListener("input",changed));
+    function ratInfo(cell,deg){const t=deg*Math.PI/180;let best=null;
+      for(let a=0;a<=Math.ceil(cell)+1;a++)for(let b=0;b<=Math.ceil(cell)+1;b++){const L=Math.hypot(a,b);if(L<2)continue;const c=Math.abs(L-cell)/cell/.1+Math.abs(Math.atan2(b,a)-t)/(10*Math.PI/180);if(!best||c<best.c)best={L,ang:Math.atan2(b,a)*180/Math.PI,c};}
+      return best;}
+    function exportDims(){const cm=Math.max(2,Number($("spWidth").value)||28),iw=origPx[0]||1,ih=origPx[1]||1;let W=Math.round(cm/2.54*300),H=Math.max(1,Math.round(W*ih/iw)),lim=false;
+      if(W*H>EXPORT_MAX){const f=Math.sqrt(EXPORT_MAX/(W*H));W=Math.floor(W*f);H=Math.floor(H*f);lim=true;}
+      return {W,H,cm,hcm:cm*H/W,dpi:Math.round(W/(cm/2.54)),lim};}
+    function wjob(msg){return new Promise((res,rej)=>{worker.onmessage=e=>{const d=e.data;if(d.id!==msg.id)return;if(d.done)res(d);};worker.onerror=e=>{e.preventDefault();rej(new Error("el procesamiento se detuvo"));};worker.postMessage(msg,[msg.buf]);});}
+    const u32=n=>[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255];
+    function pngChunk(type,data){const len=data.length,b=new Uint8Array(12+len);b.set(u32(len),0);b.set([...type].map(c=>c.charCodeAt(0)),4);b.set(data,8);b.set(u32(crc(b.subarray(4,8+len))),8+len);return b;}
+    /* PNG final a resolución completa: se trama por franjas en el Worker y se comprime al vuelo. */
+    async function exportPNG(){
+      if(!src||!origImg){status("Primero sube una imagen.");return;}
+      if(busy){status("Espera a que termine el proceso actual.");return;}
+      const ex=exportDims(),W=ex.W,H=ex.H;busy=true;$("spGo").disabled=true;$("spDl").disabled=true;$("spBar").classList.add("show");$("spBarFill").style.width="0%";
+      status("Generando PNG de "+W+" × "+H+" px a "+ex.dpi+" DPI…");
+      try{
+        const p=params(W),fm=st.screen==="fm",dB=fm?Math.max(1,Math.round(p.grain),p.dminSq||1):1,ceilTo=(v,m)=>Math.ceil(v/m)*m;
+        const margin=ceilTo(fm?dB*2:Math.ceil(p.cell*1.6)+3,dB),stripH=ceilTo(Math.max(128,Math.floor(3000000/W)),dB);
+        const cz=new CompressionStream("deflate"),wr=cz.writable.getWriter(),parts=[];
+        const readP=(async()=>{const rd=cz.readable.getReader();for(;;){const r=await rd.read();if(r.done)break;parts.push(r.value);}})();
+        const sc=document.createElement("canvas");sc.width=W;const sx=sc.getContext("2d",{willReadFrequently:true});
+        const iw=origImg.naturalWidth,ih=origImg.naturalHeight,row=W*4;
+        for(let y0=0;y0<H;y0+=stripH){
+          const sh=Math.min(stripH,H-y0),top=Math.max(0,y0-margin),bot=Math.min(H,y0+sh+margin),hh=bot-top;
+          if(sc.height!==hh)sc.height=hh;sx.clearRect(0,0,W,hh);sx.imageSmoothingEnabled=true;sx.imageSmoothingQuality="high";
+          sx.drawImage(origImg,0,top*ih/H,iw,hh*ih/H,0,0,W,hh);
+          const im=sx.getImageData(0,0,W,hh),r=await wjob({id:++jobId,w:W,h:hh,buf:im.data.buffer,p:Object.assign({},p,{oy:top,gh:H})});
+          const o=new Uint8Array(r.buf),raw=new Uint8Array(sh*(row+1));
+          for(let y=0;y<sh;y++)raw.set(o.subarray((y0-top+y)*row,(y0-top+y+1)*row),y*(row+1)+1);
+          await wr.write(raw);$("spBarFill").style.width=Math.round((y0+sh)/H*100)+"%";
+        }
+        await wr.close();await readP;
+        let tot=0;parts.forEach(a=>tot+=a.length);const z=new Uint8Array(tot);let off=0;parts.forEach(a=>{z.set(a,off);off+=a.length;});
+        const ihdr=new Uint8Array(13);ihdr.set(u32(W),0);ihdr.set(u32(H),4);ihdr[8]=8;ihdr[9]=6;
+        const ppm=Math.round(ex.dpi/0.0254),ph=new Uint8Array(9);ph.set(u32(ppm),0);ph.set(u32(ppm),4);ph[8]=1;
+        const blob=new Blob([new Uint8Array([137,80,78,71,13,10,26,10]),pngChunk("IHDR",ihdr),pngChunk("pHYs",ph),pngChunk("IDAT",z),pngChunk("IEND",new Uint8Array(0))],{type:"image/png"});
+        const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=(fileName||"diseno")+"_semitono_DTF_"+ex.cm+"cm_"+ex.dpi+"dpi.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),8000);
+        status("PNG descargado: "+W+" × "+H+" px · "+ex.cm.toFixed(1)+" × "+ex.hcm.toFixed(1)+" cm · "+ex.dpi+" DPI · fondo transparente ("+(blob.size/1e6).toFixed(1)+" MB)."+(ex.lim?" La resolución se limitó para no agotar la memoria.":""));
+      }catch(err){status("No se pudo generar el PNG completo ("+((err&&err.message)||"memoria insuficiente")+"). Prueba un ancho menor o usa una computadora.");}
+      finally{busy=false;$("spGo").disabled=false;$("spDl").disabled=false;$("spBar").classList.remove("show");}
+    }
     /* ---------- fondo de la vista (prenda) ---------- */
     function setBg(v){st.bg=v;vp.dataset.bg=v==="checker"?"checker":"color";vp.style.background=v==="checker"?"":v;
       document.querySelectorAll("#panel-semi .sp-bg button").forEach(b=>b.classList.toggle("on",b.dataset.bg===v));
@@ -6255,13 +6439,14 @@ document.addEventListener("DOMContentLoaded", function(){
         src=document.createElement("canvas");src.width=w;src.height=h;
         const c=src.getContext("2d",{willReadFrequently:true});c.imageSmoothingEnabled=true;c.imageSmoothingQuality="high";
         if(fz<1){let cur=img,cw=w0,ch=h0;while(cw*.5>w){const t=document.createElement("canvas");t.width=Math.round(cw*.5);t.height=Math.round(ch*.5);const tx=t.getContext("2d");tx.imageSmoothingQuality="high";tx.drawImage(cur,0,0,t.width,t.height);cur=t;cw=t.width;ch=t.height;}c.drawImage(cur,0,0,w,h);}else c.drawImage(img,0,0);
-        if(fz<1)setTimeout(()=>status(`Tu imagen era de ${w0}×${h0} px; la ajustamos a ${w}×${h} px para trabajar rápido. Sigue teniendo calidad de sobra para imprimir. Presiona «Aplicar semitono».`),0);srcData=c.getImageData(0,0,w,h);
+        if(fz<1)setTimeout(()=>status(`Tu imagen es de ${w0}×${h0} px. La vista previa usa una copia ligera; la descarga usa la resolución completa. Presiona «Aplicar semitono».`),0);srcData=c.getImageData(0,0,w,h);
         result=null;fileName=file.name.replace(/\.[^.]+$/,"");
         $("spFileName").textContent=file.name;$("spFileInfo").textContent=w+" × "+h+" px";$("spWidth").value=Math.max(3,Math.min(60,Math.round(w0/300*2.54*2)/2));
         $("spGo").disabled=false;$("spDl").hidden=true;vp.classList.add("has");
         st.show="orig";document.querySelectorAll("#spShow button").forEach(b=>b.classList.toggle("on",b.dataset.v==="orig"));
-        draw();fit();info();
-        if(w*h<=AUTO_PX)run();else status("Imagen grande: ajusta los controles y presiona «Aplicar semitono».");
+        orig=src;origPx=[w0,h0];origImg=img;lastSmall=0;st.lev=[0,1];syncLev();$("spAutoNote").hidden=true;const af=detectAlpha(srcData);buildWork();
+        st.show="orig";draw();fit();info();
+        if(src.width*src.height<=AUTO_PX)run();else if(fz>=1)status((af?"Corregimos transparencias raras de tu foto (típico de imágenes mejoradas con IA). ":"")+"Trabajamos a 300 DPI. Presiona «✨ Automático DTF» o ajusta y presiona «Aplicar semitono».");
       };
       img.onerror=()=>{URL.revokeObjectURL(url);status("No se pudo abrir la imagen.");};
       img.src=url;
@@ -6273,19 +6458,31 @@ document.addEventListener("DOMContentLoaded", function(){
     drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("drag");load(e.dataTransfer.files[0]);});
 
     /* ---------- parámetros e información de impresión ---------- */
-    function params(){
-      const w=src.width,inches=Math.max(.5,Number($("spWidth").value)||28)/2.54,lpi=Number($("spLpi").value);
+    function params(wo){
+      const w=wo||src.width,inches=Math.max(.5,Number($("spWidth").value)||28)/2.54,lpi=Number($("spLpi").value);
       return {mode:st.mode,shape:st.shape,fadeDir:st.fadeDir,ink:st.ink,inkColor:hex($("spInk").value),target:hex($("spTarget").value),
         range:Number($("spRange").value),soft:Number($("spSoft").value),fade:Number($("spFade").value)/100,
         contrast:Number($("spContrast").value)/100,invert:$("spInvert").checked,angle:Number($("spAngle").value),
-        cell:Math.max(2,Math.min(300,w/(inches*lpi))),min:Number($("spMin").value)/100,solid:Number($("spSolid").value)/100,hard:$("spHard").checked};
+        cell:Math.max(2,Math.min(300,w/(inches*lpi))),min:Number($("spMin").value)/100,solid:Number($("spSolid").value)/100,hard:$("spHard").checked,
+        screen:st.screen,grain:Math.max(1,Number($("spGrain").value)/25.4*(w/inches)),flat:!$("spKeepAlpha").checked&&st.mode!=="alpha",lo:st.lev[0],hi:st.lev[1],dpi:w/inches,
+        cmin:(()=>{const c=Math.max(2,Math.min(300,w/(inches*lpi))),m=Number($("spMinMM").value)/25.4*(w/inches);return Math.min(.6,Math.PI/4*(m/c)*(m/c));})(),
+        cgap:(()=>{const c=Math.max(2,Math.min(300,w/(inches*lpi))),m=Number($("spGapMM").value)/25.4*(w/inches);return Math.min(.4,Math.PI/4*(m/c)*(m/c));})(),
+        dminSq:Math.max(1,Math.ceil(Number($("spMinMM").value)/25.4*(w/inches)*.886)),edge:$("spEdge").checked,rat:$("spRat").checked};
     }
     function dpi(){return src?Math.round(src.width/(Math.max(.5,Number($("spWidth").value)||28)/2.54)):0;}
     function info(){
       if(!src){$("spInfo").innerHTML="<span>—</span>";return;}
       const p=params(),cm=Number($("spWidth").value)||28,hcm=cm*src.height/src.width,d=dpi(),mm=25.4/Number($("spLpi").value);
-      const chips=[["",cm.toFixed(1)+" × "+hcm.toFixed(1)+" cm"],[d>=250?"ok":d<150?"warn":"",d+" DPI"],["","Punto cada "+mm.toFixed(2)+" mm ("+p.cell.toFixed(1)+" px)"]];
-      if(p.cell<4)chips.push(["warn","Los puntos miden menos de 4 px: baja la lineatura o usa una imagen más grande"]);
+      const ex=exportDims(),ecell=ex.dpi/Number($("spLpi").value);
+      const chips=[["",ex.cm.toFixed(1)+" × "+ex.hcm.toFixed(1)+" cm"],[ex.dpi>=290?"ok":ex.dpi<200?"warn":"","Descarga: "+ex.W+" × "+ex.H+" px · "+ex.dpi+" DPI"],["","Punto cada "+mm.toFixed(2)+" mm ("+ecell.toFixed(1)+" px)"],["","Vista previa: "+d+" DPI"]];
+      if(ex.lim)chips.push(["warn","Resolución limitada a "+ex.dpi+" DPI para no agotar la memoria"]);
+      const mmin=Number($("spMinMM").value);if(lastSmall>0&&st.screen!=="fm")chips.push(["",lastSmall.toLocaleString("es-MX")+" puntos menores a "+mmin.toFixed(2)+" mm se agruparon para conservar el tono"]);
+      if(st.screen==="fm"&&Number($("spGrain").value)<mmin)chips.push(["warn","El grano se ajusta al punto mínimo ("+mmin.toFixed(2)+" mm)"]);
+      $("spDl").textContent="⬇ Descargar PNG · "+ex.dpi+" DPI · "+ex.cm.toFixed(1)+" cm";$("spDl").title="PNG con fondo transparente, "+ex.W+" × "+ex.H+" px";
+      if(st.screen==="fm")chips[2]=["","Trama estocástica · grano "+Number($("spGrain").value).toFixed(2)+" mm"];
+      if(origPx[0]){const od=Math.round(origPx[0]/(cm/2.54));chips.push([od<150?"warn":"","Foto original: "+od+" DPI"+(od<150?" · se verá suave a este tamaño":"")]);}
+      if(st.screen!=="fm"&&$("spRat").checked){const ri=ratInfo(ecell,Number($("spAngle").value));if(ri)chips.push(["","Lineatura real "+(ex.dpi/ri.L).toFixed(1)+" LPI a "+ri.ang.toFixed(1)+"°"]);}
+      if(st.screen!=="fm"&&ecell<4)chips.push(["warn","Los puntos miden menos de 4 px: baja la lineatura o usa una imagen más grande"]);
       if(d<150)chips.push(["warn","Resolución baja para este ancho"]);
       $("spInfo").innerHTML=chips.map(([c,t])=>'<span class="'+c+'">'+t+'</span>').join("");
     }
@@ -6303,12 +6500,12 @@ document.addEventListener("DOMContentLoaded", function(){
         result=document.createElement("canvas");result.width=w;result.height=h;result.getContext("2d").putImageData(im,0,0);
         busy=false;$("spGo").disabled=false;$("spBar").classList.remove("show");$("spDl").hidden=false;
         st.show="res";document.querySelectorAll("#spShow button").forEach(b=>b.classList.toggle("on",b.dataset.v==="res"));
-        draw();status("¡Listo! Acerca la vista para revisar los puntos antes de imprimir.");
+        draw();status("¡Listo! Acerca la vista para revisar los puntos antes de imprimir.");info();
         if(queued)run();
       };
       const fail=msg=>{busy=false;$("spGo").disabled=false;$("spBar").classList.remove("show");status("No se pudo procesar: "+msg);};
       if(worker){
-        worker.onmessage=e=>{const d=e.data;if(d.id!==id)return;if(d.progress!=null)$("spBarFill").style.width=Math.round(d.progress*100)+"%";if(d.done)finish(d.buf);};
+        worker.onmessage=e=>{const d=e.data;if(d.id!==id)return;if(d.progress!=null)$("spBarFill").style.width=Math.round(d.progress*100)+"%";if(d.done){lastSmall=d.small||0;finish(d.buf);}};
         worker.onerror=e=>{e.preventDefault();worker=null;fail("tu navegador bloqueó el procesamiento en segundo plano; intenta de nuevo.");};
         worker.postMessage({id,w,h,buf,p},[buf]);
       }else{
@@ -6320,11 +6517,12 @@ document.addEventListener("DOMContentLoaded", function(){
     $("spGo").addEventListener("click",run);
 
     /* ---------- vista: zoom, arrastre y cuentagotas ---------- */
-    function draw(){
-      const c=st.show==="res"&&result?result:src;if(!c)return;
-      if(canvas.width!==c.width||canvas.height!==c.height){canvas.width=c.width;canvas.height=c.height;}
-      ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(c,0,0);applyZoom();
-    }
+    /* Vista reducida promediada: evita manchas y franjas falsas (moiré) al ver la imagen completa. */
+    let dispSrc=null,dispW=0,dispRaf=0;
+    function paintDisp(){const c=st.show==="res"&&result?result:src;if(!c)return;const z=st.zoom,tw=z<1?Math.max(1,Math.round(c.width*z)):c.width,th=z<1?Math.max(1,Math.round(c.height*z)):c.height;
+      if(dispSrc===c&&dispW===tw)return;dispSrc=c;dispW=tw;
+      if(tw<c.width){const d=resample(c,tw,th);canvas.width=tw;canvas.height=th;ctx.clearRect(0,0,tw,th);ctx.drawImage(d,0,0);}else{canvas.width=c.width;canvas.height=c.height;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(c,0,0);}}
+    function draw(){dispSrc=null;paintDisp();applyZoom();}
     function applyZoom(cx,cy){
       if(!src)return;const old=parseFloat(canvas.style.width)/src.width||st.zoom;
       const r=vp.getBoundingClientRect(),px=cx==null?r.width/2:cx-r.left,py=cy==null?r.height/2:cy-r.top;
@@ -6334,7 +6532,7 @@ document.addEventListener("DOMContentLoaded", function(){
       const padX=Math.max(0,(vp.clientWidth-src.width*st.zoom)/2),padY=Math.max(0,(vp.clientHeight-src.height*st.zoom)/2);
       canvas.style.marginLeft=padX+"px";canvas.style.marginTop=padY+"px";
       vp.scrollLeft=ax*st.zoom-px;vp.scrollTop=ay*st.zoom-py;
-      $("spZVal").textContent=Math.round(st.zoom*100)+"%";
+      $("spZVal").textContent=Math.round(st.zoom*100)+"%";cancelAnimationFrame(dispRaf);dispRaf=requestAnimationFrame(paintDisp);
     }
     function setZoom(z,cx,cy){st.zoom=Math.max(.05,Math.min(8,z));applyZoom(cx,cy);}
     function fit(){if(!src)return;st.zoom=Math.min(1,(vp.clientWidth-8)/src.width,(vp.clientHeight-8)/src.height);canvas.style.width="";applyZoom();vp.scrollLeft=0;vp.scrollTop=0;}
@@ -6363,16 +6561,17 @@ document.addEventListener("DOMContentLoaded", function(){
       dv.setUint32(0,9);chunk.set([112,72,89,115],4);dv.setUint32(8,ppm);dv.setUint32(12,ppm);chunk[16]=1;dv.setUint32(17,crc(chunk.subarray(4,17)));
       const out=new Uint8Array(png.length+21);out.set(png.subarray(0,33));out.set(chunk,33);out.set(png.subarray(33),54);return out;
     }
-    $("spDl").addEventListener("click",()=>{
+    function legacyDl(){
       if(!result)return;status("Preparando PNG…");
       result.toBlob(async b=>{
         if(!b){status("No se pudo exportar el PNG.");return;}
         let blob=b;try{blob=new Blob([withDpi(await b.arrayBuffer(),dpi())],{type:"image/png"});}catch(e){}
         const url=URL.createObjectURL(blob),a=document.createElement("a");
         a.href=url;a.download=(fileName||"diseno")+"_semitono_DTF_"+dpi()+"dpi.png";document.body.appendChild(a);a.click();a.remove();
-        setTimeout(()=>URL.revokeObjectURL(url),3000);status("PNG descargado a "+dpi()+" DPI ("+(Number($("spWidth").value)||28)+" cm de ancho).");
+        setTimeout(()=>URL.revokeObjectURL(url),3000);status("PNG de vista previa descargado a "+dpi()+" DPI (tu navegador no permite la exportación completa).");
       },"image/png");
-    });
+    }
+    $("spDl").addEventListener("click",()=>{if(worker&&window.CompressionStream)exportPNG();else legacyDl();});
   })();
 
   // ===== MEJORADOR =====
