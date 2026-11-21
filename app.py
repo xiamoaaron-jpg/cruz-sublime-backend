@@ -1614,7 +1614,9 @@ def vip_bg_job(job_id):
         if pred.get('status') in ('failed','canceled'):
             _bg_update(job_id,'failed')
             return jsonify(status='failed',error='El procesamiento falló; crédito liberado'),200
-        return jsonify(status='processing',credits=_bg_balance(member)),202
+        # phase: 'starting' = en cola / encendiendo el modelo; 'processing' = la IA ya está trabajando.
+        # El reloj del Removedor VIP usa este dato para mostrar la etapa real.
+        return jsonify(status='processing',phase=pred.get('status') or 'processing',credits=_bg_balance(member)),202
     except requests.RequestException:
         return jsonify(status='uncertain',error='No se pudo consultar Replicate. Reintenta consultar, no procesar.'),202
 
