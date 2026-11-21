@@ -1359,7 +1359,7 @@ html body > header{max-width:1100px!important;padding:56px 20px 36px!important;f
 #csTools .cs-tools-search{display:flex;align-items:center;gap:10px;min-height:48px;margin:0 0 14px;padding:0 14px;border-radius:14px;background:var(--rd-s1);border:1px solid var(--rd-line2)}#csTools .cs-tools-search:focus-within{border-color:var(--rd-cyan)}#csTools .cs-tools-search svg{width:18px;height:18px;flex:none;fill:none;stroke:#8794AD;stroke-width:2;stroke-linecap:round}#csTools .cs-tools-search input{all:unset;flex:1;min-width:0;font:500 15px Montserrat,system-ui,sans-serif;color:var(--rd-tx)}#csTools .cs-tools-search input::placeholder{color:#8794AD}#csTools .cs-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}#csTools .cs-tools-filter button[data-f]{min-height:40px}#csTools .cs-tools-filter button[data-f="v"]{color:var(--rd-gold)!important;border-color:rgba(242,198,109,.45)!important}#csTools .cs-tools-filter button[data-f="v"].on{background:var(--rd-gold)!important;color:#1A1406!important}#csTools .cs-tools-empty{grid-column:1/-1;margin:0;padding:24px;text-align:center;color:var(--rd-tx2);border-radius:16px;background:var(--rd-s1);border:1px solid var(--rd-line)}#csTools .cs-tool.cs-tool-vipcard{border-color:rgba(242,198,109,.55)!important}#csTools .cs-tool.cs-tool-vipcard .cs-tool-tx b{color:var(--rd-gold)!important}/* --- Membresías --- */
 html body #panel-plans .plans > .plan{border-radius:22px!important}html body #panel-plans .plans > .plan.cs-gold-vip{border:1px solid var(--rd-gold)!important;box-shadow:0 0 0 6px rgba(242,198,109,.07),0 24px 60px rgba(0,0,0,.4)!important}#panel-plans .cs-canva-slots{display:grid;gap:8px;margin:12px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(156,123,255,.12);border:1px solid rgba(156,123,255,.4);font-family:Montserrat,system-ui,sans-serif;text-align:left}#panel-plans .cs-canva-slots[hidden]{display:none!important}#panel-plans .cs-canva-slots .cv-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:#E4E0FF}#panel-plans .cs-canva-slots .cv-row b{font-size:18px;color:#fff}#panel-plans .cs-canva-slots .cv-bar{display:block;height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}#panel-plans .cs-canva-slots .cv-bar i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--rd-cyan),var(--rd-violet));transition:width .6s}#panel-plans .cs-canva-slots small{font-size:11.5px;line-height:1.45;color:#B9B2E6}#panel-plans .cs-canva-slots.cv-out{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.5)}/* --- Estudios Premium VIP: marfil y oro (estilo claro de lujo) --- */
 html body #panel-premium section.vip-lobby,html body #panel-premium #vipStudioInner{--tx:#2E2516!important;--mu:#6B5A3E!important;--muted:#6B5A3E!important;--g:#9C7224!important;--g2:#B8893A!important;--ln:rgba(156,114,36,.28)!important;color:#2E2516!important;background:radial-gradient(60% 30% at 50% 0%,rgba(212,170,90,.18),rgba(212,170,90,0) 70%),linear-gradient(180deg,#F8F2E7 0%,#F5EDE0 50%,#F2E8D8 100%)!important;border-color:#E2D2B4!important}
-html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(h1,h2,h3,h4,h5,h6,p,li,label,span,small,b,strong,td,th,summary,legend,dt,dd,figcaption,div,i,output,time):not(button *):not(a *):not(.ct-phone):not(.ct-phone *):not(.mv-mockstage *):not(.cs-vip-clock *){color:#2E2516!important}
+html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(h1,h2,h3,h4,h5,h6,p,li,label,span,small,b,strong,td,th,summary,legend,dt,dd,figcaption,div,i,output,time):not(button *):not(a *):not(.ct-phone):not(.ct-phone *):not(.mv-mockstage *):not(.cs-vip-clock *):not(.rv-timer *){color:#2E2516!important}
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is([class*="sub"],[class*="hint"],[class*="note"],[class*="desc"],[class*="help"],small):not(button *):not(.ct-phone *){color:#6B5A3E!important}
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is([class*="eyebrow"],[class*="kicker"],[class*="lbl"],[class*="crest"],[class*="step"]):not(button *):not(.ct-phone *){color:#8A6420!important}
 html body #panel-premium :is(section.vip-lobby,#vipStudioInner) :is(h2 em,.vx-title,h1 em,h3 em){background:linear-gradient(100deg,#7A5518 0%,#B8893A 45%,#8A6420 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important}
@@ -4507,15 +4507,40 @@ window.addEventListener('message',function(e){var f=document.getElementById('csP
 #vipBgStudio.rv .rv-tg input{appearance:none;-webkit-appearance:none;width:34px;height:20px;border-radius:20px;background:#3a3020;position:relative;cursor:pointer;flex:none;margin:0;border:0;padding:0;transition:.2s}
 #vipBgStudio.rv .rv-tg input::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#f2ead9;transition:.2s}
 #vipBgStudio.rv .rv-tg input:checked{background:linear-gradient(110deg,#c9973f,#f4dfa6)}#vipBgStudio.rv .rv-tg input:checked::after{left:17px;background:#1d1406}
-#vipBgStudio.rv .rv-timer{display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--ln);border-radius:14px;background:rgba(214,174,98,.05)}
-#vipBgStudio.rv .rv-ring{flex:none;width:86px;height:86px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(#0d0b09 60%,transparent 61%),conic-gradient(#f4dfa6,#9c6e2a,#f4dfa6,#9c6e2a,#f4dfa6);animation:rvSpin 4s linear infinite}
-#vipBgStudio.rv .rv-ring strong,#vipBgStudio.rv .rv-ring span{animation:rvSpin 4s linear infinite reverse}
-#vipBgStudio.rv .rv-ring strong{font-family:"Cormorant Garamond",Georgia,serif;font-size:24px;color:#fbf3e0;font-variant-numeric:tabular-nums;line-height:1}
-#vipBgStudio.rv .rv-ring span{font-size:9.5px;color:var(--mu);letter-spacing:.1em;text-transform:uppercase}
-#vipBgStudio.rv .rv-bar{flex:1;height:4px;border-radius:4px;background:#2a2116;overflow:hidden;display:block}
-#vipBgStudio.rv .rv-bar em{display:block;width:40%;height:100%;border-radius:4px;background:linear-gradient(90deg,#c9973f,#f4dfa6);animation:rvSlide 1.4s ease-in-out infinite}
+/* Reloj del Removedor VIP: números legibles, etapas y avance estimado */
+#vipBgStudio.rv .rv-timer{display:block;margin-top:12px;padding:14px;border:1px solid rgba(201,151,63,.45);border-radius:16px;background:linear-gradient(180deg,#fffaf0,#f7ecd6);box-shadow:0 6px 18px rgba(120,85,30,.12)}
+#vipBgStudio.rv .rv-timer[hidden]{display:none!important}
+#vipBgStudio.rv .rv-top{display:flex;align-items:center;gap:14px}
+#vipBgStudio.rv .rv-ring{position:relative;flex:none;width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,#17120b 0 62%,transparent 63%);box-shadow:0 0 0 3px #fff6e2,0 6px 16px rgba(80,55,15,.35)}
+#vipBgStudio.rv .rv-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+#vipBgStudio.rv .rv-ring .trk{fill:none;stroke:#3a2d1a;stroke-width:7}
+#vipBgStudio.rv .rv-ring .arc{fill:none;stroke:url(#rvGold);stroke-width:7;stroke-linecap:round;stroke-dasharray:276.5;stroke-dashoffset:276.5;transition:stroke-dashoffset .6s ease}
+#vipBgStudio.rv .rv-ring .spark{fill:none;stroke:#fff3cf;stroke-width:7;stroke-linecap:round;stroke-dasharray:10 266.5;opacity:.85;transform-origin:50px 50px;animation:rvSpin 1.8s linear infinite}
+#vipBgStudio.rv .rv-ring-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+#vipBgStudio.rv .rv-timer .rv-ring-c strong{font-family:"Cormorant Garamond",Georgia,serif;font-size:26px;font-weight:700;color:#fff6dc!important;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+#vipBgStudio.rv .rv-timer .rv-ring-c span{margin-top:4px;font-size:11px;font-weight:700;color:#f0cf7f!important;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+#vipBgStudio.rv .rv-info{flex:1;min-width:0}
+#vipBgStudio.rv .rv-timer .rv-stage{display:block;font-size:14px;font-weight:800;color:#2e2516!important;line-height:1.3}
+#vipBgStudio.rv .rv-timer .rv-sub{display:block;margin-top:3px;font-size:11.5px;color:#7a6440!important;line-height:1.35}
+#vipBgStudio.rv .rv-bar{display:block;margin-top:9px;height:8px;border-radius:8px;background:#e6d6b4;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.15)}
+#vipBgStudio.rv .rv-bar em{position:relative;display:block;width:0;height:100%;border-radius:8px;background:linear-gradient(90deg,#b8862f,#e9c46a,#f8e6b0);transition:width .6s ease;overflow:hidden}
+#vipBgStudio.rv .rv-bar em::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:rvSlide 1.4s ease-in-out infinite}
+#vipBgStudio.rv .rv-steps{list-style:none;margin:14px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;position:relative}
+#vipBgStudio.rv .rv-steps::before{content:"";position:absolute;top:11px;left:12.5%;right:12.5%;height:2px;background:#e1cfa8}
+#vipBgStudio.rv .rv-timer .rv-steps li{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:#a08b66!important;text-align:center;line-height:1.2}
+#vipBgStudio.rv .rv-steps li i{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;background:#f3e7cc;border:2px solid #e1cfa8;color:#a08b66!important}
+#vipBgStudio.rv .rv-timer .rv-steps li.on{color:#2e2516!important}
+#vipBgStudio.rv .rv-steps li.on i{background:#17120b;border-color:#d6ae62;color:#f4dfa6!important;box-shadow:0 0 0 4px rgba(214,174,98,.25);animation:rvPulse 1.2s ease-in-out infinite}
+#vipBgStudio.rv .rv-timer .rv-steps li.ok{color:#5c4a2c!important}
+#vipBgStudio.rv .rv-steps li.ok i{background:linear-gradient(135deg,#c9973f,#f0d48a);border-color:#c9973f;color:#2e2516!important}
+#vipBgStudio.rv .rv-timer.done .rv-stage{color:#2f7a3b!important}
+#vipBgStudio.rv .rv-timer.done .spark,#vipBgStudio.rv .rv-timer.err .spark{display:none}
+#vipBgStudio.rv .rv-timer.err{border-color:#d98b7a;background:#fff3ef}
+#vipBgStudio.rv .rv-timer.err .rv-stage{color:#a3392a!important}
+#vipBgStudio.rv .rv-timer.err .arc{stroke:#c9533f}
 @keyframes rvSpin{to{transform:rotate(360deg)}}
-@keyframes rvSlide{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+@keyframes rvSlide{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@keyframes rvPulse{50%{box-shadow:0 0 0 7px rgba(214,174,98,.08)}}
 #vipBgStudio.rv .mp-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 #vipBgStudio.rv .mp-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:280px;max-width:100%}
 #panel-premium #vipBgStudio.rv .mp-tabs button{background:rgba(214,174,98,.05);border:1px solid var(--ln);color:var(--tx);border-radius:10px;padding:8px 11px;font:inherit;font-size:12.5px;cursor:pointer;width:auto}
@@ -4552,7 +4577,7 @@ window.addEventListener('message',function(e){var f=document.getElementById('csP
 #vipBgStudio.rv .mp-center{text-align:center}
 @media(max-width:1000px){#vipBgStudio.rv .mp-app{grid-template-columns:1fr}}
 @media(max-width:620px){#vipBgStudio.rv .mp-images{grid-template-columns:1fr}#vipBgStudio.rv .rv-img{height:320px}#vipBgStudio.rv .mp-cmp-stage{height:380px}#panel-premium #vipBgStudio.vip-lobby.rv{padding:20px 12px 24px}}
-@media(prefers-reduced-motion:reduce){#vipBgStudio.rv .rv-ring,#vipBgStudio.rv .rv-ring *,#vipBgStudio.rv .rv-bar em{animation:none}}
+@media(prefers-reduced-motion:reduce){#vipBgStudio.rv .rv-ring *,#vipBgStudio.rv .rv-bar em::after,#vipBgStudio.rv .rv-steps li i{animation:none!important}}
 </style>
 
     <section id="vipBgStudio" class="vip-lobby rv" hidden aria-label="Removedor de Fondo VIP">
@@ -4577,7 +4602,14 @@ window.addEventListener('message',function(e){var f=document.getElementById('csP
             <p class="mp-step"><b>II</b>Quitar fondo</p>
             <button id="vipBgProcess" class="mp-go" type="button" disabled>✨ Quitar fondo VIP · 1 crédito</button>
             <p id="vipBgNotice" class="mp-msg" role="status">Selecciona una imagen. Se reserva un crédito durante el proceso y solo se descuenta si termina correctamente.</p>
-            <div class="rv-timer" id="rvTimer" hidden><div class="rv-ring"><strong id="rvTime">00:00</strong><span>procesando</span></div><i class="rv-bar"><em></em></i></div>
+            <div class="rv-timer" id="rvTimer" hidden aria-live="polite">
+              <div class="rv-top">
+                <div class="rv-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="rvGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8e6b0"/><stop offset=".5" stop-color="#d6ae62"/><stop offset="1" stop-color="#9c6e2a"/></linearGradient></defs><circle class="trk" cx="50" cy="50" r="44"/><circle class="arc" id="rvArc" cx="50" cy="50" r="44"/><circle class="spark" cx="50" cy="50" r="44"/></svg>
+                  <div class="rv-ring-c"><strong id="rvTime">00:00</strong><span id="rvPct">0%</span></div></div>
+                <div class="rv-info"><b class="rv-stage" id="rvStage">Preparando imagen…</b><small class="rv-sub" id="rvSub">Normalmente tarda de 5 a 20 segundos.</small><i class="rv-bar"><em id="rvBarFill"></em></i></div>
+              </div>
+              <ol class="rv-steps" id="rvSteps"><li data-s="upload"><i>1</i>Subiendo</li><li data-s="queue"><i>2</i>En cola</li><li data-s="ai"><i>3</i>IA recortando</li><li data-s="done"><i>4</i>PNG listo</li></ol>
+            </div>
           </div>
           <div class="mp-box">
             <p class="mp-step"><b>III</b>Exportar</p>
@@ -7440,16 +7472,37 @@ document.addEventListener("DOMContentLoaded", function(){
         const h2f = h => { const s = (h & 0x8000) ? -1 : 1, e = (h >> 10) & 31, f = h & 1023; return e === 0 ? s * Math.pow(2, -14) * (f / 1024) : e === 31 ? (f ? NaN : s * Infinity) : s * Math.pow(2, e - 15) * (1 + f / 1024); };
         const c = new Float32Array(n); for (let i = 0; i < n; i++) c[i] = h2f(src[i]); src = c;
       }
-      let mn = Infinity, mx = -Infinity; for (let i = 0; i < n; i++) { const v = src[i]; if (v < mn) mn = v; if (v > mx) mx = v; }
-      const isProb = mn >= 0 && mx <= 1, a = new Float32Array(n);
-      let bad = 0, kept = 0;
-      for (let i = 0; i < n; i++) { const v = Number(src[i]); let m = isProb ? v : 1 / (1 + Math.exp(-v)); if (!Number.isFinite(m)) { bad++; m = 0; } if (m > .5) kept++; a[i] = m; }
+      // Este modelo SIEMPRE entrega logits (según su ficha). Antes, si los valores caían por casualidad
+      // entre 0 y 1, se tomaban como probabilidad y la máscara salía vacía. Ahora siempre se aplica sigmoide.
+      const a = new Float32Array(n);
+      let bad = 0, kept = 0, sMin = 1, sMax = 0;
+      for (let i = 0; i < n; i++) { let m = 1 / (1 + Math.exp(-Number(src[i]))); if (!Number.isFinite(m)) { bad++; m = 0; } if (m > .5) kept++; if (m < sMin) sMin = m; if (m > sMax) sMax = m; a[i] = m; }
+      // Rescate: si la IA está "insegura" (máscara tenue pero con forma), se estira el contraste
+      // para que el objeto que sí detectó no se pierda.
+      if (bad <= n * .01 && kept < n * .002 && sMax - sMin > .12) {
+        const span = sMax - sMin; kept = 0;
+        for (let i = 0; i < n; i++) { const m = (a[i] - sMin) / span; a[i] = m; if (m > .5) kept++; }
+      }
       if (bad > n * .01 || kept < n * .002) {
         if (device === 'webgpu') { await bgFree512(); throw new Error('máscara vacía en GPU'); }
-        throw new Error('la IA no encontró un objeto principal en esta imagen. Si el fondo es de un solo color, usa «Fondo de color»');
+        const e = new Error('la IA no encontró un objeto principal en esta imagen'); e.code = 'EMPTY_MASK'; throw e;
       }
       return [{ mask: { data: a, width: W, height: H, channels: 1 } }];
     } finally { URL.revokeObjectURL(url); }
+  }
+  /* ¿La orilla de la imagen es de un solo color? (fondo liso: negro, blanco, etc.) */
+  async function bgBorderUniform(file) {
+    const bm = await createImageBitmap(file), sc = Math.min(1, 600 / Math.max(bm.width, bm.height));
+    const w = Math.max(2, Math.round(bm.width * sc)), h = Math.max(2, Math.round(bm.height * sc));
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(bm, 0, 0, w, h); bm.close();
+    const d = x.getImageData(0, 0, w, h).data, idx = [];
+    for (let X = 0; X < w; X++) { idx.push(X, (h - 1) * w + X); } for (let Y = 0; Y < h; Y++) { idx.push(Y * w, Y * w + w - 1); }
+    const bins = new Map(); for (const i of idx) { const k = (d[i*4] >> 4) << 8 | (d[i*4+1] >> 4) << 4 | (d[i*4+2] >> 4); bins.set(k, (bins.get(k) || 0) + 1); }
+    let best = 0, bk = 0; bins.forEach((v, k) => { if (v > best) { best = v; bk = k; } });
+    const ref = [((bk >> 8) & 15) * 16 + 8, ((bk >> 4) & 15) * 16 + 8, (bk & 15) * 16 + 8];
+    let near = 0; for (const i of idx) { const dr = d[i*4] - ref[0], dg = d[i*4+1] - ref[1], db = d[i*4+2] - ref[2]; if (dr*dr + dg*dg + db*db < 40 * 40) near++; }
+    return near / idx.length;
   }
   async function bgSegment(file, device, variant) {
     if (window.csBgMode !== 'portrait' && variant !== 'hq') return bgSegment512(file, device);
@@ -7518,6 +7571,7 @@ document.addEventListener("DOMContentLoaded", function(){
     const file = bgOriginalFile;
     bgButton.disabled = true;
     bgDownload.disabled = true;
+    let bgAutoColor = false;
     try {
       let output;
       if (window.csBgMode === 'color') {
@@ -7551,7 +7605,19 @@ document.addEventListener("DOMContentLoaded", function(){
       }
       if (!output) {
         bgSetStatus(hasGPU ? 'Reintentando con el procesador (CPU)… puede tardar un poco.' : 'Procesando con CPU… puede tardar un poco.');
-        output = await bgSegment(file, 'wasm', 'std');
+        try {
+          output = await bgSegment(file, 'wasm', 'std');
+        } catch (cpuError) {
+          // Respaldo automático: si la IA no detecta el objeto pero el fondo es liso
+          // (muy común en diseños para playera sobre negro o blanco), se usa «Fondo de color».
+          const memoryErr = /memory|alloc|OOM/i.test(cpuError?.message || '') || /^\d+$/.test(String(cpuError?.message || '').trim());
+          if (!memoryErr && general && window.csBgColorMask && await bgBorderUniform(file) >= .6) {
+            console.warn('IA general sin máscara útil; usando «Fondo de color» automático:', cpuError);
+            bgSetStatus('La IA no distinguió el objeto; como el fondo es liso, se está quitando por color…');
+            output = await window.csBgColorMask(file);
+            bgAutoColor = true;
+          } else throw cpuError;
+        }
       }
       }
       if (generation !== bgGeneration) return;
@@ -7561,7 +7627,9 @@ document.addEventListener("DOMContentLoaded", function(){
       bgClearResult();
       bgLastSegmentation = output;
       bgResultURL = URL.createObjectURL(result);
-      bgAfter.onload = () => bgSetStatus('¡Fondo eliminado! Descarga tu PNG transparente.');
+      bgAfter.onload = () => bgSetStatus(bgAutoColor
+        ? '¡Fondo eliminado! La IA no reconoció el objeto, así que se quitó automáticamente el fondo liso por color. Si se borró parte del diseño, ajusta la «Tolerancia» en «Fondo de color».'
+        : '¡Fondo eliminado! Descarga tu PNG transparente.');
       bgAfter.onerror = () => bgSetStatus('La IA generó el archivo, pero falló la vista previa.');
       bgAfter.src = bgResultURL;
       await bgSetEditBase(result, true);
@@ -7577,7 +7645,9 @@ document.addEventListener("DOMContentLoaded", function(){
       const memory = /^\d+$/.test(raw.trim()) || /memory|alloc|OOM/i.test(raw);
       if (generation === bgGeneration) bgSetStatus(memory
         ? 'Tu equipo se quedó sin memoria para la IA con esta imagen. Prueba «Fondo de color» (si el fondo es liso), cierra otras pestañas o usa una imagen más pequeña.'
-        : 'Error de IA: ' + raw + '. Si persiste, prueba «Fondo de color» o «IA retrato».');
+        : err?.code === 'EMPTY_MASK'
+          ? 'La IA no encontró un objeto principal y el fondo no es de un solo color. Prueba «IA retrato» (si es una persona) o recorta la imagen para que el objeto ocupe más espacio.'
+          : 'Error de IA: ' + raw + '. Si persiste, prueba «Fondo de color» o «IA retrato».');
     } finally {
       if (generation === bgGeneration) bgButton.disabled = false;
     }
@@ -8798,7 +8868,9 @@ function detenerTemporizadorVIP() {
      if(d.status==='completed'&&d.image)return d.image;
      if(d.status==='failed')throw Error(d.error||'El procesamiento falló. Crédito liberado.');
      if(!r.ok&&r.status!==202)throw Error(d.error||'No se pudo consultar el trabajo');
-     notice.textContent='Procesando fondo con IA… '+(i+1)*3+' segundos';
+     const queued=d.phase==='starting';
+     window.dispatchEvent(new CustomEvent('rv-stage',{detail:{stage:queued?'queue':'ai'}}));
+     notice.textContent=queued?'El servidor de IA se está preparando…':'La IA está quitando el fondo…';
    }
    throw Error('El trabajo sigue pendiente. No lo envíes de nuevo; conserva este identificador: '+id);
  }
@@ -8809,12 +8881,15 @@ function detenerTemporizadorVIP() {
      const t=await token();if(!t)throw Error('Debes iniciar sesión Premium VIP');
      const image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('No se pudo leer la foto'));reader.readAsDataURL(file.files[0]);});
      lastJob=crypto.randomUUID();notice.textContent='Enviando imagen de forma segura…';
+     window.dispatchEvent(new CustomEvent('rv-stage',{detail:{stage:'upload'}}));
      const r=await fetch(api+'/api/vip/background/remove',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({image,job_id:lastJob})});
      const d=await r.json();if(!r.ok&&r.status!==202)throw Error(d.error||'No se pudo iniciar');
+     if(!d.image)window.dispatchEvent(new CustomEvent('rv-stage',{detail:{stage:'queue'}}));
      resultUrl=d.image||await poll(lastJob,t);
      after.src=resultUrl;after.hidden=false;afterHint.hidden=true;download.style.display='inline-block';
+     window.dispatchEvent(new CustomEvent('rv-stage',{detail:{stage:'done'}}));
      notice.textContent='¡Fondo eliminado! Descarga el PNG. Se utilizó 1 crédito del Removedor VIP.';
-   }catch(e){notice.textContent='Atención: '+e.message+(lastJob?' · Trabajo: '+lastJob:'');}
+   }catch(e){window.dispatchEvent(new CustomEvent('rv-stage',{detail:{stage:'error',msg:e.message}}));notice.textContent='Atención: '+e.message+(lastJob?' · Trabajo: '+lastJob:'');}
    finally{busy=false;await balance();}
  });
  download.addEventListener('click',async()=>{
@@ -10557,12 +10632,36 @@ window.addEventListener('message',function(e){var f=document.getElementById('cs-
   stage.tabIndex=0;stage.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')setPos(pos-4);if(e.key==='ArrowRight')setPos(pos+4);});
   document.querySelectorAll('#rvView button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#rvView button').forEach(x=>x.classList.toggle('on',x===b));
     const s=b.dataset.v==='slider';$('vipBgResults').hidden=s;$('rvCompare').hidden=!s;if(s)sync();}));
-  // Reloj mientras la IA trabaja
-  let t0=0,iv=null;const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
-  function start(){t0=Date.now();$('rvTimer').hidden=false;$('rvTime').textContent='00:00';clearInterval(iv);iv=setInterval(()=>{$('rvTime').textContent=fmt(Math.floor((Date.now()-t0)/1000));},500);}
-  function stop(){clearInterval(iv);iv=null;$('rvTimer').hidden=true;}
+  // Reloj mientras la IA trabaja: tiempo, etapa actual y avance estimado
+  let t0=0,iv=null,rvStg='upload',stageT=0,pct=0,hideT=null;const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  const ORDER=['upload','queue','ai','done'];
+  const INFO={upload:['Subiendo tu imagen…','Enviando el archivo cifrado al servidor.',0,18],
+    queue:['Preparando la IA…','El servidor está en cola o encendiendo; la primera vez puede tardar un poco más.',18,38],
+    ai:['La IA está quitando el fondo…','Detectando bordes, cabello y detalles finos.',38,94],
+    done:['¡Listo! Fondo eliminado','Tu PNG transparente ya aparece en el resultado.',100,100]};
+  const ARC=276.5;
+  function paint(){
+    const el=Math.floor((Date.now()-t0)/1000);$('rvTime').textContent=fmt(el);
+    const lo=(INFO[rvStg]||INFO.upload)[2],hi=(INFO[rvStg]||INFO.upload)[3];
+    if(rvStg!=='done'&&rvStg!=='error'){const st=(Date.now()-stageT)/1000,tau=rvStg==='ai'?7:4;pct=Math.max(pct,lo+(hi-lo)*(1-Math.exp(-st/tau)));}
+    const p=Math.round(pct);$('rvPct').textContent=p+'%';$('rvBarFill').style.width=p+'%';$('rvArc').style.strokeDashoffset=String(ARC*(1-p/100));
+    if(rvStg==='ai'&&el>45)$('rvSub').textContent='Está tardando más de lo normal; sigue trabajando. No cierres ni vuelvas a enviar.';
+  }
+  function setStage(s,msg){
+    if(!iv)return;
+    if(s==='error'){$('rvTimer').classList.add('err');$('rvStage').textContent='No se pudo completar';$('rvSub').textContent=msg||'Revisa el mensaje de arriba.';clearInterval(iv);iv=null;paint();hideT=setTimeout(()=>{$('rvTimer').hidden=true;},8000);return;}
+    if(ORDER.indexOf(s)<ORDER.indexOf(rvStg))return;
+    if(s!==rvStg){rvStg=s;stageT=Date.now();}
+    $('rvStage').textContent=INFO[s][0];$('rvSub').textContent=INFO[s][1];
+    const k=ORDER.indexOf(s);document.querySelectorAll('#rvSteps li').forEach((li,i)=>{const ok=i<k||s==='done';li.classList.toggle('ok',ok);li.classList.toggle('on',i===k&&s!=='done');li.querySelector('i').textContent=ok?'✓':String(i+1);});
+    if(s==='done'){pct=100;$('rvTimer').classList.add('done');clearInterval(iv);iv=null;paint();hideT=setTimeout(()=>{$('rvTimer').hidden=true;},6000);}
+    else paint();
+  }
+  function start(){clearTimeout(hideT);clearInterval(iv);t0=Date.now();pct=0;rvStg='upload';stageT=Date.now();
+    const tm=$('rvTimer');tm.classList.remove('done','err');tm.hidden=false;iv=setInterval(paint,250);setStage('upload');}
   $('vipBgProcess').addEventListener('click',()=>{if(!$('vipBgProcess').disabled&&$('vipBgFile').files[0])start();},true);
-  new MutationObserver(()=>{if(iv&&/^(¡Fondo eliminado|Atención|No se pudo)/.test(notice.textContent))stop();}).observe(notice,{childList:true,characterData:true,subtree:true});
+  window.addEventListener('rv-stage',e=>setStage(e.detail.stage,e.detail.msg));
+  new MutationObserver(()=>{if(!iv)return;const t=notice.textContent;if(/^¡Fondo eliminado/.test(t))setStage('done');else if(/^(Atención|No se pudo)/.test(t))setStage('error',t.replace(/^Atención:\s*/,''));}).observe(notice,{childList:true,characterData:true,subtree:true});
   // Descarga con recorte de espacio vacío (antes que la descarga original)
   $('vipBgDownload').addEventListener('click',async e=>{
     if(!$('rvTrim').checked||!after.getAttribute('src'))return;
