@@ -45,6 +45,19 @@ def normalizar_correo(email):
         dominio = "gmail.com"
     return usuario + "@" + dominio
 
+def normalizar_codigo(valor):
+    """Acepta el código en minúsculas, con espacios o sin guion: 'jg2u ywl8' -> 'JG2U-YWL8'."""
+    original = str(valor or "").strip().upper()
+    limpio = re.sub(r"[^A-Z0-9]", "", original)
+    if limpio.startswith("TRIAL") and len(limpio) > 5:
+        return "TRIAL-" + limpio[5:]
+    if len(limpio) == 8:
+        return limpio[:4] + "-" + limpio[4:]
+    return original
+
+# Sin O, 0, I, 1 ni L para que el cliente no confunda caracteres al escribir.
+ALFABETO_CODIGOS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=False)
 
 @app.after_request
@@ -181,6 +194,17 @@ def init_db():
                 expires_at TIMESTAMP NOT NULL,
                 attempts INTEGER NOT NULL DEFAULT 0,
                 verified BOOLEAN NOT NULL DEFAULT FALSE
+            )
+        """)
+        # Intentos de ingreso rechazados: muestran en el panel por qué un cliente no pudo entrar.
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS login_attempts (
+                id SERIAL PRIMARY KEY,
+                code TEXT,
+                email TEXT,
+                message TEXT,
+                ip TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
         conn.commit()
@@ -483,9 +507,9 @@ def home():
 
 def verify():
     """Lógica de verificación. La ruta /api/verify se registra más abajo (_secure_verify)."""
-    data = request.get_json() or {}
-    code = data.get("code", "").strip().upper()
-    user = data.get("user", "").strip()
+    data = request.get_json(silent=True) or {}
+    code = normalizar_codigo(data.get("code", ""))
+    user = str(data.get("user", "")).strip()
     if not code or not user:
         return jsonify({"valid": False, "message": "Faltan datos"})
     # Las pruebas TRIAL se validan en su propia tabla, sin alterar las membresías.
@@ -639,7 +663,7 @@ def admin():
     denied = _admin_guard()
     if denied: return denied
     conn = get_conn()
-    codes, usages, trials = [], [], []
+    codes, usages, trials, attempts = [], [], [], []
     if conn:
         try:
             with conn.cursor() as c:
@@ -695,6 +719,18 @@ def admin():
                     trials.append({"email": trial_email, "code": trial_code,
                                    "created": str(created_at), "expires": str(expires_at),
                                    "active": is_active})
+                # Intentos rechazados (últimos 30 días), en hora de CDMX, con el correo registrado del código.
+                c.execute("DELETE FROM login_attempts WHERE created_at < NOW() - INTERVAL '30 days'")
+                c.execute("""
+                    SELECT to_char(a.created_at AT TIME ZONE 'America/Mexico_City', 'YYYY-MM-DD HH24:MI:SS'),
+                           a.code, a.email, COALESCE(c.email, t.email), a.message, a.ip
+                    FROM login_attempts a
+                    LEFT JOIN codes c ON c.code = a.code
+                    LEFT JOIN free_trials t ON t.code = a.code
+                    ORDER BY a.id DESC LIMIT 50
+                """)
+                attempts = c.fetchall()
+            conn.commit()
         except Exception:
             app.logger.exception("Error al consultar panel de membresías")
             return "No se pudo cargar el panel. Revisa los logs de Render.", 500
@@ -801,6 +837,16 @@ def admin():
           </form></td></tr>
       {% else %}<tr><td colspan="8">Todavía no hay pruebas gratuitas registradas.</td></tr>{% endfor %}
     </table></div>
+    <h3>🚫 Intentos de ingreso rechazados</h3>
+    <p class="muted">Aquí ves por qué un cliente no pudo entrar: correo distinto, código mal escrito, vencido, etc. Hora de CDMX · se conservan 30 días.</p>
+    <div class="table-wrap"><table>
+      <tr><th>Fecha (CDMX)</th><th>Código escrito</th><th>Correo escrito</th><th>Correo registrado</th><th>Motivo</th><th>IP</th></tr>
+      {% for a in attempts %}
+      <tr><td>{{ a[0] }}</td><td><code>{{ a[1] or '—' }}</code></td><td>{{ a[2] or '—' }}</td>
+          <td>{% if a[3] %}{{ a[3] }}{% else %}<span class="muted">El código no existe</span>{% endif %}</td>
+          <td class="urgent">{{ a[4] }}</td><td class="muted">{{ a[5] }}</td></tr>
+      {% else %}<tr><td colspan="6">Sin intentos rechazados.</td></tr>{% endfor %}
+    </table></div>
     <h3>Últimos 50 accesos</h3>
     <form action="/admin/clear-usages" method="post" onsubmit="return confirm('¿Borrar TODOS los registros de uso? Esto eliminará también el historial de primera conexión.')"><input type="hidden" name="csrf" value="{{ csrf }}">
       <button class="danger small" type="submit">Vaciar historial de usos</button>
@@ -849,7 +895,7 @@ def admin():
         canva = _canva_status()
     except Exception:
         canva = None
-    return render_template_string(html, codes=codes, usages=usages, trials=trials, csrf=session["admin_csrf"], canva=canva)
+    return render_template_string(html, codes=codes, usages=usages, trials=trials, attempts=attempts, csrf=session["admin_csrf"], canva=canva)
 
 @app.route("/admin/generate", methods=["POST"])
 def admin_generate():
@@ -864,7 +910,7 @@ def admin_generate():
     except (ValueError, TypeError):
         return "Los días deben estar entre 1 y 3650", 400
     email = request.form.get("email", "").strip()
-    code = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+    code = ''.join(secrets.choice(ALFABETO_CODIGOS) for _ in range(8))
     code = f"{code[:4]}-{code[4:]}"
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_conn()
@@ -1013,6 +1059,24 @@ def _member():
 
 _original_verify = verify
 
+def _log_attempt(code, email, message):
+    """Guarda un ingreso rechazado. Nunca interrumpe la respuesta al cliente."""
+    conn = get_conn()
+    if not conn:
+        return
+    try:
+        with conn.cursor() as c:
+            c.execute(
+                "INSERT INTO login_attempts (code, email, message, ip) VALUES (%s, %s, %s, %s)",
+                (normalizar_codigo(code)[:60], str(email or "").strip()[:160],
+                 str(message or "Rechazado")[:200], str(_ip() or "")[:60]))
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        app.logger.exception("No se pudo registrar el intento fallido")
+    finally:
+        conn.close()
+
 # La página revisa la sesión desde varias herramientas en cada carga (hasta ~7 llamadas),
 # así que el límite deja margen para el uso normal y frena a quien intente adivinar códigos.
 @app.route("/api/verify", methods=["POST"], endpoint="verify")
@@ -1022,9 +1086,11 @@ def _secure_verify():
     if not hasattr(result, "get_json"):
         return result
     data = result.get_json(silent=True) or {}
+    submitted = request.get_json(silent=True) or {}
+    if not data.get("valid"):
+        _log_attempt(submitted.get("code", ""), submitted.get("user", ""), data.get("message"))
     if data.get("valid"):
-        submitted = request.get_json(silent=True) or {}
-        code = str(submitted.get("code", "")).strip().upper()
+        code = normalizar_codigo(submitted.get("code", ""))
         email = str(submitted.get("user", "")).strip().lower()
         conn = get_conn()
         if conn:
