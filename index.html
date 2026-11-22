@@ -1484,9 +1484,9 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
 <img src="https://cruzsublim.com/static/logo-neon.png"
      alt="Logo neón Cruz Sublime"
      style="display:block; width:150px; max-width:65%; height:auto; margin:0 auto 12px; object-fit:contain;">    <h2 style="margin-bottom:8px">Cruz Sublime</h2>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Ingresa tu nombre y código de acceso</p>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Ingresa el correo que diste al pagar y tu código de acceso</p>
     <div class="field">
-      <input type="text" id="userInput" placeholder="Tu nombre o correo" style="margin-bottom:10px">
+      <input type="email" id="userInput" placeholder="Tu correo (el mismo que diste al pagar)" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" style="margin-bottom:10px">
       <input type="text" id="codeInput" placeholder="XXXX-XXXX" style="text-align:center;letter-spacing:2px;font-weight:800">
     </div>
     <button class="btn btn-big" id="btnUnlock">Desbloquear</button>
@@ -6357,25 +6357,42 @@ setInterval(async function () {
 }, 15000);
 document.addEventListener("DOMContentLoaded", function(){
   var API_URL = "https://cruz-sublime-api.onrender.com/api/verify";
+  // Despertar el servidor de Render en cuanto alguien abre la página, antes de que escriba su código.
+  try { fetch("https://cruz-sublime-api.onrender.com/", { mode: "no-cors", cache: "no-store" }).catch(function(){}); } catch (e) {}
   async function verificarCodigo(code, user) {
+    var ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    var corte = ctrl ? setTimeout(function(){ ctrl.abort(); }, 75000) : null;
+    var aviso = setTimeout(function(){
+      document.getElementById("gateMsg").textContent = "Despertando el servidor, puede tardar hasta 1 minuto… no cierres la página.";
+    }, 4000);
     try {
       var res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: code, user: user })
+        body: JSON.stringify({ code: code, user: user }),
+        signal: ctrl ? ctrl.signal : undefined
       });
       return await res.json();
     } catch (e) {
-      return { valid: false, message: "Error de conexion con el servidor" };
+      return { valid: false, message: (e && e.name === "AbortError")
+        ? "El servidor tardó demasiado. Intenta de nuevo en un momento."
+        : "Error de conexión con el servidor. Revisa tu internet e intenta de nuevo." };
+    } finally {
+      clearTimeout(aviso);
+      if (corte) clearTimeout(corte);
     }
   }
   var el_btnUnlock = document.getElementById("btnUnlock"); if(el_btnUnlock) el_btnUnlock.addEventListener("click", async function() {
-    var code = document.getElementById("codeInput").value.trim();
-    var user = document.getElementById("userInput").value.trim();
-    if (!code) { document.getElementById("gateMsg").textContent = "Ingresa un codigo"; return; }
-    if (!user) { document.getElementById("gateMsg").textContent = "Ingresa tu nombre o correo"; return; }
+    var code = document.getElementById("codeInput").value.trim().toUpperCase();
+    var user = document.getElementById("userInput").value.trim().toLowerCase();
+    if (!code) { document.getElementById("gateMsg").textContent = "Ingresa tu código"; return; }
+    if (!user) { document.getElementById("gateMsg").textContent = "Ingresa tu correo"; return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(user)) { document.getElementById("gateMsg").textContent = "Escribe tu correo completo (ejemplo: nombre@gmail.com), el mismo que diste al pagar."; return; }
+    if (el_btnUnlock.disabled) return;
+    el_btnUnlock.disabled = true;
     document.getElementById("gateMsg").textContent = "Verificando...";
-    var r = await verificarCodigo(code, user);
+    var r;
+    try { r = await verificarCodigo(code, user); } finally { el_btnUnlock.disabled = false; }
     if (r && (r.status === "ok" || r.valid === true)) {
       document.getElementById("gate").style.display = "none";
       localStorage.setItem("cruz_sublime_unlocked", "1");
