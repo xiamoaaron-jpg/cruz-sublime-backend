@@ -1361,6 +1361,207 @@ def cloud_job(prediction_id):
     return jsonify(status="processing"), 202
 
 
+
+# ===== Removedor de fondo con Bria (planes basico / medio / anual) =====
+# 50 recortes por correo al mes. Se descuenta al iniciar y se devuelve si Replicate falla.
+# Premium VIP usa su propio Removedor VIP; las pruebas gratis no reciben token.
+BASIC_BG_LIMIT = int(os.environ.get("BASIC_BG_LIMIT", "50"))
+BASIC_BG_MODEL = (os.environ.get("REPLICATE_BG_VERSION") or "bria/remove-background").strip()
+
+def _init_basic_bg():
+    def work(c):
+        c.execute("""CREATE TABLE IF NOT EXISTS basic_bg_monthly (
+            email TEXT NOT NULL, month TEXT NOT NULL, used INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (email, month))""")
+        c.execute("""CREATE TABLE IF NOT EXISTS basic_bg_jobs (
+            prediction_id TEXT PRIMARY KEY, email TEXT NOT NULL, month TEXT NOT NULL,
+            status TEXT NOT NULL, result TEXT, created_at TIMESTAMP DEFAULT NOW())""")
+    try:
+        _cloud_db(work)
+    except Exception as e:
+        print("Basic bg init:", type(e).__name__)
+_init_basic_bg()
+
+def _bg_member():
+    member = _member()
+    if not member:
+        return None, (jsonify(error="Inicia sesión con tu código y correo para usar la IA profesional"), 401)
+    if member["plan"] == VIP_PLAN:
+        return None, (jsonify(error="Tu plan Premium VIP tiene su propio Removedor VIP con créditos aparte. Úsalo desde el Estudio Premium.", vip=True), 403)
+    if member["plan"] not in BASIC_CLOUD_PLANS:
+        return None, (jsonify(error="Tu plan no incluye la IA profesional"), 403)
+    return member, None
+
+def _bg_used(email, month):
+    def work(c):
+        c.execute("SELECT used FROM basic_bg_monthly WHERE email=%s AND month=%s", (email, month))
+        row = c.fetchone()
+        return row[0] if row else 0
+    return _cloud_db(work)
+
+def _bg_info(used):
+    return {"max": BASIC_BG_LIMIT, "used": used, "left": max(0, BASIC_BG_LIMIT - used)}
+
+def _bg_refund(email, month):
+    _cloud_db(lambda c: c.execute(
+        "UPDATE basic_bg_monthly SET used = GREATEST(used - 1, 0) WHERE email=%s AND month=%s", (email, month)))
+
+@app.route("/api/bg/credits", methods=["GET"])
+def basic_bg_credits():
+    member, error = _bg_member()
+    if error:
+        return error
+    try:
+        return jsonify(_bg_info(_bg_used(member["email"].lower(), datetime.now().strftime("%Y-%m"))))
+    except Exception:
+        return jsonify(error="No se pudo consultar tu saldo"), 503
+
+@app.route("/api/bg/remove", methods=["POST"])
+@limiter.limit("20/minute;200/day")
+def basic_bg_remove():
+    member, error = _bg_member()
+    if error:
+        return error
+    if not REPLICATE_TOKEN:
+        return jsonify(error="La IA profesional no está configurada en el servidor"), 503
+    data = request.get_json(silent=True) or {}
+    img = data.get("image")
+    if not isinstance(img, str) or len(img) > 16_000_000 or not img.startswith(
+            ("data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,")):
+        return jsonify(error="Imagen inválida o demasiado grande (máximo 8 MB)"), 400
+    try:
+        raw = base64.b64decode(img.split(",", 1)[1], validate=True)
+        if len(raw) > 8 * 1024 * 1024:
+            raise ValueError()
+        with Image.open(io.BytesIO(raw)) as im:
+            im.verify()
+    except Exception:
+        return jsonify(error="Archivo de imagen inválido"), 400
+    email, month = member["email"].lower(), datetime.now().strftime("%Y-%m")
+
+    def reserve(c):
+        c.execute("""INSERT INTO basic_bg_monthly (email, month, used) VALUES (%s, %s, 1)
+                     ON CONFLICT (email, month) DO UPDATE SET used = basic_bg_monthly.used + 1
+                     WHERE basic_bg_monthly.used < %s RETURNING used""",
+                  (email, month, BASIC_BG_LIMIT))
+        row = c.fetchone()
+        return row[0] if row else None
+    try:
+        used = _cloud_db(reserve)
+    except Exception:
+        return jsonify(error="No se pudo reservar tu recorte; intenta de nuevo"), 503
+    if used is None:
+        return jsonify(error="Ya usaste tus %d recortes con IA profesional de este mes. «Fondo de color» sigue siendo gratis." % BASIC_BG_LIMIT,
+                       credits=_bg_info(BASIC_BG_LIMIT)), 402
+    headers = {"Authorization": "Bearer " + REPLICATE_TOKEN, "Content-Type": "application/json"}
+    try:
+        if "/" in BASIC_BG_MODEL and ":" not in BASIC_BG_MODEL:
+            url = "https://api.replicate.com/v1/models/" + BASIC_BG_MODEL + "/predictions"
+            payload = {"input": {"image": img, "preserve_alpha": True}}
+        else:
+            url = "https://api.replicate.com/v1/predictions"
+            payload = {"version": BASIC_BG_MODEL.split(":")[-1], "input": {"image": img}}
+        r = requests.post(url, headers=headers, json=payload, timeout=30)
+        r.raise_for_status()
+        prediction_id = r.json()["id"]
+        _cloud_db(lambda c: c.execute(
+            "INSERT INTO basic_bg_jobs (prediction_id, email, month, status) VALUES (%s, %s, %s, 'running')",
+            (prediction_id, email, month)))
+    except Exception as e:
+        print("Basic bg start:", type(e).__name__)
+        try:
+            _bg_refund(email, month)
+        except Exception:
+            pass
+        return jsonify(error="No se pudo iniciar el recorte; no se descontó"), 502
+    return jsonify(job_id=prediction_id, credits=_bg_info(used)), 202
+
+def _bg_result_url(prediction):
+    out = prediction.get("output")
+    if isinstance(out, list):
+        out = out[0] if out else None
+    if isinstance(out, dict):
+        out = out.get("image") or out.get("url")
+    return out if isinstance(out, str) and out.startswith("https://") else None
+
+@app.route("/api/bg/job/<prediction_id>", methods=["GET"])
+def basic_bg_job(prediction_id):
+    member, error = _bg_member()
+    if error:
+        return error
+    if not re.fullmatch(r"[A-Za-z0-9]{8,64}", prediction_id or ""):
+        return jsonify(error="Trabajo no válido"), 400
+    email = member["email"].lower()
+    try:
+        job = _cloud_db(lambda c: (c.execute(
+            "SELECT month, status FROM basic_bg_jobs WHERE prediction_id=%s AND email=%s",
+            (prediction_id, email)), c.fetchone())[1])
+    except Exception:
+        return jsonify(status="processing"), 202
+    if not job:
+        return jsonify(error="Trabajo no encontrado"), 404
+    month, status = job
+    if status == "completed":
+        return jsonify(status="completed", credits=_bg_info(_bg_used(email, month)))
+    if status == "failed":
+        return jsonify(status="failed", error="El recorte no se completó; tu recorte se devolvió",
+                       credits=_bg_info(_bg_used(email, month)))
+    try:
+        p = requests.get("https://api.replicate.com/v1/predictions/" + prediction_id,
+                         headers={"Authorization": "Bearer " + REPLICATE_TOKEN}, timeout=12).json()
+    except Exception:
+        return jsonify(status="processing"), 202
+    state = p.get("status")
+    if state == "succeeded":
+        out = _bg_result_url(p)
+        if out:
+            _cloud_db(lambda c: c.execute(
+                "UPDATE basic_bg_jobs SET status='completed', result=%s WHERE prediction_id=%s", (out, prediction_id)))
+            return jsonify(status="completed", credits=_bg_info(_bg_used(email, month)))
+        state = "failed"
+    if state in ("failed", "canceled"):
+        def mark_failed(c):
+            c.execute("UPDATE basic_bg_jobs SET status='failed' WHERE prediction_id=%s AND status='running' RETURNING 1",
+                      (prediction_id,))
+            return c.fetchone()
+        if _cloud_db(mark_failed):
+            _bg_refund(email, month)
+        return jsonify(status="failed", error="El recorte no se completó; tu recorte se devolvió",
+                       credits=_bg_info(_bg_used(email, month)))
+    return jsonify(status="processing", phase=state or "processing"), 202
+
+@app.route("/api/bg/result/<prediction_id>", methods=["GET"])
+def basic_bg_result(prediction_id):
+    """Entrega el PNG desde este servidor para que la página pueda editarlo (evita bloqueos de CORS)."""
+    member, error = _bg_member()
+    if error:
+        return error
+    if not re.fullmatch(r"[A-Za-z0-9]{8,64}", prediction_id or ""):
+        return jsonify(error="Trabajo no válido"), 400
+    try:
+        row = _cloud_db(lambda c: (c.execute(
+            "SELECT result FROM basic_bg_jobs WHERE prediction_id=%s AND email=%s AND status='completed'",
+            (prediction_id, member["email"].lower())), c.fetchone())[1])
+    except Exception:
+        return jsonify(error="Base de datos no disponible"), 503
+    if not row or not row[0]:
+        return jsonify(error="Resultado no disponible"), 404
+    from urllib.parse import urlparse
+    host = (urlparse(row[0]).hostname or "").lower()
+    if not (host == "replicate.delivery" or host.endswith(".replicate.delivery")):
+        return jsonify(error="Origen de resultado no permitido"), 400
+    try:
+        r = requests.get(row[0], timeout=30)
+        r.raise_for_status()
+    except Exception:
+        return jsonify(error="El resultado ya no está disponible; vuelve a procesar"), 502
+    if len(r.content) > 60 * 1024 * 1024:
+        return jsonify(error="Resultado demasiado grande"), 502
+    from flask import Response
+    resp = Response(r.content, mimetype=r.headers.get("Content-Type", "image/png").split(";")[0])
+    resp.headers["Cache-Control"] = "private, no-store"
+    return resp
+
 def _process_trial(kind):
     member = _member()
     if not member: return jsonify(error="Inicia sesión con tu código"), 401

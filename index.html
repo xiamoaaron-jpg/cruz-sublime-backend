@@ -3486,9 +3486,8 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
 <div class="sp-cut" id="spCutBox" hidden>
  <p class="sp-cut-t"><b>✂️ ¿Tu imagen trae fondo?</b> Quítalo primero y el semitono se aplicará solo al diseño, no al fondo.</p>
  <select id="spCutMode" aria-label="Tipo de imagen para quitar el fondo">
-  <option value="general">IA: personajes, dibujos y productos</option>
-  <option value="portrait">IA: fotos de personas</option>
-  <option value="color">Fondo de un solo color (rápido)</option>
+  <option value="general">IA profesional (usa 1 de tus 50 recortes del mes)</option>
+  <option value="color">Fondo de un solo color (gratis, instantáneo)</option>
  </select>
  <div class="sp-cut-row"><button type="button" id="spCutGo">✂️ Quitar fondo</button><button type="button" id="spCutUndo" hidden>↺ Usar original</button></div>
  <p class="sp-cut-msg" id="spCutMsg" hidden></p>
@@ -5552,14 +5551,13 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
       <aside class="rb-side">
         <div class="rb-box">
           <p class="rb-step"><b>1</b>Imagen</p>
-          <div class="rb-drop" id="bgDrop" role="button" tabindex="0"><span class="rb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span><span class="rb-dt"><span class="rb-t">Subir o arrastrar imagen</span><span class="rb-s">JPG, PNG o WEBP · hasta 20 MB</span></span></div>
+          <div class="rb-drop" id="bgDrop" role="button" tabindex="0"><span class="rb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span><span class="rb-dt"><span class="rb-t">Subir o arrastrar imagen</span><span class="rb-s">JPG, PNG o WEBP · hasta 80 MB</span></span></div>
           <input type="file" id="bgFile" accept="image/png,image/jpeg,image/webp" hidden>
         </div>
         <div class="rb-box">
           <p class="rb-step"><b>2</b>Quitar fondo</p>
           <div class="rb-modes" id="bgModes">
-            <button type="button" data-mode="general" class="on"><span>✨</span><strong>IA general</strong><small>Diseños, dibujos, objetos y personas</small></button>
-            <button type="button" data-mode="portrait"><span>👤</span><strong>IA retrato</strong><small>Fotos de personas · más rápida</small></button>
+            <button type="button" data-mode="general" class="on"><span>✨</span><strong>IA profesional</strong><small>Diseños, dibujos, fotos y personas · 50 al mes</small></button>
             <button type="button" data-mode="color"><span>🎨</span><strong>Fondo de color</strong><small>Fondo liso · instantáneo, sin IA</small></button>
           </div>
           <div class="rb-colorbox" id="bgColorBox" hidden>
@@ -5570,7 +5568,7 @@ csDlInstall(window,{css:CSS,onDownload:function(){try{parent.postMessage({csDlDi
           </div>
           <button class="rb-go" id="btnBg" disabled>✦ Quitar fondo</button>
           <div class="rb-status" id="bgStatus" role="status" aria-live="polite">Sube una imagen para comenzar.</div>
-          <p class="rb-note" id="bgModeNote">IA general (BiRefNet lite): reconoce personajes, dibujos, productos y personas. Funciona con poca memoria; la primera vez descarga el modelo (unos 100 MB) y después queda guardado.</p>
+          <p class="rb-note" id="bgModeNote">IA profesional (Bria): recorta diseños, dibujos, productos y personas con bordes limpios. Se procesa en nuestro servidor, así que no traba tu computadora. Incluye 50 recortes al mes.</p><p class="rb-note" id="bgCredits" style="color:#3fc3ee;font-weight:700"></p>
         </div>
         <div class="rb-box">
           <p class="rb-step"><b>3</b>Ajustar borde</p>
@@ -7011,7 +7009,7 @@ document.addEventListener("DOMContentLoaded", function(){
       if(!spOrigFile){status("Primero sube una imagen.");return;}
       if(spCutBusy||busy)return;
       if(typeof window.csRemoveBackground!=="function"){spCutSay("El removedor aún se está cargando; intenta en unos segundos.");return;}
-      spCutBusy=true;$("spCutGo").disabled=true;$("spCutUndo").disabled=true;spCutSay("Quitando fondo… la primera vez descarga la IA (unos 100 MB).");
+      spCutBusy=true;$("spCutGo").disabled=true;$("spCutUndo").disabled=true;spCutSay($("spCutMode").value==="color"?"Quitando fondo por color…":"Enviando a la IA profesional…");
       try{
         const r=await window.csRemoveBackground(spOrigFile,{mode:$("spCutMode").value,onStatus:spCutSay});
         const base=String(spOrigFile.name||"diseno").replace(/\.[^.]+$/,"");
@@ -7679,7 +7677,7 @@ document.addEventListener("DOMContentLoaded", function(){
       return await new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('No se pudo generar PNG.')), 'image/png'));
     } finally { bitmap.close(); }
   }
-  async function bgRunSegmentation(file) {
+  async function bgRunSegmentationLocal(file) {
     let output = null, bgAutoColor = false;
       if (window.csBgMode === 'color') {
         bgSetStatus('Quitando color de fondo…');
@@ -7729,6 +7727,89 @@ document.addEventListener("DOMContentLoaded", function(){
       }
     return { output, autoColor: bgAutoColor };
   }
+
+  // ===== IA profesional en el servidor (Bria vía Replicate): 50 recortes al mes =====
+  const BG_API = 'https://cruz-sublime-api.onrender.com';
+  const bgSleep = ms => new Promise(r => setTimeout(r, ms));
+  async function bgToken(force) {
+    let t = null; try { t = sessionStorage.getItem('cruz_member_token'); } catch (e) {}
+    if (t && !force) return t;
+    let code = '', user = ''; try { code = localStorage.getItem('cruz_sublime_code') || ''; user = localStorage.getItem('cruz_sublime_user') || ''; } catch (e) {}
+    if (!code || !user) return null;
+    try {
+      const r = await fetch(BG_API + '/api/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, user }) });
+      const d = await r.json();
+      if (d.valid && d.token) { try { sessionStorage.setItem('cruz_member_token', d.token); } catch (e) {} return d.token; }
+    } catch (e) {}
+    return null;
+  }
+  async function bgApi(path, opts) {
+    let t = await bgToken();
+    if (!t) throw Object.assign(new Error(bgNoTokenMsg()), { server: true });
+    const go = tk => fetch(BG_API + path, Object.assign({}, opts, { headers: Object.assign({ Authorization: 'Bearer ' + tk }, (opts && opts.body) ? { 'Content-Type': 'application/json' } : {}) }));
+    let r = await go(t);
+    if (r.status === 401) { try { sessionStorage.removeItem('cruz_member_token'); } catch (e) {} t = await bgToken(true); if (t) r = await go(t); }
+    return r;
+  }
+  function bgNoTokenMsg() {
+    let code = ''; try { code = (localStorage.getItem('cruz_sublime_code') || '').toUpperCase(); } catch (e) {}
+    return code.startsWith('TRIAL-') ? 'La IA profesional se incluye en los planes Básico, Medio y Anual. En la prueba gratis puedes usar «Fondo de color».'
+      : 'Inicia sesión con tu código y correo para usar la IA profesional (50 recortes al mes).';
+  }
+  function bgShowCredits(c) {
+    const el = document.getElementById('bgCredits'); if (!el || !c || typeof c.left !== 'number') return;
+    el.textContent = '🎯 Te quedan ' + c.left + ' de ' + c.max + ' recortes con IA profesional este mes.';
+  }
+  async function bgRefreshCredits() {
+    const el = document.getElementById('bgCredits'); if (!el) return;
+    try {
+      const t = await bgToken(); if (!t) { el.textContent = bgNoTokenMsg(); return; }
+      const r = await bgApi('/api/bg/credits'); const d = await r.json().catch(() => ({}));
+      if (r.ok) bgShowCredits(d); else if (d.error) el.textContent = d.error;
+    } catch (e) {}
+  }
+  window.csBgRefreshCredits = bgRefreshCredits;
+  function bgReadDataURL(f) { return new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => bad(new Error('No se pudo leer la imagen')); r.readAsDataURL(f); }); }
+  async function bgServerSegment(file) {
+    bgSetStatus('Preparando imagen para la IA profesional…');
+    let up = file;
+    if (file.size > 7.5 * 1024 * 1024 && window.csFitImage) up = await window.csFitImage(file, { maxBytes: 7.5 * 1024 * 1024 });
+    const dataURL = await bgReadDataURL(up);
+    bgSetStatus('Enviando a la IA profesional… (si el servidor estaba dormido puede tardar hasta 1 minuto)');
+    const r = await bgApi('/api/bg/remove', { method: 'POST', body: JSON.stringify({ image: dataURL }) });
+    const j = await r.json().catch(() => ({}));
+    if (j.credits) bgShowCredits(j.credits);
+    if (!r.ok) throw Object.assign(new Error(j.error || ('El servidor respondió con error ' + r.status)), { server: true });
+    const id = j.job_id;
+    let done = false;
+    for (let i = 0; i < 100 && !done; i++) {
+      await bgSleep(i < 4 ? 1500 : 2500);
+      let q, s = {};
+      try { q = await bgApi('/api/bg/job/' + encodeURIComponent(id)); s = await q.json().catch(() => ({})); } catch (e) { continue; }
+      if (s.credits) bgShowCredits(s.credits);
+      if (s.status === 'completed') { done = true; break; }
+      if (s.status === 'failed' || (!q.ok && q.status !== 202)) throw Object.assign(new Error(s.error || 'El recorte no se completó; tu recorte se devolvió.'), { server: true });
+      bgSetStatus(s.phase === 'starting' ? 'Encendiendo la IA profesional… (unos segundos)' : 'La IA profesional está recortando tu imagen…');
+    }
+    if (!done) throw Object.assign(new Error('La IA está tardando más de lo normal. Espera un momento e intenta de nuevo.'), { server: true });
+    bgSetStatus('Descargando resultado…');
+    const res = await bgApi('/api/bg/result/' + encodeURIComponent(id));
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw Object.assign(new Error(e.error || 'No se pudo descargar el resultado.'), { server: true }); }
+    const blob = await res.blob();
+    // La máscara es el canal de transparencia que entrega Bria; se aplica sobre tu imagen original sin recomprimir.
+    const bm = await createImageBitmap(blob);
+    const k = Math.min(1, 4096 / Math.max(bm.width, bm.height)), w = Math.max(1, Math.round(bm.width * k)), h = Math.max(1, Math.round(bm.height * k));
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(bm, 0, 0, w, h); bm.close();
+    const d = x.getImageData(0, 0, w, h).data, a = new Float32Array(w * h);
+    for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3] / 255;
+    bgRefreshCredits();
+    return [{ mask: { data: a, width: w, height: h, channels: 1 } }];
+  }
+  async function bgRunSegmentation(file) {
+    if (window.csBgMode === 'color') return bgRunSegmentationLocal(file);
+    return { output: await bgServerSegment(file), autoColor: false };
+  }
   /* Quitar fondo desde otras herramientas (Semitonos): mismo motor, devuelve un PNG transparente. */
   window.csRemoveBackground = async function (file, opts) {
     opts = opts || {};
@@ -7736,7 +7817,6 @@ document.addEventListener("DOMContentLoaded", function(){
     if (opts.mode) window.csBgMode = opts.mode;
     bgStatusHook = opts.onStatus || null;
     try {
-      if (bgMobile() && window.csBgMode !== 'color') throw new Error('La IA para quitar fondo solo funciona en computadora. Usa «Fondo de un solo color».');
       const prep = await bgPrepare(file, opts.maxSide || 6000);
       const seg = await bgRunSegmentation(prep.file);
       bgSetStatus('Preparando PNG transparente…');
@@ -7783,7 +7863,7 @@ document.addEventListener("DOMContentLoaded", function(){
         ? 'Tu equipo se quedó sin memoria para la IA con esta imagen. Prueba «Fondo de color» (si el fondo es liso), cierra otras pestañas o usa una imagen más pequeña.'
         : err?.code === 'EMPTY_MASK'
           ? 'La IA no encontró un objeto principal y el fondo no es de un solo color. Prueba «IA retrato» (si es una persona) o recorta la imagen para que el objeto ocupe más espacio.'
-          : 'Error de IA: ' + raw + '. Si persiste, prueba «Fondo de color» o «IA retrato».');
+          : raw + (/[.!?]$/.test(raw) ? '' : '.') + ' Si el fondo es liso, también puedes usar «Fondo de color» (gratis).');
     } finally {
       if (generation === bgGeneration) bgButton.disabled = false;
     }
@@ -7991,8 +8071,8 @@ document.addEventListener("DOMContentLoaded", function(){
     if(!$('bgModes'))return;
     window.csBgMode='general';
     let keyColor=null,picking=false,timer=null;
-    const notes={general:'IA general (BiRefNet lite): reconoce personajes, dibujos, productos y personas. Funciona con poca memoria; la primera vez descarga el modelo (unos 100 MB) y después queda guardado.',
-      portrait:'IA retrato (MODNet): ideal y rápida para fotos de personas reales. No funciona bien con dibujos ni objetos.',
+    const notes={general:'IA profesional (Bria): recorta diseños, dibujos, productos y personas con bordes limpios. Se procesa en nuestro servidor, así que no traba tu computadora. Incluye 50 recortes al mes.',
+      portrait:'IA profesional (Bria).',
       color:'Para diseños con fondo de un solo color (blanco, negro o cualquier color liso). Es instantáneo, funciona sin internet y deja bordes limpios.'};
     $('bgModes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;window.csBgMode=b.dataset.mode;
       $('bgModes').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
@@ -8105,6 +8185,8 @@ document.addEventListener("DOMContentLoaded", function(){
   })();
 
   bgUpdateEditButtons();
+  bgRefreshCredits();
+  document.querySelectorAll('[data-tab="bg"]').forEach(b => b.addEventListener('click', () => setTimeout(bgRefreshCredits, 50)));
 
 
 
