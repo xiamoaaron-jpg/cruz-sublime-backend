@@ -1386,9 +1386,8 @@ def _bg_member():
     member = _member()
     if not member:
         return None, (jsonify(error="Inicia sesión con tu código y correo para usar la IA profesional"), 401)
-    if member["plan"] == VIP_PLAN:
-        return None, (jsonify(error="Tu plan Premium VIP tiene su propio Removedor VIP con créditos aparte. Úsalo desde el Estudio Premium.", vip=True), 403)
-    if member["plan"] not in BASIC_CLOUD_PLANS:
+    # Premium VIP también puede usarlo: se descuenta de sus 50 créditos del Removedor VIP (no recibe recortes extra).
+    if member["plan"] not in BASIC_CLOUD_PLANS and member["plan"] != VIP_PLAN:
         return None, (jsonify(error="Tu plan no incluye la IA profesional"), 403)
     return member, None
 
@@ -1402,6 +1401,13 @@ def _bg_used(email, month):
 def _bg_info(used):
     return {"max": BASIC_BG_LIMIT, "used": used, "left": max(0, BASIC_BG_LIMIT - used)}
 
+def _bg_credits_for(member, month=None):
+    if member["plan"] == VIP_PLAN:
+        b = _bg_balance(member) or {"max": 50, "used": 0, "pending": 0, "left": 0}
+        b = dict(b); b["vip"] = True
+        return b
+    return _bg_info(_bg_used(member["email"].lower(), month or datetime.now().strftime("%Y-%m")))
+
 def _bg_refund(email, month):
     _cloud_db(lambda c: c.execute(
         "UPDATE basic_bg_monthly SET used = GREATEST(used - 1, 0) WHERE email=%s AND month=%s", (email, month)))
@@ -1412,7 +1418,7 @@ def basic_bg_credits():
     if error:
         return error
     try:
-        return jsonify(_bg_info(_bg_used(member["email"].lower(), datetime.now().strftime("%Y-%m"))))
+        return jsonify(_bg_credits_for(member))
     except Exception:
         return jsonify(error="No se pudo consultar tu saldo"), 503
 
@@ -1438,6 +1444,14 @@ def basic_bg_remove():
     except Exception:
         return jsonify(error="Archivo de imagen inválido"), 400
     email, month = member["email"].lower(), datetime.now().strftime("%Y-%m")
+    vip_job = None
+    if member["plan"] == VIP_PLAN:
+        vip_job = str(uuid.uuid4())
+        reservation, err = _bg_reserve(member, vip_job)
+        if err:
+            return jsonify(error=("Ya usaste los 50 créditos de tu Removedor VIP de este periodo. «Fondo de color» sigue siendo gratis."
+                                  if "agotados" in err else err), credits=_bg_credits_for(member)), (402 if "agotados" in err else 503)
+        month = "vip:" + vip_job
 
     def reserve(c):
         c.execute("""INSERT INTO basic_bg_monthly (email, month, used) VALUES (%s, %s, 1)
@@ -1447,7 +1461,7 @@ def basic_bg_remove():
         row = c.fetchone()
         return row[0] if row else None
     try:
-        used = _cloud_db(reserve)
+        used = 0 if vip_job else _cloud_db(reserve)
     except Exception:
         return jsonify(error="No se pudo reservar tu recorte; intenta de nuevo"), 503
     if used is None:
@@ -1467,14 +1481,19 @@ def basic_bg_remove():
         _cloud_db(lambda c: c.execute(
             "INSERT INTO basic_bg_jobs (prediction_id, email, month, status) VALUES (%s, %s, %s, 'running')",
             (prediction_id, email, month)))
+        if vip_job:
+            _bg_update(vip_job, "reserved", prediction_id=prediction_id)
     except Exception as e:
         print("Basic bg start:", type(e).__name__)
         try:
-            _bg_refund(email, month)
+            if vip_job:
+                _bg_update(vip_job, "failed")
+            else:
+                _bg_refund(email, month)
         except Exception:
             pass
         return jsonify(error="No se pudo iniciar el recorte; no se descontó"), 502
-    return jsonify(job_id=prediction_id, credits=_bg_info(used)), 202
+    return jsonify(job_id=prediction_id, credits=_bg_credits_for(member) if vip_job else _bg_info(used)), 202
 
 def _bg_result_url(prediction):
     out = prediction.get("output")
@@ -1501,11 +1520,13 @@ def basic_bg_job(prediction_id):
     if not job:
         return jsonify(error="Trabajo no encontrado"), 404
     month, status = job
+    vip_job = month[4:] if month.startswith("vip:") else None
+    credits = lambda: _bg_credits_for(member, None if vip_job else month)
     if status == "completed":
-        return jsonify(status="completed", credits=_bg_info(_bg_used(email, month)))
+        return jsonify(status="completed", credits=credits())
     if status == "failed":
         return jsonify(status="failed", error="El recorte no se completó; tu recorte se devolvió",
-                       credits=_bg_info(_bg_used(email, month)))
+                       credits=credits())
     try:
         p = requests.get("https://api.replicate.com/v1/predictions/" + prediction_id,
                          headers={"Authorization": "Bearer " + REPLICATE_TOKEN}, timeout=12).json()
@@ -1517,7 +1538,9 @@ def basic_bg_job(prediction_id):
         if out:
             _cloud_db(lambda c: c.execute(
                 "UPDATE basic_bg_jobs SET status='completed', result=%s WHERE prediction_id=%s", (out, prediction_id)))
-            return jsonify(status="completed", credits=_bg_info(_bg_used(email, month)))
+            if vip_job:
+                _bg_update(vip_job, "completed", result=out)
+            return jsonify(status="completed", credits=credits())
         state = "failed"
     if state in ("failed", "canceled"):
         def mark_failed(c):
@@ -1525,9 +1548,12 @@ def basic_bg_job(prediction_id):
                       (prediction_id,))
             return c.fetchone()
         if _cloud_db(mark_failed):
-            _bg_refund(email, month)
+            if vip_job:
+                _bg_update(vip_job, "failed")
+            else:
+                _bg_refund(email, month)
         return jsonify(status="failed", error="El recorte no se completó; tu recorte se devolvió",
-                       credits=_bg_info(_bg_used(email, month)))
+                       credits=credits())
     return jsonify(status="processing", phase=state or "processing"), 202
 
 @app.route("/api/bg/result/<prediction_id>", methods=["GET"])

@@ -3486,7 +3486,7 @@ html body > header button:focus-visible,#csTools input:focus-visible{outline:3px
 <div class="sp-cut" id="spCutBox" hidden>
  <p class="sp-cut-t"><b>✂️ ¿Tu imagen trae fondo?</b> Quítalo primero y el semitono se aplicará solo al diseño, no al fondo.</p>
  <select id="spCutMode" aria-label="Tipo de imagen para quitar el fondo">
-  <option value="general">IA profesional (usa 1 de tus 50 recortes del mes)</option>
+  <option value="general">IA profesional (usa 1 recorte de tu saldo)</option>
   <option value="color">Fondo de un solo color (gratis, instantáneo)</option>
  </select>
  <div class="sp-cut-row"><button type="button" id="spCutGo">✂️ Quitar fondo</button><button type="button" id="spCutUndo" hidden>↺ Usar original</button></div>
@@ -7758,7 +7758,9 @@ document.addEventListener("DOMContentLoaded", function(){
   }
   function bgShowCredits(c) {
     const el = document.getElementById('bgCredits'); if (!el || !c || typeof c.left !== 'number') return;
-    el.textContent = '🎯 Te quedan ' + c.left + ' de ' + c.max + ' recortes con IA profesional este mes.';
+    el.textContent = c.vip
+      ? '👑 Créditos del Removedor VIP: te quedan ' + c.left + ' de ' + c.max + (c.pending ? ' (' + c.pending + ' en proceso)' : '') + '. Son los mismos del Estudio Premium.'
+      : '🎯 Te quedan ' + c.left + ' de ' + c.max + ' recortes con IA profesional este mes.';
   }
   async function bgRefreshCredits() {
     const el = document.getElementById('bgCredits'); if (!el) return;
